@@ -1,0 +1,569 @@
+================================================================================
+WONDERHACK — SUMMARY OF MODIFICATIONS AND UPDATES
+================================================================================
+
+0. SERVER ACCOUNTS, SESSION COOKIES, SCORE PERSISTENCE & LEADERBOARD
+--------------------------------------------------------------------------------
+- Backend (server.py):
+  * Added POST /api/register, POST /api/login, POST /api/logout, GET /api/me.
+  * Sessions are real server-side sessions: a random token is sent in an
+    HttpOnly, SameSite=Lax cookie (wh_session), and only its SHA-256 hash is
+    stored in SQLite.
+  * Added POST /api/solve. The server validates each riddle answer and records
+    every solve once in the `solves` table, then adds the coins to the account.
+    Clients can no longer set their own points.
+  * Added POST /api/profile, POST /api/progress (hint sync only),
+    POST /api/reset and GET /api/puzzles.
+  * GET /api/leaderboard now ranks players by saved coins and marks the
+    current player with isYou.
+- Database (db/init_db.py):
+  * Added password_hash, email, timestamps and progress columns; existing
+    plaintext passwords are migrated to salted PBKDF2 hashes on startup.
+  * Added hashed `sessions` and per-puzzle `solves` tables.
+  * Migrates legacy JSON solved-puzzle lists into the solves table.
+- Frontend:
+  * login.html: real login + registration tabs; removed the IndexedDB fallback.
+  * session.js v2: boot/register/login/logout, server-validated solvePuzzle,
+    profile updates, reset, leaderboard, and a shared boot promise.
+  * puzzle-engine.js: every correct answer is saved through /api/solve before
+    the reward banner appears; offline/session-expired fallbacks are explicit.
+  * leaderboard.html: current-player highlight, "your standing" strip, login
+    CTA and 20-second auto-refresh.
+  * profile.html/js: display-name/email saved to the account; reset now clears
+    server-side progression; stats show solved count out of the total trials.
+  * Added session.js to every page and bumped cache-busting script versions.
+
+================================================================================
+
+1. REMOVAL OF "GO TO CIPHER LAB" BUTTONS
+--------------------------------------------------------------------------------
+- Main Navigation Bar (public/js/main.js):
+  * Removed the "🔬 Cipher Lab" navigation item from the global header
+    (WonderUI.initHeader) across all pages.
+- Home Entrance Cards (public/index.html):
+  * Removed the "Cipher Laboratory" gateway card from the homepage grid.
+- Mad Hatter's Shop (public/mad-hatter.html):
+  * Removed the "Open Cipher Workbench →" crimson button from the Cheshire Cat
+    dialogue modal.
+
+
+2. CHESHIRE CAT PNG INTERACTION & DIRECT NAVIGATION
+--------------------------------------------------------------------------------
+- Homepage Cast Strip (public/index.html & public/css/menu.css):
+  * Converted the Cheshire Cat cast element into an interactive link
+    (.cat-cast-item / .cat-cipher-trigger) with pointer cursor, hover glow,
+    subtle rotation, and smooth scaling that navigates directly to challenge.html.
+- Mad Hatter's Shop Sprite (public/mad-hatter.html & public/js/mad-hatter.js):
+  * Clicking the Cheshire Cat character sprite (#cheshire-sprite) now directly
+    navigates to the Cipher Lab (challenge.html).
+- Global Cat Click Handler (public/js/main.js):
+  * Added a universal document click listener that catches clicks on any
+    Cheshire Cat PNG image or trigger element on any page (outside of
+    challenge.html) and routes the user directly to challenge.html.
+
+
+3. CHESHIRE CAT CHARACTER SPRITE ON CIPHER LAB PAGE
+--------------------------------------------------------------------------------
+- Character Sprite Mount (public/challenge.html):
+  * Added the Cheshire Cat character sprite perched on the right side of the
+    screen (#cheshire-sprite) with banjo PNG, royal character tag, and an
+    interactive speech bubble (#cheshire-bubble).
+  * Tied sprite click events to WonderCharacters.triggerCheshireHelp() for sound
+    and animated dialogue.
+  * Updated left card prompt to point players to the cat on the right for hints.
+- Styling & Responsiveness (public/css/challenge.css):
+  * Added CSS rules for .cheshire-character-wrapper and #cheshire-bubble with
+    drop shadows, hover glow, and responsive scaling down to mobile screens.
+  * Adjusted .lab-container max-width to 1040px to comfortably accommodate the
+    cat sprite alongside the parchment dossier and decoder cards on desktop.
+- Cat Dialogue (public/js/characters.js):
+  * Added new cryptographic wisdom lines for ROT13 and Base64 padding.
+
+
+4. CIPHER LAB RETURN & SUBMISSION NAVIGATION
+--------------------------------------------------------------------------------
+- Button Rerouting (public/challenge.html):
+  * Changed both "← Return to Queen's Castle" and "Submit in Castle →" buttons
+    so they no longer route to puzzles.html (the difficulty selection screen).
+  * Updated their static fallback targets to challenges/easy/index.html.
+  * Added dynamic JavaScript resolution checking the active or stored difficulty
+    (challenges/${activeDiff}/index.html), seamlessly returning the player directly
+    to their active puzzle chamber (Easy, Medium, or Hard).
+- API Export (public/js/main.js):
+  * Exported getActiveDifficulty on the WonderUI object for shared chamber lookup.
+
+
+5. PLAYER DOSSIER: REMOVED QUEEN ACCOUNT SELECTOR & REFERENCES
+--------------------------------------------------------------------------------
+- Portrait Selection Removal (public/profile.html):
+  * Completely removed the "Select Court Portrait:" header and the avatar choice
+    cards for Alice and Queen of Hearts (avatar-opt-queen).
+  * Replaced the selection UI with a single court portrait cameo (#profile-avatar-img)
+    displaying the authenticated player's portrait.
+  * Changed the title from "Player Dossier & Cameo" to "Player Dossier".
+- Profile Logic Cleanup (public/js/profile.js):
+  * Removed avatar selection event listeners and switching logic for the Queen.
+  * Updated the locked dossier screen prompt to remove mention of "The Red Queen".
+- Home Description (public/index.html):
+  * Updated the Player Dossier menu card description to remove references to
+    switching cameos, keeping the Queen's account hidden.
+
+6. ADMIN-ONLY LEADERBOARD & THE QUEEN'S ANSWER SCROLL
+--------------------------------------------------------------------------------
+- Leaderboard access (server.py, public/js/main.js, public/leaderboard.html):
+  * GET /api/leaderboard now returns 401 for anonymous visitors and 403 for
+    every account except the Court Administrator (`admin`).
+  * The Leaderboard navigation link is rendered only for the administrator.
+  * Non-admins who open leaderboard.html see a themed "By Royal Decree" gate.
+- Queen's answer scroll (server.py, public/royal-answers.html,
+  public/css/royal-answers.css):
+  * New GET /api/queen/answers endpoint returns every riddle with their
+    questions, accepted answers and coin values. Only `hearts_queen` may call
+    it; every other account receives 403.
+  * New royal-answers.html page groups the riddles into themed Easy / Medium /
+    Hard parchment tables with crimson and gold styling.
+  * Added a reserved flag panel whose value is currently "no flag yet".
+  * Logging in as The Heart's Queen redirects straight to the answer scroll.
+  * The Queen's account has no castle, puzzle, profile, coin or audio controls:
+    her header shows only the brand, her name and "Log out".
+  * The Queen is redirected away from every game/dossier page back to
+    royal-answers.html.
+  * POST /api/solve now returns 403 for the Queen: she reviews answers rather
+    than playing the trials.
+- db/puzzles.py now stores each riddle's question text alongside its answers.
+
+7. REMOVED THE ALICE AND RED QUEEN ACCOUNTS
+--------------------------------------------------------------------------------
+- Deleted both users (and any sessions/solves they owned) from
+  db/wonderhack.db. Only `admin` and `hearts_queen` remain.
+- Removed both accounts from the seed list in db/init_db.py, so re-running the
+  initializer cannot recreate them.
+- Removed their legacy demo-password aliases from server.py.
+- Regenerated VALID_ACCOUNTS.txt; it now lists only the two remaining accounts.
+- Removed the "Demo courtier: Alice / wonderland" hint from login.html and
+  cleared the seeded users from the unused public/js/database.js helper.
+- Removed the obsolete Alice/Red Queen references from future_plans.md.
+
+8. REMOVED THE "QUEEN'S CASTLE" TOP-BAR BUTTON
+--------------------------------------------------------------------------------
+- Removed the Queen's Castle navigation item from the shared top bar
+  (public/js/main.js). The administrator keeps only the Leaderboard link;
+  regular players and the Queen have no castle nav item.
+- Bumped the shared main.js cache-busting version on every page.
+
+9. PORT CONFLICT HANDLING, EMPTY HATTER SHOP & VANISHING CAT
+--------------------------------------------------------------------------------
+- Start-up port safety (server.py):
+  * No more raw "OSError: [Errno 98] Address already in use" traceback.
+  * If WonderHack is already running on the requested port, it prints the
+    existing URL and exits cleanly.
+  * If another program owns the port, it automatically tries the next 10 ports.
+- Mad Hatter shop (public/mad-hatter.html, public/js/mad-hatter.js):
+  * Removed the All/Easy/Medium/Hard filter tabs and the entire hint grid.
+  * Removed the free-consultation box and its modal.
+  * The shop now shows a single themed "The Tea Table Is Empty" placeholder.
+  * Removed the now-unused puzzle/challenge script includes from the page.
+- Cheshire Cat (public/css/mad-hatter.css):
+  * The cat sprite fades out when hovered and is still present when the
+    pointer leaves.
+
+10. FIRST PAGE NOW HAS ONLY "BEGIN CASTLE TRIALS"
+--------------------------------------------------------------------------------
+- Removed the three gateway cards from public/index.html:
+  Queen's Castle, Hatter's Tea Shop and Player Dossier.
+- Kept a single primary action: "Begin Castle Trials ➔".
+- Hid the shared top-bar navigation links on the landing page so no other
+  option is offered before the trial begins.
+
+11. VANISHED CAT IS NOT CLICKABLE
+--------------------------------------------------------------------------------
+- The Cheshire Cat still fades out when the pointer hovers over it and comes
+  back when the pointer leaves.
+- Once the fade has finished (after ~200 ms), public/js/mad-hatter.js marks the
+  sprite with an "is-vanished" class. While that class is present, clicks on
+  the cat's empty space are ignored, so the vanished cat cannot be clicked.
+- public/css/mad-hatter.css gives the vanished sprite a default cursor and
+  disables pointer events on the invisible image and name tag.
+- Moving the pointer off the cat removes the class and restores normal clicks.
+- Bumped mad-hatter.js to v=18 and mad-hatter.css to v=3 for cache busting.
+
+12. EASY-LEVEL CLIENT-SIDE ACCESS CONTROL & MAD HATTER HINT SYSTEM
+--------------------------------------------------------------------------------
+- Easy Challenge Vulnerability (public/challenges/easy/easy.js, index.html):
+  * Implemented an intentional client-side access control vulnerability on the
+    Garden Gate challenge using window.queenGateAccess and checkGateAccess().
+  * Added the Victorian Garden Gate stage, interactive padlock status card,
+    access-denied error banner, flag reveal container, and educational success
+    lesson on client-side authorization failure.
+  * Preserved Court Riddles I–V and difficulty scoring.
+- Mad Hatter Hint Shop (public/mad-hatter.html, public/js/mad-hatter.js,
+  public/css/mad-hatter.css):
+  * Added opening dialogue quote banner and 5 sequential hints (Hint 1 free;
+    Hints 2–5 costing 10, 20, 30, and 40 Sovereigns).
+  * Added Cheshire Cat free extra hint box.
+  * Authoritative server-side hint deduction via POST /api/hint.
+  * Preserved empty shop state for Medium and Hard chambers.
+- Hint Data Files:
+  * Created public/data/wonderhack-easy-hints.json and
+    public/js/wonderhack-easy-hints.js as shared sources of truth.
+
+13. CODEBASE RESTRUCTURING: PUBLIC (FRONTEND) VS SRC (INTERNAL/BACKEND)
+--------------------------------------------------------------------------------
+- Created src/ directory for internal processes, backend code, and private data:
+  * src/server.py: Core backend HTTP server, session cookies, routing & APIs.
+  * src/db/: SQLite database, initialization, migrations, and security modules.
+  * src/data/wonderhack-puzzles.json: Moved full answer key out of public/
+    so players cannot read riddle solutions over HTTP.
+  * src/VALID_ACCOUNTS.txt: Internal account credentials for administrators.
+- public/ directory is strictly reserved for client-facing assets:
+  * Static HTML pages, challenge chambers, CSS stylesheets, client JS modules,
+    media assets, and public hint data.
+- Added root server.py entrypoint that imports and runs src.server.main().
+- Added root db symlink to src/db for seamless backward compatibility.
+
+================================================================================
+File updated: CHANGES.txt
+================================================================================
+
+14. CHALLENGE LOGIC MOVED TO THE BACKEND + checkIsSolved() FLAG HELPER
+--------------------------------------------------------------------------------
+- Removed client-side challenge catalogues and answer data:
+  * Deleted public/challenges/*/easy.js, medium.js, hard.js and the duplicate
+    challenge.js files, plus the unused public/js/puzzle-core.js.
+  * public/challenges/ now contains only the chamber UI pages
+    (easy/index.html, medium/index.html, hard/index.html).
+  * Removed the old Easy Garden Gate JavaScript and its panel. The flag
+    challenge now lives on the landing page.
+- Backend-owned puzzle data:
+  * Added src/db/chamber_data.py with the public-safe metadata (roman numerals,
+    categories, hints, Queen taunts, corrupted-riddle flags).
+  * GET /api/puzzles now returns the full browser-safe puzzle record,
+    optionally filtered with ?difficulty=easy|medium|hard.
+  * Accepted answers still live only in src/db/puzzles.py and are never sent
+    to the browser.
+- Frontend now obeys the server:
+  * New public/js/chamber.js fetches each chamber's puzzles from /api/puzzles
+    and initialises WonderPuzzleEngine.
+  * WonderPuzzleEngine no longer compares answers locally; every submission is
+    sent to POST /api/solve, which is the only place that can mark a puzzle
+    solved or award coins.
+  * public/js/puzzles.js loads the Grand Hall catalogue from the backend instead
+    of using a hard-coded fallback list.
+- New landing-page flag helper:
+  * Added public/js/check-is-solved.js and loaded it from public/index.html.
+  * Callable from the browser console as checkIsSolved(puzzleNumber, solved).
+  * It returns the prize (50/100/200) when solved is true, 0 when false, and
+    the Queen's flag when puzzle 30 is solved.
+  * POST /api/check-is-solved intentionally trusts the client-submitted solved
+    boolean. Calling checkIsSolved(30, true) is therefore enough to obtain the
+    flag: the lesson is that client claims must never be treated as proof.
+- Updated the Mad Hatter's Easy hints (public/js/wonderhack-easy-hints.js and
+  public/data/wonderhack-easy-hints.json) to point at the new checkIsSolved()
+  helper instead of the removed Garden Gate.
+- Bumped puzzle-engine.js to v=18 and puzzles.js to v=15; added chamber.js v=1
+  and check-is-solved.js v=2.
+
+15. EXPANDED PUZZLE CATALOGUE — EASY 15 / MEDIUM 10 / HARD 5
+--------------------------------------------------------------------------------
+- Puzzle catalogue (src/db/puzzles.py) now holds 30 riddles:
+  * Easy: IDs 1–15 (15 puzzles, 50 coins each, 750 total).
+  * Medium: IDs 101–110 (10 puzzles, 100 coins each, 1,000 total).
+  * Hard: IDs 201–205 (5 puzzles, 200 coins each, 1,000 total).
+  * Grand total: 30 puzzles and 2,750 available coins.
+- Added ten new Easy riddles (IDs 6–15) and five new Medium riddles (IDs
+  106–110), each with accepted answers, hints, roman numerals, categories and
+  Queen taunts.
+- Cleared the lingering `queenCorrupted` flag on Medium 105 and replaced its
+  "ask the Mad Hatter" hints with real hints. Corrupted puzzles disable the
+  answer input, and the Medium/Hard hint shop is empty, so that riddle could
+  never be submitted. Every non-sealed puzzle is now playable.
+- src/db/chamber_data.py now carries public metadata for every one of the 30
+  puzzles, so each chamber renders the right number of tabs.
+- PUZZLE_ORDINALS now maps the public numbers 1–30:
+  * 1–15  → Easy IDs 1–15
+  * 16–25 → Medium IDs 101–110
+  * 26–30 → Hard IDs 201–205
+- checkIsSolved(number, solved):
+  * Still returns 50/100/200 for a solved claim and 0 otherwise.
+  * Now returns the Queen's flag only for the final ordinal, checkIsSolved(30, true).
+  * Invalid numbers outside 1–30 are rejected by POST /api/check-is-solved.
+- The legacy POST /api/flag endpoint now requires all 30 puzzle IDs in the
+  client-supplied solvedPuzzles list before it returns the flag.
+- Updated the Easy hints and Cheshire Cat dialogue to reference thirty trials
+  and checkIsSolved(30, true).
+- GET /api/puzzles?difficulty=... now returns 15 Easy, 10 Medium and 5 Hard
+  puzzles; accepted answers remain server-only.
+- No cache-busting bumps were needed for this data change, but browsers should
+  be hard-refreshed so the Grand Hall and chamber tabs pick up the new counts.
+
+16. THE QUEEN SEALS THE FINAL TRIAL OF EVERY CHAMBER
+--------------------------------------------------------------------------------
+- The last puzzle of each difficulty is now permanently corrupted by the Queen
+  and can never be solved:
+  * Easy   → puzzle 15  (The Kettle's Beak)
+  * Medium → puzzle 110 (The Right Elbow)
+  * Hard   → puzzle 205 (The Final Gate)
+- Server-authoritative seal (src/db/puzzles.py, src/server.py):
+  * Added QUEEN_SEALED_PUZZLE_IDS = {15, 110, 205} and is_queen_sealed().
+  * public_puzzle() always reports queenCorrupted = true for those IDs.
+  * POST /api/solve now rejects any answer for a sealed puzzle with HTTP 403,
+    even if the player edits the page, re-enables the input or calls the API
+    directly from the console.
+- UI (public/js/puzzle-engine.js v=19):
+  * The sealed puzzle uses the corrupted-riddle rendering (glitched question,
+    Queen banner) and disables the answer input/submit button.
+  * Tabs for sealed puzzles show a crown and the tooltip "sealed by the Queen".
+  * A sealed puzzle never shows "Solved", even if an old account has a stale
+    solve recorded.
+  * Feedback reads: "The Queen has corrupted this final trial! Her seal can
+    never be broken — no answer will ever be accepted."
+- Persistence:
+  * The corruption lives in backend metadata, not localStorage, so logging out,
+    logging back in, resetting progress or clearing browser storage does not
+    remove it. It is identical in every difficulty.
+  * Removed the pre-existing solve rows for puzzles 15, 110 and 205 and
+    recalculated the affected account's coins, so no profile starts with a
+    sealed trial marked as solved.
+- The final riddle itself can never be answered. The flag is still reachable
+  through the Easy-only `isSolved()` helper described in section 17.
+
+17. isSolved() IN THE CONSOLE — EASY-ONLY FLAG EXPLOIT
+--------------------------------------------------------------------------------
+- New global helper (public/js/check-is-solved.js v=3):
+  * `isSolved()` claims the final trial is solved and returns the Queen's flag
+    directly in the browser console.
+  * `isSolved(true)` behaves the same; `isSolved(false)` returns 0.
+  * `isSolved(number, solved)` keeps the old prize semantics (50/100/200, with
+    the flag only for ordinal 30). `checkIsSolved(number, solved)` remains as a
+    backwards-compatible alias for the same endpoint.
+  * The script is now loaded by index.html and by all three chamber pages.
+- The function is only vulnerable in Easy:
+  * POST /api/check-is-solved (and the new /api/is-solved alias) inspects the
+    request's Referer header before reading the client's `solved` claim.
+  * Requests from /challenges/easy/ and the landing page are allowed and trust
+    the claim, so `isSolved()` returns the flag there.
+  * Requests from /challenges/medium/ or /challenges/hard/ get HTTP 403 with
+    `{"immune": true}` and no prize/flag. Missing or unrecognised Referer
+    headers are also refused, so the shortcut cannot be replayed from curl or
+    another page.
+  * Browsers do not let page JavaScript forge the Referer header, so Medium and
+    Hard players cannot spoof their way past the check from the console.
+- `isSolved` is exposed on `window` (alongside `checkIsSolved`,
+  `checkIsSolvedAsync` and `WonderCheckIsSolved`), so the player can type it
+  directly in DevTools on the Easy Chamber page.
+- Updated the Mad Hatter's Easy hints (public/js/wonderhack-easy-hints.js and
+  public/data/wonderhack-easy-hints.json) to teach `isSolved()` and note that
+  Medium/Hard are immune.
+- Bumped check-is-solved.js to v=3.
+
+18. LANDING PAGE LORE — "WONDERHACK: THE QUEEN'S RIDDLES"
+--------------------------------------------------------------------------------
+- Replaced the landing page's short prologue (public/index.html) with the supplied
+  lore: the Queen's condemnation, the King's bargain, Alice's journey through
+  Wonderland, the corrupted riddles, and the White Rabbit, Mad Hatter and
+  Cheshire Cat.
+- The page title is now "WonderHack: The Queen's Riddles"; the on-page subtitle
+  is "The Queen's Riddles" beneath the WONDERHACK wordmark.
+- The "Begin Castle Trials" button is retained as the only call to action, and
+  the shared top-bar links/account widget remain hidden on this page.
+- Added small, page-scoped `.menu-lore` styles: left-aligned readable column, a
+  gold drop cap on the opening paragraph, and centred gold climax/welcome lines.
+- No puzzle data, answers or flags were added to public/ as part of this change.
+
+19. PER-DIFFICULTY FLAGS, THE QUEEN'S LIVE FLAG, AND CHESHIRE CAT GATING
+--------------------------------------------------------------------------------
+- Added three backend-owned flags in src/server.py (DIFFICULTY_FLAGS):
+  * Easy:   CIC{cur10us_4l1c3}
+  * Medium: CIC{th3_qu33n_4lw4ys_w4tch3s}
+  * Hard:   CIC{n0_rul3_1s_s4f3_1n_w0nd3rl4nd}
+  The old single WH{...} constant was removed.
+- The active difficulty is stored in a new SQLite settings table
+  (active_difficulty, default "easy"). Choosing a chamber on puzzles.html,
+  opening the login gate, or entering a chamber calls POST /api/difficulty, so
+  the shared value changes immediately.
+- The Queen's answer scroll now shows the flag for the selected difficulty:
+  * GET /api/queen/answers returns the matching flag and difficulty.
+  * New GET /api/queen/flag is a lightweight polling endpoint used by
+    royal-answers.html every 2.5 seconds, so the flag changes live while the
+    scroll is open.
+  * The flag panel names the active chamber (Easy / Medium / Hard).
+- The intentional Easy-only isSolved() flaw returns the Easy flag
+  (CIC{cur10us_4l1c3}); the Medium and Hard Referer gate still returns HTTP 403
+  with `immune: true`. The legacy /api/flag endpoint returns the active
+  difficulty's flag.
+- Cheshire Cat gating:
+  * The cat is clickable only in the Easy Chamber after all five Easy hints
+    have been purchased (checked from WonderState.purchasedHints).
+  * In every other case the cat fades away on hover and ignores clicks,
+    including on the Mad Hatter page, the Cipher Lab, and any global cat image.
+  * The state refreshes immediately after the final hint purchase, without a
+    page reload. The global cat click handler in main.js now respects the same
+    gate so it cannot be bypassed.
+- The Mad Hatter's unlocked hint text now uses the storybook font
+  (var(--font-story)) instead of monospace, matching the tea-room theme.
+- Cipher Lab flag validation now recognises the CIC{...} format.
+- Cache versions bumped: main.js v17, session.js v6, characters.js v16,
+  puzzles.js v16, puzzle-engine.js v20, check-is-solved.js v4,
+  mad-hatter.js v20, mad-hatter.css v4, challenge.css v10,
+  royal-answers.css v2.
+
+20. EASY CIPHER TRAIL, CHESHIRE GUIDE, AND LOCAL STORYBOOK FONT
+--------------------------------------------------------------------------------
+- The Easy flag is now presented as a four-layer cipher instead of plaintext:
+  Base64 Decode → Reverse Hex → ROT13 → URL Decode.
+  * GET /api/cheshire returns only the sealed value and the operation order.
+  * POST /api/cheshire/advance validates one layer at a time. The server
+    compares the submitted value with the backend-computed intermediate, then
+    returns the next instruction (or, on the last step, the Easy flag).
+  * Fabricated values, skipped steps and wrong tools are rejected with HTTP 400.
+  * No plaintext flag or intermediate is stored in public/.
+- public/challenges/easy/index.html has a new "The Queen's Sealed Flag" panel
+  showing the sealed Base64 value, four hidden layer markers, a copy button and
+  a link to the Cipher Lab.
+- public/challenge.html has the Cheshire Cat's decryption guide:
+  * It appears only in Easy after all five Easy hints are purchased.
+  * The cat names the current tool and step ("…choose Base64 Decode, meow!").
+  * When the player performs the requested operation on the exact cipher, the
+    guide advances automatically, the cat speaks the next instruction and the
+    current result is copied forward to the next paw print.
+  * The final step reveals CIC{cur10us_4l1c3}; progress is resumable from
+    localStorage, with a Start Over button.
+- Added public/js/cheshire-cipher.js (API client + progress storage).
+- The Mad Hatter's hint text now uses a locally bundled IM Fell English face
+  (public/assets/fonts/) with italic styling and higher specificity, so the
+  storybook font is visible even when Google Fonts cannot load.
+- Cache versions bumped: main.js v18, characters.js v17, mad-hatter.js v21,
+  mad-hatter.css v5, challenge.css v12. New cheshire-cipher.js v1.
+- Small polish pass on the guide: success lines now show the server message
+  directly (no duplicated "Purr-fect." prefix), and the guide's buttons stack
+  full-width below 600px so the fixed cat sprite cannot cover their labels.
+
+21. CONSOLE-ONLY EASY FLAG, PAID CIPHER LAB, AND CHARACTER VOICES
+--------------------------------------------------------------------------------
+- The Easy flag is no longer obtainable from any on-page decoder:
+  * src/server.py now builds the four-layer trail from EASY_CIPHER_MESSAGE, a
+    non-flag message that tells the player to return to the Easy Chamber and
+    run isSolved(). The flag is still only returned by the intentional
+    Easy-only /api/check-is-solved flaw and by the Queen's answer scroll.
+  * POST /api/cheshire/advance returns `revealed` (the cat's message) instead
+    of `flag` on the final layer. No intermediate value or public file
+    contains the Easy flag.
+  * public/challenges/easy/index.html no longer has the "Queen's Sealed Flag"
+    panel, its copy button, or the cheshire-cipher.js client. The chamber is
+    now purely the riddle room.
+  * public/challenge.html no longer has "Verify Flag Format" or the flag
+    validation banner. The guide's final state displays the decoded message
+    and points the player at the console instead of printing the flag.
+  * The guide's localStorage key moved from wh_cheshire_guide_v1 to
+    wh_cheshire_guide_v2. The old key (which may have contained the flag) is
+    deleted on load, so stale progress cannot leak the flag into the UI.
+- Cheshire Cat paywall:
+  * New POST /api/cheshire/unlock sells the 200-Sovereign Cipher Lab pass. The
+    server verifies that every Easy hint was purchased, deducts the coins from
+    both the total and Easy balances, and records `cheshire-cat-pass` in
+    purchased_hints so the pass survives reloads.
+  * public/js/characters.js exposes hasCheshirePass() and
+    requestCheshirePass(). The latter renders a themed payment modal using the
+    shared .wonder-modal-* styles and falls back to WonderState.purchaseHint
+    when the player is offline/not logged in.
+  * The Mad Hatter's Cheshire Cat sprite and the global cat click handler both
+    check the pass before navigating to challenge.html. Clicking an unlocked
+    but unpaid cat opens the payment prompt instead of the lab.
+  * The Cipher Lab guide now requires both the hint gate and the paid pass;
+    direct visitors see the cat's paywall line and can pay by clicking him.
+- Character voices (public/js/main.js + characters.js):
+  * Queen of Hearts dialogue plays a low, detuned angry roar.
+  * Cheshire Cat dialogue and clicks play a rising, purring meow.
+  * Mad Hatter dialogue and clicks play a wheezing four-note laugh.
+  * The generic click sound no longer overrides character sprite voices.
+- Easy hint economy aligned across the JS data, JSON mirror and server:
+  * Costs are now 0, 10, 20, 30 and 40 Sovereigns (previously the JS file said
+    100 each while the server charged 10/20/30/40).
+  * Hint text teaches the console-only isSolved() path and mentions the cat's
+    200-Sovereign Cipher Lab key.
+- Cache versions bumped: main.js v20, characters.js v18, session.js v7,
+  mad-hatter.js v23, mad-hatter.css v6, challenge.css v13,
+  cheshire-cipher.js v2.
+
+22. FLAG-SURFACE AUDIT: ONLY isSolved() AND THE QUEEN CAN REVEAL A FLAG
+--------------------------------------------------------------------------------
+- Removed the legacy POST /api/flag endpoint and its _handle_flag handler.
+  It trusted a client-supplied solvedPuzzles list and could return any
+  difficulty's flag, which violated the console-only/Queen-only rule. The route
+  now falls through to the generic 404 "Unknown endpoint." response.
+- POST /api/difficulty no longer returns a flag. The endpoint is public and is
+  used only to record the active chamber for the Queen's scroll.
+- WonderSession.selectDifficulty() no longer returns or documents a flag field.
+- The remaining server-side flag fields are exclusively:
+  * GET /api/queen/answers and GET /api/queen/flag (Queen-only), and
+  * the Easy-chamber/landing-page branch of POST /api/check-is-solved
+    (the intentional isSolved() teaching flaw).
+- Cache version bumped: session.js v8 (all HTML references updated).
+- Regression checked: /api/difficulty returns no flag, /api/flag returns 404,
+  /api/cheshire returns no flag, /api/cheshire/advance ends with `revealed`,
+  the Easy isSolved() referer still returns CIC{cur10us_4l1c3}, Medium returns
+  403 immune, and the Queen's scroll endpoints still return the active flag.
+- Removed leftover test accounts (test_voyager_*, guide_tester_*) from the
+  local database.
+
+23. EVENT HARDENING: SEASONS, ADMIN, OAUTH, PROGRESS, A11Y & TESTS
+--------------------------------------------------------------------------------
+- Database (src/db/init_db.py; src/db/wonderhack.db is canonical):
+  * Added solves.season, the current_season setting and an admin_audit table.
+  * Added users.oauth_subject with a partial unique index.
+  * Added WONDERHACK_DB so the server and test suite can use an alternate file.
+  * Season-scoped JSON/points backfill keeps old databases consistent.
+  * Legacy solves tables are rebuilt so one puzzle can be solved once per season.
+- Per-chamber progress:
+  * /api/me, /api/solve and /api/progress return
+    progressByDifficulty: {easy:{solved,total}, medium:..., hard:...}.
+  * Grand Hall cards and the Player Dossier render accessible progress bars.
+- Leaderboard:
+  * GET /api/leaderboard accepts ?difficulty=all|easy|medium|hard and
+    ?season=current|all; the page exposes both selectors.
+  * The server aggregates the active season or every archived season.
+- Admin monitoring:
+  * GET /api/admin/players (search/sort/paginate), GET /api/admin/solves and
+    GET /api/admin/audit.
+  * POST /api/admin/players/reset (explicit RESET) and
+    POST /api/admin/season/rollover (explicit ROLLOVER).
+  * New public/admin.html + public/css/admin.css, linked from the header and
+    leaderboard. Password hashes and session tokens are never returned.
+  * Privileged admin/Queen accounts cannot be reset; every privileged mutation
+    is written to admin_audit.
+- Seasons:
+  * Rollover archives solves under their season, increments current_season and
+    zeroes current coins/solved caches. Purchased hints and the Cipher Lab pass
+    survive the rollover.
+- OAuth (provider-agnostic, hidden unless fully configured):
+  * GET /api/oauth/status, /api/oauth/start and /api/oauth/callback.
+  * Config: OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OAUTH_AUTHORIZE_URL,
+    OAUTH_TOKEN_URL, OAUTH_USERINFO_URL; optional OAUTH_PROVIDER_NAME,
+    OAUTH_SCOPE and OAUTH_REDIRECT_URI.
+  * State is HMAC-signed and time-limited. Email linking happens only when the
+    provider marks the email verified. Provider claims never grant roles.
+- Accessibility / reduced motion:
+  * prefers-reduced-motion disables decorative motion/transitions and Web Audio
+    voices.
+  * The Cheshire payment modal traps focus, closes on Escape, and returns focus
+    to the triggering sprite.
+  * The cat sprite is keyboard-operable with an aria-label that reflects
+    locked/unpaid/paid state.
+- Offline/demo hardening:
+  * WonderState.purchaseHint() only grants purchases when the page opts in with
+    window.WONDERHACK_DEMO === true or a wonderhack-demo body class.
+- Tests and hygiene:
+  * Added tests/verify.py (run: python3 -m tests.verify). It starts an isolated
+    server on a temporary WONDERHACK_DB and covers all of the above.
+  * ordinal 30 now reports "The Final Trial" / "Easy" in the console output.
+  * Removed test_voyager_*, guide_tester_* and verify_* accounts from the local
+    databases.
+  * Cleaned the event database for release: the administrator's manual test
+    progression was reset (0 coins, no solves/hints) and automated curl/test
+    sessions were purged. Only current browser sessions for the three real
+    accounts remain.
+- Cache versions bumped: main.js v21, session.js v9, puzzles.js v17,
+  profile.js v17, characters.js v19, mad-hatter.js v24, puzzle-engine.js v21,
+  main.css v15, leaderboard.css v3, puzzles.css v14.
+
+================================================================================
