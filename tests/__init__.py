@@ -1,1 +1,0 @@
-"""WonderHack regression tests."""
