@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Player Dossier — WonderHack Profile</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="icon" type="image/svg+xml" href="assets/images/characters/alice.png">
+  <style>
+    body.profile-body {
+      background-image: url('assets/images/backgrounds/queen-castle.jpg');
+      background-position: center bottom;
+      background-size: cover;
+      background-attachment: fixed;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .profile-container {
+      flex: 1;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      padding: calc(var(--nav-height) + 2rem) 1.5rem 4rem 1.5rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 2rem;
+    }
+
+    /* Avatar Chooser */
+    .avatar-selection-box {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin: 1.5rem 0;
+    }
+
+    .avatar-choice-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      border: 2px solid #c4ab85;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #fdfaf2;
+      transition: var(--transition-gentle);
+      width: 120px;
+    }
+
+    .avatar-choice-card img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid var(--color-gold-antique);
+      background: #f0e6d2;
+    }
+
+    .avatar-choice-card.selected {
+      border-color: #8a1327;
+      background: #faecee;
+      box-shadow: 0 0 12px rgba(138, 19, 39, 0.3);
+    }
+
+    .avatar-choice-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--color-gold-bright);
+    }
+
+    /* Stats Ribbon */
+    .stats-ribbon {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin: 1.5rem 0;
+      text-align: center;
+    }
+
+    .stat-pill {
+      background: #f0e6d2;
+      border: 1px solid #d4c09d;
+      border-radius: 6px;
+      padding: 0.75rem 0.5rem;
+    }
+
+    .stat-value {
+      font-family: var(--font-mono);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #7a1223;
+    }
+
+    .stat-label {
+      font-family: var(--font-story);
+      font-size: 0.85rem;
+      color: #694b3a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Achievements list */
+    .achievements-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .achievement-badge {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: #fcf9f2;
+      border: 1px solid #d4c29c;
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      transition: var(--transition-gentle);
+    }
+
+    .achievement-badge.unlocked {
+      border-color: #4a8f53;
+      background: #f4fbf4;
+    }
+
+    .achievement-badge.locked {
+      opacity: 0.6;
+      filter: grayscale(0.8);
+    }
+
+    .achievement-icon {
+      font-size: 1.8rem;
+    }
+
+    .achievement-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: #1a100f;
+    }
+
+    .achievement-desc {
+      font-family: var(--font-story);
+      font-size: 0.9rem;
+      color: #694b3a;
+    }
+
+    .achievement-status {
+      margin-left: auto;
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      font-weight: bold;
+      color: #388e3c;
+    }
+
+    .achievement-badge.locked .achievement-status {
+      color: #8c7365;
+    }
+
+    @media (max-width: 860px) {
+      .profile-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body class="profile-body">
+
+  <!-- Mount Point for Shared Header Navigation -->
+  <header id="wonder-header-mount"></header>
+
+  <main class="profile-container">
+    
+    <article class="parchment-window" style="max-width: 100%;">
+      
+      <header class="parchment-header">
+        <div>
+          <div class="parchment-meta">
+            <span class="puzzle-number-badge">Wonderland Court Dossier</span>
+          </div>
+          <h1 class="parchment-title">Player Dossier</h1>
+        </div>
+        <div style="display:flex; align-items:flex-start; padding-top:0.25rem;">
+          <button type="button" onclick="history.back()" class="btn-victorian btn-secondary" style="font-size:0.85rem; padding:0.4rem 1rem; white-space:nowrap;">
+            ← Go Back
+          </button>
+        </div>
+      </header>
+
+      <div class="profile-grid">
+        
+        <!-- Left: Court Portrait Cameo & Alias Form -->
+        <section>
+          <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 1.5rem;">
+            <div class="profile-avatar-display" style="width: 90px; height: 90px; border-radius: 50%; border: 3px solid var(--color-gold-bright); box-shadow: 0 0 15px rgba(212, 175, 55, 0.45); overflow: hidden; background: #2b1828;">
+              <img id="profile-avatar-img" src="assets/images/characters/alice.png" alt="Court Portrait" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+            <span id="profile-character-name" style="font-family: var(--font-display); font-size: 1.05rem; color: #7a1223; margin-top: 0.5rem; font-weight: bold;">Court Dossier</span>
+          </div>
+
+          <form id="profile-form" style="display:flex; flex-direction:column; gap: 1rem; margin-top: 1rem;">
+            <div>
+              <label for="profile-username" style="font-family: var(--font-story); font-weight: bold; font-size: 0.95rem; display:block; margin-bottom: 0.25rem;">
+                Courtier Display Name:
+              </label>
+              <input type="text" id="profile-username" class="parchment-input" style="width: 100%;" required>
+            </div>
+
+            <div>
+              <label for="profile-email" style="font-family: var(--font-story); font-weight: bold; font-size: 0.95rem; display:block; margin-bottom: 0.25rem;">
+                Court Telegraph / Email:
+              </label>
+              <input type="email" id="profile-email" class="parchment-input" style="width: 100%;">
+            </div>
+
+            <button type="submit" class="btn-victorian btn-crimson" style="width: 100%;">
+              Seal Dossier
+            </button>
+          </form>
+
+            <div style="margin-top: 2rem; border-top: 1px dashed #d4c29c; padding-top: 1rem;">
+              <button type="button" id="reset-progress-btn" class="btn-victorian btn-secondary" style="width: 100%; font-size: 0.8rem; padding: 0.4rem;">
+                Reset Game Progress (Server)
+              </button>
+            </div>
+        </section>
+
+        <!-- Right: Court Stats & Achievements -->
+        <section>
+          <h3 style="font-family: var(--font-display); font-size: 1.15rem; color: #7a1223; margin-bottom: 0.5rem;">
+            Court Statistics & Standing:
+          </h3>
+
+          <div class="stats-ribbon">
+            <div class="stat-pill">
+              <div class="stat-value" id="stat-points-easy">0</div>
+              <div class="stat-label">🌿 Easy Coins</div>
+            </div>
+            <div class="stat-pill">
+              <div class="stat-value" id="stat-points-medium">0</div>
+              <div class="stat-label">⚔️ Medium Coins</div>
+            </div>
+            <div class="stat-pill">
+              <div class="stat-value" id="stat-points-hard">0</div>
+              <div class="stat-label">👑 Hard Coins</div>
+            </div>
+            <div class="stat-pill">
+              <div class="stat-value" id="stat-points">0</div>
+              <div class="stat-label">🪙 Total Sovereigns</div>
+            </div>
+            <div class="stat-pill">
+              <div class="stat-value" id="stat-solved">0</div>
+              <div class="stat-label">Enigmas Solved</div>
+            </div>
+            <div class="stat-pill">
+              <div class="stat-value" id="stat-hints">0</div>
+              <div class="stat-label">Tea Secrets</div>
+            </div>
+          </div>
+
+          <div class="chamber-progress-list" id="profile-chamber-progress" aria-label="Per-chamber trial progress">
+            <div class="chamber-progress-row" data-difficulty="easy">
+              <span class="chamber-progress-label">🌿 Easy Chamber</span>
+              <div class="progress-track"><div class="progress-fill progress-easy" id="progress-easy-fill" style="width:0%"></div></div>
+              <span class="chamber-progress-value" id="progress-easy-value">0 / 15</span>
+            </div>
+            <div class="chamber-progress-row" data-difficulty="medium">
+              <span class="chamber-progress-label">⚔️ Medium Chamber</span>
+              <div class="progress-track"><div class="progress-fill progress-medium" id="progress-medium-fill" style="width:0%"></div></div>
+              <span class="chamber-progress-value" id="progress-medium-value">0 / 10</span>
+            </div>
+            <div class="chamber-progress-row" data-difficulty="hard">
+              <span class="chamber-progress-label">👑 Hard Chamber</span>
+              <div class="progress-track"><div class="progress-fill progress-hard" id="progress-hard-fill" style="width:0%"></div></div>
+              <span class="chamber-progress-value" id="progress-hard-value">0 / 5</span>
+            </div>
+          </div>
+
+          <h3 style="font-family: var(--font-display); font-size: 1.15rem; color: #7a1223; margin: 1.5rem 0 0.5rem 0;">
+            Court Achievements & Honors:
+          </h3>
+
+          <div class="achievements-list" id="achievements-container"></div>
+        </section>
+
+      </div>
+
+    </article>
+
+  </main>
+
+  <!-- Core Scripts -->
+  <script src="js/main.js?v=21"></script>
+  <script src="js/session.js?v=9"></script>
+  <script src="js/profile.js?v=17"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      WonderUI.initHeader('profile');
+      await WonderSession.boot();
+      WonderProfile.init();
+    });
+  </script>
+</body>
+</html>

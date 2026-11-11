@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mad Hatter's Tea Room — WonderHack</title>
+  <link rel="stylesheet" href="css/main.css?v=15">
+  <link rel="stylesheet" href="css/mad-hatter.css?v=6">
+  <link rel="icon" type="image/svg+xml" href="assets/images/ui/hatter-hat.svg">
+</head>
+<body class="tea-room-body">
+
+  <!-- Mount Point for Shared Header Navigation -->
+  <header id="wonder-header-mount"></header>
+
+  <!-- Mad Hatter (Left Character Sprite, drinking tea on coin sacks) -->
+  <aside class="hatter-character-wrapper character-sprite" id="hatter-sprite" title="Click the Mad Hatter to hear tea table gossip">
+    <img src="assets/images/characters/mad-hatter.png" alt="The Mad Hatter sipping tea atop bags of gold sovereigns">
+    <div class="character-tag">The Mad Hatter (Tea Time!)</div>
+  </aside>
+
+  <!-- Mad Hatter's Speech Bubble -->
+  <div class="dialogue-bubble bubble-hatter" id="hatter-bubble" role="dialog" aria-live="polite">
+    <div class="dialogue-bubble-header">
+      <span class="dialogue-speaker-name">The Mad Hatter</span>
+      <button class="dialogue-close-btn" aria-label="Close speech bubble">&times;</button>
+    </div>
+    <div class="dialogue-bubble-text">“Why is a raven like a writing desk? Because both can leak sensitive plaintext if left unattended!”</div>
+  </div>
+
+  <!-- Cheshire Cat (Right Character Sprite with banjo) -->
+  <aside class="cheshire-character-wrapper character-sprite" id="cheshire-sprite" role="button" tabindex="0" aria-label="The Cheshire Cat — Cipher Laboratory guide" title="Click the Cheshire Cat to enter the Queen's Cipher Laboratory">
+    <img src="assets/images/characters/cheshire-cat.png" alt="The grinning Cheshire Cat strumming a banjo">
+    <div class="character-tag">Cheshire Cat (Grinning)</div>
+  </aside>
+
+  <!-- Cheshire Cat's Speech Bubble -->
+  <div class="dialogue-bubble bubble-cheshire" id="cheshire-bubble" role="dialog" aria-live="polite">
+    <div class="dialogue-bubble-header">
+      <span class="dialogue-speaker-name">Cheshire Cat</span>
+      <button class="dialogue-close-btn" aria-label="Close speech bubble">&times;</button>
+    </div>
+    <div class="dialogue-bubble-text">“We're all root down here... The tea table is bare for now, but the Hatter is brewing something new!”</div>
+  </div>
+
+  <!-- Main Tea Room Stage -->
+  <main class="tea-room-stage">
+    <div class="shop-main-content">
+
+      <!-- Top Action Bar with Back Button & Point Counter -->
+      <div class="shop-top-bar">
+        <a href="challenges/easy/index.html" class="shop-return-btn" id="shop-return-btn" title="Back to Puzzles">
+          <span>←</span> <strong>Back to Puzzles</strong>
+        </a>
+        <div class="shop-wallet-badge">
+          <span>Gold Sovereigns Available:</span>
+          <strong id="shop-wallet-pts" style="color:var(--color-gold-bright);">0</strong>
+          <span>🪙</span>
+        </div>
+      </div>
+
+      <!-- Tea Table Parchment Menu -->
+      <article class="tea-menu-parchment">
+        
+        <header class="tea-menu-header">
+          <p class="tea-menu-subtitle">A Most Unsettling Victorian Confectionery</p>
+          <h1 class="tea-menu-title">The Mad Hatter's Tea Table</h1>
+        </header>
+
+        <!-- The shop is intentionally empty for Medium / Hard. -->
+        <section class="shop-empty" id="shop-empty" aria-label="Empty hint shop" style="display:none;">
+          <div class="shop-empty-icon" aria-hidden="true">🫖</div>
+          <h2 class="shop-empty-title">The Tea Table Is Empty</h2>
+          <p class="shop-empty-text">
+            The Mad Hatter has cleared the shelves for the moment.
+            No hints are for sale — return after the next tea party.
+          </p>
+        </section>
+
+        <!-- Easy Chamber Hint Shop Container -->
+        <div id="easy-hints-container" class="easy-hints-container" style="display:none;">
+          <!-- Mad Hatter opening quote banner -->
+          <div class="hatter-intro-banner" id="hatter-intro-banner">
+            <span class="hatter-quote-icon">🎩</span>
+            <blockquote class="hatter-intro-text" id="hatter-intro-text">
+              “You say the Queen forbids you? How terribly impolite of her! But tell me, Alice… does a locked door remain locked simply because a sign says so?”
+            </blockquote>
+          </div>
+
+          <!-- Cheshire Cat Free Assistance Highlight Box -->
+          <aside class="cheshire-assist-box" id="cheshire-assist-box" aria-label="Cheshire Cat Extra Clue">
+            <div class="cheshire-assist-info">
+              <h3><span>😸</span> <span id="cheshire-hint-title">Cheshire Cat — Free Extra Hint</span> <span class="hint-cost-pill" style="margin-left:0.5rem; font-size:0.75rem;">Free (0 Sovereigns)</span></h3>
+              <p id="cheshire-hint-text">“You are searching for a secret, but the interesting thing is not the secret itself. It is the little rule standing between you and it. Find the rule, and perhaps the grin will make sense.”</p>
+            </div>
+          </aside>
+
+          <!-- Hints Catalogue Grid -->
+          <div class="hints-grid" id="hints-grid" aria-label="Mad Hatter Hints Grid">
+            <!-- Rendered by WonderHatterShop -->
+          </div>
+        </div>
+
+      </article>
+
+    </div>
+  </main>
+
+  <!-- Core Scripts -->
+  <script src="js/main.js?v=21"></script>
+  <script src="js/characters.js?v=19"></script>
+  <script src="js/session.js?v=9"></script>
+  <script src="js/wonderhack-easy-hints.js"></script>
+  <script src="js/mad-hatter.js?v=24"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      WonderUI.initHeader('mad-hatter');
+      await WonderSession.boot();
+      WonderHatterShop.init();
+    });
+  </script>
+</body>
+</html>

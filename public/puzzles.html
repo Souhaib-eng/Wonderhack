@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Queen's Castle — WonderHack Enigma Chambers</title>
+  <link rel="stylesheet" href="css/main.css?v=15">
+  <link rel="stylesheet" href="css/puzzles.css?v=14">
+  <link rel="icon" type="image/svg+xml" href="assets/images/ui/card-suits.svg">
+  <style>
+    /* Difficulty hub: hide the account widget until the player is inside a chamber. */
+    .difficulty-hub-body .nav-profile,
+    .difficulty-hub-body .nav-points-chip,
+    .difficulty-hub-body .nav-logout-btn { display: none !important; }
+  </style>
+</head>
+<body class="puzzle-room-body difficulty-hub-body">
+
+  <!-- Mount Point for Shared Header Navigation -->
+  <header id="wonder-header-mount"></header>
+
+  <!-- Ambient Floating Playing Cards in the Castle Hall -->
+  <div class="floating-card-decor heart" style="top: 14%; left: 18%; transform: rotate(-12deg);">
+    <span>A♥</span><span style="align-self: flex-end;">♥A</span>
+  </div>
+  <div class="floating-card-decor spade" style="top: 22%; right: 19%; transform: rotate(18deg);">
+    <span>K♠</span><span style="align-self: flex-end;">♠K</span>
+  </div>
+  <div class="floating-card-decor diamond" style="bottom: 18%; left: 24%; transform: rotate(8deg);">
+    <span>Q♦</span><span style="align-self: flex-end;">♦Q</span>
+  </div>
+  <div class="floating-card-decor club" style="bottom: 25%; right: 22%; transform: rotate(-15deg);">
+    <span>J♣</span><span style="align-self: flex-end;">♣J</span>
+  </div>
+
+  <!-- Queen of Hearts (Left Character Sprite) -->
+  <aside class="queen-character-wrapper character-sprite" id="queen-sprite" title="Click to provoke Her Majesty's royal wrath">
+    <img src="assets/images/characters/queen.png" alt="The Queen of Hearts, screaming in royal fury">
+    <div class="character-tag">Her Imperial Majesty</div>
+  </aside>
+
+  <!-- Queen's Speech Bubble -->
+  <div class="dialogue-bubble bubble-queen" id="queen-bubble" role="dialog" aria-live="polite">
+    <div class="dialogue-bubble-header">
+      <span class="dialogue-speaker-name">Queen of Hearts</span>
+      <button class="dialogue-close-btn" aria-label="Close speech bubble">&times;</button>
+    </div>
+    <div class="dialogue-bubble-text">“Off with their passwords! Choose your chamber, insolent mortal, or face the executioner!”</div>
+  </div>
+
+  <!-- White Rabbit (Right Character Sprite) -->
+  <aside class="rabbit-character-wrapper character-sprite" id="rabbit-sprite" title="Click the White Rabbit to whisper for a puzzle hint">
+    <img src="assets/images/characters/white-rabbit.png" alt="The White Rabbit in waistcoat consulting his pocket watch">
+    <div class="character-tag">The White Rabbit (Hurry!)</div>
+  </aside>
+
+  <!-- White Rabbit's Speech Bubble -->
+  <div class="dialogue-bubble bubble-rabbit" id="rabbit-bubble" role="dialog" aria-live="polite">
+    <div class="dialogue-bubble-header">
+      <span class="dialogue-speaker-name">White Rabbit</span>
+      <button class="dialogue-close-btn" aria-label="Close speech bubble">&times;</button>
+    </div>
+    <div class="dialogue-bubble-text">“Oh dear, oh dear! Look at the pocket watch! Start with the Easy Chamber at the Garden Gate!”</div>
+  </div>
+
+  <!-- Main Castle Grand Hall Stage -->
+  <main class="puzzle-stage-container">
+
+    <div class="chambers-container">
+      
+      <!-- Hero Banner -->
+      <section class="chambers-hero">
+        <h1 class="chambers-hero-title">The Queen's Enigma Chambers</h1>
+        <p class="chambers-hero-subtitle">
+          Her Majesty has organized her royal trials into three distinct difficulty levels.<br>
+          Select a chamber to face the court ciphers and claim your Gold Sovereigns.
+        </p>
+      </section>
+
+      <!-- Chamber Selection Cards Grid (Dynamically Populated) -->
+      <section class="chambers-grid" id="chambers-grid-mount" aria-label="Difficulty Chamber Selection">
+        <!-- Rendered by WonderPuzzles.initHub() -->
+      </section>
+
+      <!-- Bottom Quick Navigation -->
+      <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; align-items: center;">
+        <a href="login.html?difficulty=easy" class="btn-victorian btn-crimson" style="padding: 0.75rem 2rem; text-decoration: none;">
+          Begin Castle Trials (Choose Easy) ➔
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Core Scripts -->
+  <script src="js/main.js?v=21"></script>
+  <script src="js/characters.js?v=19"></script>
+  <script src="js/session.js?v=9"></script>
+  <script src="js/puzzles.js?v=17"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      WonderUI.initHeader('puzzles', null, { hideAccount: true });
+      await WonderSession.boot();
+      WonderPuzzles.initHub();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Medium Trials: The Royal Court — WonderHack</title>
+  <link rel="stylesheet" href="../../css/main.css?v=15">
+  <link rel="stylesheet" href="../../css/puzzles.css?v=14">
+  <link rel="stylesheet" href="../../css/queen-corruption.css?v=1">
+  <link rel="icon" type="image/svg+xml" href="../../assets/images/ui/card-suits.svg">
+  <style>
+    .puzzle-question-box {
+      background: rgba(122, 18, 35, 0.06);
+      border: 1.5px solid rgba(122, 18, 35, 0.18);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      font-family: var(--font-story);
+      font-size: 1.45rem;
+      line-height: 1.75;
+      color: var(--parchment-ink);
+      font-style: italic;
+      text-align: center;
+    }
+    #hint-log {
+      display: none;
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      background: rgba(240, 207, 101, 0.08);
+      border: 1px dashed rgba(197, 155, 39, 0.4);
+      border-radius: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .hint-log-item {
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-start;
+      padding: 0.35rem 0;
+      border-bottom: 1px dashed rgba(138, 19, 39, 0.1);
+      font-family: var(--font-story);
+      font-size: 0.95rem;
+      color: var(--parchment-ink);
+    }
+    .hint-log-item:last-child { border-bottom: none; }
+    .hint-log-number { white-space: nowrap; font-weight: 700; color: #7a3010; flex-shrink: 0; }
+    .hint-log-text { font-style: italic; }
+    .puzzle-tab-btn.locked {
+      opacity: 0.42;
+      cursor: not-allowed;
+      border-color: rgba(100, 100, 100, 0.3);
+    }
+    .puzzle-tab-btn.locked:hover {
+      transform: none;
+      background: rgba(20, 14, 26, 0.85);
+      border-color: rgba(100, 100, 100, 0.3);
+      color: var(--color-lavender-bright);
+    }
+  </style>
+</head>
+<body class="puzzle-room-body" data-base-path="../../">
+
+  <header id="wonder-header-mount"></header>
+
+  <div class="floating-card-decor heart"    style="top: 14%; left: 18%; transform: rotate(-12deg);"><span>A♥</span><span style="align-self:flex-end;">♥A</span></div>
+  <div class="floating-card-decor spade"   style="top: 22%; right: 19%; transform: rotate(18deg);"><span>K♠</span><span style="align-self:flex-end;">♠K</span></div>
+  <div class="floating-card-decor diamond" style="bottom: 18%; left: 24%; transform: rotate(8deg);"><span>Q♦</span><span style="align-self:flex-end;">♦Q</span></div>
+  <div class="floating-card-decor club"    style="bottom: 25%; right: 22%; transform: rotate(-15deg);"><span>J♣</span><span style="align-self:flex-end;">♣J</span></div>
+
+  <aside class="queen-character-wrapper character-sprite" id="queen-sprite" title="Click to provoke Her Majesty's royal wrath">
+    <img src="../../assets/images/characters/queen.png" alt="The Queen of Hearts">
+    <div class="character-tag">Her Imperial Majesty</div>
+  </aside>
+  <div class="dialogue-bubble bubble-queen" id="queen-bubble" role="dialog" aria-live="polite">
+    <div class="dialogue-bubble-header">
+      <span class="dialogue-speaker-name">Queen of Hearts</span>
+      <button class="dialogue-close-btn" aria-label="Close speech bubble">&times;</button>
+    </div>
+    <div class="dialogue-bubble-text">"Off with their passwords! You dare enter my Royal Court?"</div>
+  </div>
+
+  <aside class="rabbit-character-wrapper character-sprite" id="rabbit-sprite" title="Click the White Rabbit for a hint!">
+    <img src="../../assets/images/characters/white-rabbit.png" alt="The White Rabbit">
+    <div class="character-tag">The White Rabbit (Click for a hint!)</div>
+  </aside>
+  <div class="dialogue-bubble bubble-rabbit" id="rabbit-bubble" role="dialog" aria-live="polite">
+    <div class="dialogue-bubble-header">
+      <span class="dialogue-speaker-name">White Rabbit</span>
+      <button class="dialogue-close-btn" aria-label="Close speech bubble">&times;</button>
+    </div>
+    <div class="dialogue-bubble-text">"Oh dear! Click on me for hints — no time to waste!"</div>
+  </div>
+
+  <main class="puzzle-stage-container">
+    <div class="puzzle-main-content">
+
+      <nav class="difficulty-switcher-bar" aria-label="Current Chamber">
+        <span class="diff-btn active" style="cursor:default;" title="Active Chamber: Medium">
+          <span>⚔️</span> Medium Chamber
+        </span>
+        <a href="../../puzzles.html" class="diff-hub-btn" title="Return to Castle Grand Hall">
+          <span>🏰</span> Change Difficulty
+        </a>
+      </nav>
+
+      <div class="puzzle-tabs-bar" id="puzzle-tabs" role="tablist" aria-label="Puzzle Navigator"></div>
+
+      <article class="parchment-window" id="main-parchment-window" style="position:relative;">
+
+        <header class="parchment-header">
+          <div>
+            <div class="parchment-meta">
+              <span class="puzzle-number-badge" id="puzzle-number-badge">I</span>
+              <span class="puzzle-difficulty-tag" id="puzzle-difficulty-tag">Medium · Riddle</span>
+            </div>
+            <h1 class="parchment-title" id="puzzle-title">Loading…</h1>
+          </div>
+          <div class="parchment-reward" id="puzzle-reward-pts">+100 Sovereigns</div>
+        </header>
+
+        <div class="parchment-body">
+          <div class="puzzle-question-box" id="puzzle-question-text">Loading puzzle…</div>
+
+          <form id="puzzle-solution-form" autocomplete="off" style="margin-bottom:0;">
+            <div class="puzzle-answer-row">
+              <input
+                type="text"
+                id="puzzle-answer-input"
+                class="puzzle-answer-input"
+                placeholder="Type your answer here…"
+                aria-label="Your answer"
+                autocomplete="off"
+                spellcheck="false"
+              >
+              <button type="submit" id="submit-answer-btn" class="btn-victorian btn-crimson puzzle-submit-btn">
+                Propose Solution
+              </button>
+            </div>
+            <div id="puzzle-feedback" class="feedback-banner" style="display:none;" role="alert" aria-live="polite"></div>
+            <div id="hint-log" aria-live="polite" aria-label="Revealed hints"></div>
+            <div class="hints-quick-bar">
+              <button type="button" id="rabbit-hint-btn" class="rabbit-hint-btn" title="Ask the White Rabbit for a hint">
+                🐇 Ask the White Rabbit for a Hint
+              </button>
+              <a href="../../mad-hatter.html?from=medium" class="hatter-shop-link">🎩 Visit Shop</a>
+            </div>
+          </form>
+        </div>
+
+        <a href="../../mad-hatter.html?from=medium" class="puzzle-hat-shop-link" title="Visit Mad Hatter's Tea Shop">
+          <img src="../../assets/images/ui/hat.png" alt="Mad Hatter's Hat" class="puzzle-hat-icon">
+          <span class="character-tag">Visit Shop 🎩</span>
+        </a>
+
+      </article>
+    </div>
+  </main>
+
+  <script src="../../js/main.js?v=21"></script>
+  <script src="../../js/characters.js?v=19"></script>
+  <script src="../../js/session.js?v=9"></script>
+  <script src="../../js/check-is-solved.js?v=4"></script>
+  <script src="../../js/puzzle-engine.js?v=21"></script>
+  <script src="../../js/chamber.js?v=1"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      WonderUI.initHeader('puzzles', '../../');
+    });
+  </script>
+</body>
+</html>

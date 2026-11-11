@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Court Administrator — WonderHack</title>
+  <link rel="stylesheet" href="css/main.css?v=15">
+  <link rel="stylesheet" href="css/admin.css?v=1">
+  <link rel="icon" type="image/svg+xml" href="assets/images/ui/card-suits.svg">
+</head>
+<body class="puzzle-room-body admin-body">
+
+  <header id="wonder-header-mount"></header>
+
+  <main class="admin-stage">
+    <div class="admin-container">
+
+      <header class="admin-hero">
+        <div class="admin-hero-seal" aria-hidden="true">🛡️</div>
+        <h1>Court Administrator</h1>
+        <p>Live monitoring of every courtier, solve and privileged action in the realm.</p>
+      </header>
+
+      <section class="admin-parchment admin-denied" id="admin-denied" hidden>
+        <div class="admin-denied-seal" aria-hidden="true">⚖️</div>
+        <h2>By Royal Decree</h2>
+        <p id="admin-denied-text">The monitoring chamber is sealed to all but the Court Administrator.</p>
+        <div class="admin-actions">
+          <a href="puzzles.html" class="btn-victorian btn-secondary">🏰 Return to Castle</a>
+          <a href="login.html?difficulty=easy" class="btn-victorian btn-gold" id="admin-denied-login">🗝️ Administrator Login</a>
+        </div>
+      </section>
+
+      <div id="admin-content" hidden>
+
+        <section class="admin-summary" aria-label="Registry summary">
+          <div class="admin-stat">
+            <span class="admin-stat-value" id="admin-stat-players">0</span>
+            <span class="admin-stat-label">Registered courtiers</span>
+          </div>
+          <div class="admin-stat">
+            <span class="admin-stat-value" id="admin-stat-solves">0</span>
+            <span class="admin-stat-label">Solves recorded</span>
+          </div>
+          <div class="admin-stat">
+            <span class="admin-stat-value" id="admin-stat-season">1</span>
+            <span class="admin-stat-label">Current season</span>
+          </div>
+          <div class="admin-stat admin-stat-actions">
+            <button type="button" class="btn-victorian btn-gold" id="admin-rollover-btn">↻ Start New Season</button>
+            <span class="admin-stat-hint">Archives solves, resets coins, keeps hints.</span>
+          </div>
+        </section>
+
+        <section class="admin-parchment" aria-labelledby="admin-players-title">
+          <div class="admin-section-head">
+            <h2 id="admin-players-title">Player Registry</h2>
+            <div class="admin-controls">
+              <label class="sr-only" for="admin-search">Search players</label>
+              <input type="search" id="admin-search" placeholder="Search name…" autocomplete="off">
+              <label class="sr-only" for="admin-sort">Sort players</label>
+              <select id="admin-sort">
+                <option value="points">Points</option>
+                <option value="solved">Solves</option>
+                <option value="username">Username</option>
+                <option value="last_login">Last login</option>
+                <option value="created">Created</option>
+              </select>
+              <button type="button" class="btn-victorian btn-secondary admin-small-btn" id="admin-sort-order">Desc ↓</button>
+            </div>
+          </div>
+
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Courtier</th>
+                  <th>Role</th>
+                  <th>Points</th>
+                  <th>Easy / Med / Hard</th>
+                  <th>Hints</th>
+                  <th>Last Login</th>
+                  <th><span class="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody id="admin-players-body">
+                <tr><td colspan="7" class="admin-loading">Consulting the royal registry…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="admin-pager">
+            <button type="button" class="btn-victorian btn-secondary admin-small-btn" id="admin-prev-page">← Prev</button>
+            <span id="admin-page-label">Page 1 of 1</span>
+            <button type="button" class="btn-victorian btn-secondary admin-small-btn" id="admin-next-page">Next →</button>
+          </div>
+        </section>
+
+        <div class="admin-columns">
+          <section class="admin-parchment" aria-labelledby="admin-solves-title">
+            <div class="admin-section-head">
+              <h2 id="admin-solves-title">Recent Solves</h2>
+              <span class="admin-muted" id="admin-solves-count"></span>
+            </div>
+            <div class="admin-table-wrap">
+              <table class="admin-table admin-table-compact">
+                <thead>
+                  <tr><th>Courtier</th><th>Trial</th><th>Chamber</th><th>Points</th><th>Season</th><th>When</th></tr>
+                </thead>
+                <tbody id="admin-solves-body">
+                  <tr><td colspan="6" class="admin-loading">Loading recent solves…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="admin-parchment" aria-labelledby="admin-audit-title">
+            <div class="admin-section-head">
+              <h2 id="admin-audit-title">Audit Trail</h2>
+              <span class="admin-muted">Privileged actions only</span>
+            </div>
+            <div class="admin-table-wrap">
+              <table class="admin-table admin-table-compact">
+                <thead>
+                  <tr><th>Action</th><th>Administrator</th><th>Target</th><th>When</th></tr>
+                </thead>
+                <tbody id="admin-audit-body">
+                  <tr><td colspan="4" class="admin-loading">Loading audit trail…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <p class="admin-status" id="admin-status" role="status"></p>
+
+      </div>
+    </div>
+  </main>
+
+  <script src="js/main.js?v=21"></script>
+  <script src="js/session.js?v=9"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      await WonderSession.boot();
+      WonderUI.initHeader('admin');
+
+      const denied = document.getElementById('admin-denied');
+      const deniedText = document.getElementById('admin-denied-text');
+      const deniedLogin = document.getElementById('admin-denied-login');
+      const content = document.getElementById('admin-content');
+
+      if (!WonderSession.isAdmin()) {
+        denied.hidden = false;
+        content.hidden = true;
+        if (!WonderSession.isAuthenticated()) {
+          deniedText.textContent = 'The monitoring chamber is sealed. Present the Court Administrator\'s credentials to unroll it.';
+          deniedLogin.style.display = 'inline-block';
+        } else {
+          const current = WonderSession.currentUser();
+          const who = (current && (current.displayName || current.username)) || 'This courtier';
+          deniedText.textContent = `${who} is not the Court Administrator. This chamber remains sealed.`;
+          deniedLogin.style.display = 'none';
+        }
+        return;
+      }
+
+      denied.hidden = true;
+      content.hidden = false;
+
+      const state = {
+        page: 1,
+        perPage: 25,
+        sort: 'points',
+        order: 'desc',
+        search: '',
+      };
+
+      const searchInput = document.getElementById('admin-search');
+      const sortSelect = document.getElementById('admin-sort');
+      const orderBtn = document.getElementById('admin-sort-order');
+      const prevBtn = document.getElementById('admin-prev-page');
+      const nextBtn = document.getElementById('admin-next-page');
+      const statusEl = document.getElementById('admin-status');
+
+      function setStatus(message, isError = false) {
+        if (!statusEl) return;
+        statusEl.textContent = message || '';
+        statusEl.classList.toggle('is-error', isError);
+      }
+
+      async function loadAdmin() {
+        const [players, solves, audit] = await Promise.all([
+          WonderSession.adminPlayers(state),
+          WonderSession.adminSolves({ limit: 50 }),
+          WonderSession.adminAudit({ limit: 50 }),
+        ]);
+
+        if (!players.ok || !solves.ok || !audit.ok) {
+          const error = players.error || solves.error || audit.error || 'The registry refused this request.';
+          setStatus(error, true);
+          if ([players.status, solves.status, audit.status].includes(403)) {
+            setTimeout(() => window.location.reload(), 1200);
+          }
+          return;
+        }
+
+        renderPlayers(players);
+        renderSolves(solves);
+        renderAudit(audit);
+        setStatus('');
+      }
+
+      function renderPlayers(result) {
+        const body = document.getElementById('admin-players-body');
+        const players = result.players || [];
+        document.getElementById('admin-stat-players').textContent = result.total || 0;
+        document.getElementById('admin-page-label').textContent =
+          `Page ${result.page || 1} of ${result.pages || 1}`;
+        prevBtn.disabled = (result.page || 1) <= 1;
+        nextBtn.disabled = (result.page || 1) >= (result.pages || 1);
+
+        if (!players.length) {
+          body.innerHTML = '<tr><td colspan="7" class="admin-loading">No courtiers match that search.</td></tr>';
+          return;
+        }
+
+        body.innerHTML = players.map((p) => {
+          const privileged = p.isAdmin || p.isQueen;
+          return `
+            <tr>
+              <td>
+                <strong>${escHtml(p.displayName)}</strong>
+                <span class="admin-sub">@${escHtml(p.username)}${p.isAdmin ? ' · 🛡️ Admin' : ''}${p.isQueen ? ' · ♛ Queen' : ''}</span>
+              </td>
+              <td>${escHtml(p.role || '')}</td>
+              <td class="admin-num">${Number(p.points || 0).toLocaleString()}</td>
+              <td class="admin-num">${p.solvedByDifficulty.easy} / ${p.solvedByDifficulty.medium} / ${p.solvedByDifficulty.hard}</td>
+              <td class="admin-num">${p.hintCount}</td>
+              <td class="admin-date">${formatDate(p.lastLoginAt)}</td>
+              <td class="admin-row-actions">
+                ${privileged
+                  ? '<span class="admin-muted">Protected</span>'
+                  : `<button type="button" class="admin-danger-btn" data-reset-id="${p.id}" data-reset-name="${escHtml(p.username)}">Reset</button>`}
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        body.querySelectorAll('[data-reset-id]').forEach((button) => {
+          button.addEventListener('click', async () => {
+            const name = button.dataset.resetName;
+            if (!window.confirm(`Reset ${name}? This erases their solves, coins and hint purchases.`)) {
+              return;
+            }
+            button.disabled = true;
+            const result = await WonderSession.adminResetPlayer({ userId: button.dataset.resetId });
+            if (result.ok) {
+              setStatus(`${name} was reset. The action is recorded in the audit trail.`);
+              await loadAdmin();
+            } else {
+              setStatus(result.error || 'The reset failed.', true);
+              button.disabled = false;
+            }
+          });
+        });
+      }
+
+      function renderSolves(result) {
+        const body = document.getElementById('admin-solves-body');
+        const solves = result.solves || [];
+        document.getElementById('admin-stat-solves').textContent = result.total || 0;
+        document.getElementById('admin-solves-count').textContent = `${result.total || 0} total`;
+
+        if (!solves.length) {
+          body.innerHTML = '<tr><td colspan="6" class="admin-loading">No solves recorded yet.</td></tr>';
+          return;
+        }
+
+        body.innerHTML = solves.map((s) => `
+          <tr>
+            <td>${escHtml(s.displayName || s.username)}</td>
+            <td>${escHtml(s.title)}</td>
+            <td><span class="admin-diff admin-diff-${escHtml(s.difficulty)}">${escHtml(s.difficulty)}</span></td>
+            <td class="admin-num">${s.points}</td>
+            <td class="admin-num">${s.season}</td>
+            <td class="admin-date">${formatDate(s.solvedAt)}</td>
+          </tr>
+        `).join('');
+      }
+
+      function renderAudit(result) {
+        const body = document.getElementById('admin-audit-body');
+        const audit = result.audit || [];
+        if (!audit.length) {
+          body.innerHTML = '<tr><td colspan="4" class="admin-loading">No privileged actions yet.</td></tr>';
+          return;
+        }
+        body.innerHTML = audit.map((entry) => `
+          <tr>
+            <td>
+              <strong>${escHtml(entry.action)}</strong>
+              ${entry.detail ? `<span class="admin-sub">${escHtml(entry.detail)}</span>` : ''}
+            </td>
+            <td>${escHtml(entry.adminUsername)}</td>
+            <td>${escHtml(entry.targetUser || '—')}</td>
+            <td class="admin-date">${formatDate(entry.createdAt)}</td>
+          </tr>
+        `).join('');
+      }
+
+      searchInput.addEventListener('input', () => {
+        state.search = searchInput.value.trim();
+        state.page = 1;
+        clearTimeout(searchInput._timer);
+        searchInput._timer = setTimeout(loadAdmin, 300);
+      });
+
+      sortSelect.addEventListener('change', () => {
+        state.sort = sortSelect.value;
+        state.page = 1;
+        loadAdmin();
+      });
+
+      orderBtn.addEventListener('click', () => {
+        state.order = state.order === 'desc' ? 'asc' : 'desc';
+        orderBtn.textContent = state.order === 'desc' ? 'Desc ↓' : 'Asc ↑';
+        state.page = 1;
+        loadAdmin();
+      });
+
+      prevBtn.addEventListener('click', () => {
+        if (state.page > 1) {
+          state.page -= 1;
+          loadAdmin();
+        }
+      });
+
+      nextBtn.addEventListener('click', () => {
+        state.page += 1;
+        loadAdmin();
+      });
+
+      document.getElementById('admin-rollover-btn').addEventListener('click', async () => {
+        if (!window.confirm('Start a new season? Current solves are archived, coins reset to zero, and hint purchases are preserved.')) {
+          return;
+        }
+        const button = document.getElementById('admin-rollover-btn');
+        button.disabled = true;
+        const result = await WonderSession.adminRolloverSeason();
+        if (result.ok) {
+          document.getElementById('admin-stat-season').textContent = result.season;
+          setStatus(`Season ${result.season} has begun. Season ${result.previousSeason} is archived.`);
+          state.page = 1;
+          await loadAdmin();
+          document.getElementById('admin-stat-season').textContent = result.season;
+        } else {
+          setStatus(result.error || 'The season rollover failed.', true);
+        }
+        button.disabled = false;
+      });
+
+      // Load the current season number and the first page.
+      const initial = await WonderSession.adminPlayers({ page: 1, perPage: 25 });
+      if (initial.ok) {
+        document.getElementById('admin-stat-season').textContent = initial.season || 1;
+      }
+      await loadAdmin();
+
+      setInterval(() => {
+        if (!document.hidden) loadAdmin();
+      }, 30000);
+    });
+
+    function escHtml(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function formatDate(value) {
+      if (!value) return '—';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return escHtml(value);
+      return date.toLocaleString();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>The Queen's Answer Scroll — WonderHack</title>
+  <link rel="stylesheet" href="css/main.css?v=15">
+  <link rel="stylesheet" href="css/royal-answers.css?v=2">
+  <link rel="icon" type="image/svg+xml" href="assets/images/ui/card-suits.svg">
+</head>
+<body class="puzzle-room-body">
+
+  <!-- Mount Point for Shared Header Navigation -->
+  <header id="wonder-header-mount"></header>
+
+  <!-- Ambient Floating Playing Cards -->
+  <div class="floating-card-decor heart"    style="top:12%;left:15%;transform:rotate(-11deg)"><span>Q♥</span><span style="align-self:flex-end">♥Q</span></div>
+  <div class="floating-card-decor spade"   style="top:21%;right:16%;transform:rotate(15deg)"><span>A♠</span><span style="align-self:flex-end">♠A</span></div>
+  <div class="floating-card-decor diamond" style="bottom:17%;left:20%;transform:rotate(7deg)"><span>K♦</span><span style="align-self:flex-end">♦K</span></div>
+  <div class="floating-card-decor club"    style="bottom:23%;right:19%;transform:rotate(-14deg)"><span>J♣</span><span style="align-self:flex-end">♣J</span></div>
+
+  <main class="ra-stage">
+    <div class="ra-container">
+
+      <!-- Hero Banner -->
+      <header class="ra-hero">
+        <div class="ra-crown" aria-hidden="true">♛</div>
+        <h1 class="ra-hero-title">The Queen's Answer Scroll</h1>
+        <p class="ra-hero-subtitle">
+          By sovereign right of The Heart's Queen, every riddle of the realm is laid bare.
+          Let no common courtier glimpse these pages, lest the executioner be summoned.
+        </p>
+        <span class="ra-seal">✦ Sealed for the Queen's eyes only ✦</span>
+      </header>
+
+      <!-- Access gate -->
+      <section class="ra-parchment ra-gate" id="ra-gate" hidden>
+        <div class="ra-gate-seal" aria-hidden="true">🂡</div>
+        <h2 class="ra-gate-title" id="ra-gate-title">The Scroll Is Sealed</h2>
+        <p class="ra-gate-text" id="ra-gate-text">
+          Present the credentials of The Heart's Queen to unroll this scroll.
+        </p>
+        <div class="ra-gate-actions">
+          <a href="puzzles.html" class="btn-victorian btn-secondary" style="padding:0.7rem 2rem;font-size:0.95rem;text-decoration:none;">
+            🏰 Return to Castle
+          </a>
+          <a href="login.html?difficulty=easy" class="btn-victorian btn-gold" id="ra-gate-login" style="padding:0.7rem 2rem;font-size:0.95rem;text-decoration:none;">
+            🗝️ Queen's Login
+          </a>
+        </div>
+      </section>
+
+      <!-- Answer key (Queen only) -->
+      <div id="ra-content" hidden>
+
+        <!-- Difficulty flag (follows the chamber chosen by the players) -->
+        <section class="ra-parchment ra-flag-panel" aria-label="Royal flag">
+          <div class="ra-flag-heading">
+            <span class="ra-flag-icon" aria-hidden="true">⚑</span>
+            <div>
+              <h2 class="ra-flag-title">The Royal Flag</h2>
+              <p class="ra-flag-note">
+                The flag below follows the chamber currently chosen by the players:
+                <strong class="ra-flag-difficulty" id="ra-flag-difficulty">Easy</strong>
+              </p>
+            </div>
+          </div>
+          <div class="ra-flag-value" id="ra-flag-value">—</div>
+        </section>
+
+        <!-- One table per difficulty -->
+        <div id="ra-tables" class="ra-tables"></div>
+      </div>
+
+      <!-- Status / errors -->
+      <p class="ra-status" id="ra-status"></p>
+
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script src="js/main.js?v=21"></script>
+  <script src="js/session.js?v=9"></script>
+  <script>
+    const DIFFICULTY_META = {
+      Easy:   { icon: '🐇', name: 'Easy Chamber — The Garden Gate',   suit: '♥' },
+      Medium: { icon: '⚔️', name: 'Medium Chamber — The Royal Court', suit: '♦' },
+      Hard:   { icon: '👑', name: 'Hard Chamber — The Inner Sanctum', suit: '♠' }
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await WonderSession.boot();
+      WonderUI.initHeader('answers');
+
+      const gate = document.getElementById('ra-gate');
+      const gateTitle = document.getElementById('ra-gate-title');
+      const gateText = document.getElementById('ra-gate-text');
+      const gateLogin = document.getElementById('ra-gate-login');
+      const content = document.getElementById('ra-content');
+      const status = document.getElementById('ra-status');
+
+      if (!WonderSession.isAuthenticated()) {
+        gate.hidden = false;
+        gateTitle.textContent = 'The Scroll Is Sealed';
+        gateText.textContent = "Present the credentials of The Heart's Queen to unroll this scroll.";
+        gateLogin.style.display = 'inline-block';
+        return;
+      }
+
+      if (!WonderSession.isQueen()) {
+        const current = WonderSession.currentUser();
+        const who = (current && (current.displayName || current.username)) || 'This courtier';
+        gate.hidden = false;
+        gateTitle.textContent = 'By Royal Decree';
+        gateText.textContent = `${who} is not The Heart's Queen. These answers are sealed to the sovereign alone.`;
+        gateLogin.style.display = 'none';
+        return;
+      }
+
+      const result = await WonderSession.queenAnswers();
+      if (!result.ok) {
+        gate.hidden = false;
+        gateTitle.textContent = 'The Scroll Will Not Open';
+        gateText.textContent = result.error || 'The royal registry refused to release the answers.';
+        gateLogin.style.display = result.status === 401 ? 'inline-block' : 'none';
+        return;
+      }
+
+      gate.hidden = true;
+      content.hidden = false;
+      status.textContent = '';
+
+      const flagValue = document.getElementById('ra-flag-value');
+      const flagDifficulty = document.getElementById('ra-flag-difficulty');
+
+      const renderFlag = (flag, difficulty) => {
+        if (flagValue) flagValue.textContent = flag || '—';
+        if (flagDifficulty) {
+          const label = String(difficulty || 'easy');
+          flagDifficulty.textContent = label.charAt(0).toUpperCase() + label.slice(1);
+        }
+      };
+
+      renderFlag(result.flag, result.difficulty);
+
+      // Keep the royal flag in sync while the scroll is open. Any player who
+      // chooses a chamber updates the backend value; the scroll follows.
+      setInterval(async () => {
+        if (document.hidden) return;
+        const live = await WonderSession.queenFlag();
+        if (live && live.ok) renderFlag(live.flag, live.difficulty);
+      }, 2500);
+
+      renderAnswerTables(result.puzzles);
+    });
+
+    function renderAnswerTables(puzzles) {
+      const host = document.getElementById('ra-tables');
+      const groups = new Map();
+
+      puzzles.forEach((puzzle) => {
+        const key = puzzle.difficulty || 'Unknown';
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(puzzle);
+      });
+
+      const order = ['Easy', 'Medium', 'Hard'];
+      const difficultyNames = Array.from(groups.keys()).sort((a, b) => {
+        const ai = order.indexOf(a);
+        const bi = order.indexOf(b);
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      });
+
+      host.innerHTML = difficultyNames.map((difficulty) => {
+        const meta = DIFFICULTY_META[difficulty] || { icon: '🃏', name: difficulty, suit: '♣' };
+        const rows = groups.get(difficulty).map((puzzle) => {
+          const answers = Array.isArray(puzzle.answers) ? puzzle.answers : [];
+          const primary = answers[0] || '—';
+          const aliases = answers.slice(1);
+          const aliasHtml = aliases.length
+            ? `<div class="ra-aliases">also accepted: ${aliases.map(escHtml).join(' · ')}</div>`
+            : '';
+          return `
+            <tr>
+              <td class="ra-td-id">${escapeCell(puzzle.id)}</td>
+              <td class="ra-td-title">
+                <div class="ra-title">${escHtml(puzzle.title)}</div>
+                <div class="ra-question">“${escHtml(puzzle.question || '')}”</div>
+              </td>
+              <td class="ra-td-answer">
+                <span class="ra-answer-primary">${escHtml(primary)}</span>
+                ${aliasHtml}
+              </td>
+              <td class="ra-td-points">${Number(puzzle.points).toLocaleString()} <span aria-hidden="true">🪙</span></td>
+            </tr>
+          `;
+        }).join('');
+
+        return `
+          <section class="ra-parchment ra-difficulty" aria-label="${escHtml(meta.name)}">
+            <header class="ra-diff-header">
+              <h2 class="ra-diff-title">
+                <span class="ra-diff-icon" aria-hidden="true">${meta.icon}</span>
+                ${escHtml(meta.name)}
+                <span class="ra-diff-suit" aria-hidden="true">${meta.suit}</span>
+              </h2>
+              <span class="ra-diff-count">${groups.get(difficulty).length} riddle${groups.get(difficulty).length !== 1 ? 's' : ''}</span>
+            </header>
+            <div class="ra-table-wrap">
+              <table class="ra-table">
+                <thead>
+                  <tr>
+                    <th class="ra-th-id">#</th>
+                    <th>Question / Riddle</th>
+                    <th>Answer (and accepted variants)</th>
+                    <th class="ra-th-points">Gold</th>
+                  </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          </section>
+        `;
+      }).join('');
+    }
+
+    function escapeCell(value) {
+      return escHtml(String(value).padStart(2, '0'));
+    }
+
+    function escHtml(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+  </script>
+</body>
+</html>

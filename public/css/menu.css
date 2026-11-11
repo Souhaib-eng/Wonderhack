@@ -1,0 +1,250 @@
+/* ==========================================================================
+   WONDERHACK — Storybook Entrance & Landing Menu Styles
+   ========================================================================== */
+
+body.menu-body {
+  background-image: url('../assets/images/backgrounds/queen-castle.jpg');
+  background-position: center center;
+  background-size: cover;
+  background-attachment: fixed;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--nav-height) + 2rem) 1.5rem 4rem 1.5rem;
+  position: relative;
+  z-index: 10;
+}
+
+/* Antique Book Cover Frame */
+.book-cover-container {
+  max-width: 880px;
+  width: 100%;
+  background: linear-gradient(135deg, #1f0f24 0%, #130a17 50%, #2b1328 100%);
+  border: 4px solid var(--color-gold-antique);
+  border-radius: 12px;
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.9),
+    0 0 35px rgba(197, 155, 39, 0.3),
+    inset 0 0 30px rgba(0, 0, 0, 0.8);
+  padding: 3.5rem 3rem;
+  position: relative;
+  text-align: center;
+  color: var(--color-lavender-bright);
+}
+
+/* Ornate Victorian Gold Filigree Corners */
+.book-cover-container::before,
+.book-cover-container::after {
+  content: "✤";
+  position: absolute;
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  color: var(--color-gold-bright);
+  text-shadow: 0 0 15px rgba(240, 207, 101, 0.6);
+}
+
+.book-cover-container::before {
+  top: 14px;
+  left: 20px;
+}
+
+.book-cover-container::after {
+  bottom: 14px;
+  right: 20px;
+}
+
+.menu-crest {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 1.5rem auto;
+  border: 2px solid var(--color-gold-bright);
+  border-radius: 50%;
+  padding: 8px;
+  background: radial-gradient(circle, var(--color-crimson-queen) 0%, var(--color-plum-900) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 25px rgba(240, 207, 101, 0.4);
+}
+
+.menu-crest svg {
+  width: 44px;
+  height: 44px;
+  fill: var(--color-gold-bright);
+}
+
+.menu-title {
+  font-family: var(--font-display);
+  font-size: 3.2rem;
+  letter-spacing: 3px;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #ffffff 0%, var(--color-gold-bright) 50%, var(--color-gold-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 25px rgba(240, 207, 101, 0.3);
+}
+
+.menu-subtitle {
+  font-family: var(--font-story);
+  font-style: italic;
+  font-size: 1.45rem;
+  color: var(--color-gold-bright);
+  margin-bottom: 2rem;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+.menu-prologue {
+  font-family: var(--font-story);
+  font-size: 1.25rem;
+  line-height: 1.8;
+  color: #eeddfa;
+  max-width: 720px;
+  margin: 0 auto 2.5rem auto;
+  text-align: center;
+}
+
+.menu-prologue p {
+  margin-bottom: 1.2rem;
+}
+
+/* Action Gateways Grid */
+.menu-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  max-width: 760px;
+  margin: 0 auto 2.5rem auto;
+}
+
+.menu-action-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  background: #24122b !important;
+  border: 1.5px solid rgba(197, 155, 39, 0.5);
+  border-radius: 8px;
+  padding: 1.25rem 1rem;
+  transition: var(--transition-theatrical);
+  text-decoration: none;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
+}
+
+.menu-action-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--color-gold-bright);
+  background: rgba(48, 22, 56, 0.95);
+  box-shadow: 0 10px 25px rgba(197, 155, 39, 0.25), 0 0 15px rgba(240, 207, 101, 0.2);
+}
+
+.menu-action-icon {
+  font-size: 2rem;
+}
+
+.menu-action-title {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.menu-action-desc {
+  font-family: var(--font-story);
+  font-size: 0.95rem;
+  color: var(--color-lavender-dim);
+  line-height: 1.3;
+}
+
+/* Characters Cast Row */
+.cast-strip {
+  border-top: 1px solid rgba(197, 155, 39, 0.3);
+  padding-top: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.cast-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+.cast-item img {
+  width: 58px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-gold-antique);
+  background: #2b1828;
+  transition: transform 0.3s ease;
+}
+
+.cast-item img[src*="queen"],
+.cast-item img[src*="mad-hatter"],
+.cast-item img[src*="cheshire-cat"] {
+  width: 76px;
+  height: 76px;
+  border-width: 2.5px;
+  border-color: var(--color-gold-bright);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.45);
+}
+
+.cast-item.cat-cast-item {
+  text-decoration: none;
+  cursor: pointer;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  background: rgba(74, 33, 85, 0.25);
+  border: 1px dashed rgba(212, 175, 55, 0.5);
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cast-item.cat-cast-item:hover {
+  transform: translateY(-4px) scale(1.06);
+  background: rgba(74, 33, 85, 0.55);
+  border-color: var(--color-gold-bright);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), 0 0 20px rgba(184, 138, 224, 0.6);
+}
+
+.cast-item.cat-cast-item:hover img {
+  border-color: #fff;
+  transform: rotate(5deg) scale(1.05);
+  box-shadow: 0 0 25px rgba(200, 160, 240, 0.85);
+}
+
+.cast-item.cat-cast-item:hover .cast-name {
+  color: #fff;
+  text-shadow: 0 0 10px rgba(240, 207, 101, 0.9);
+}
+
+.cast-name {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--color-gold-bright);
+}
+
+.cast-role {
+  font-family: var(--font-story);
+  font-size: 0.8rem;
+  color: var(--color-lavender-dim);
+}
+
+@media (max-width: 768px) {
+  .book-cover-container {
+    padding: 2rem 1.5rem;
+  }
+  .menu-title {
+    font-size: 2.2rem;
+  }
+}

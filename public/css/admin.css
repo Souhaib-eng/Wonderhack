@@ -1,0 +1,349 @@
+/* WonderHack — Court Administrator monitoring view */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.admin-body {
+  background:
+    radial-gradient(circle at 15% 10%, rgba(122, 18, 35, 0.35), transparent 40%),
+    radial-gradient(circle at 85% 20%, rgba(74, 33, 85, 0.35), transparent 45%),
+    linear-gradient(160deg, #160a18 0%, #24101c 45%, #12080d 100%);
+  min-height: 100vh;
+}
+
+.admin-stage {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+.admin-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.admin-hero {
+  text-align: center;
+  color: #f4e3bd;
+  padding: 1rem 0 0.5rem;
+}
+
+.admin-hero-seal {
+  font-size: 2.75rem;
+  line-height: 1;
+  filter: drop-shadow(0 4px 12px rgba(212, 175, 55, 0.4));
+}
+
+.admin-hero h1 {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  margin: 0.35rem 0 0.5rem;
+  letter-spacing: 2px;
+  color: #e9cf8a;
+}
+
+.admin-hero p {
+  margin: 0;
+  font-family: var(--font-story);
+  font-size: 1.05rem;
+  color: #d9c6a4;
+}
+
+.admin-parchment {
+  background:
+    linear-gradient(180deg, rgba(255, 249, 235, 0.98), rgba(245, 232, 206, 0.98));
+  border: 1px solid rgba(197, 155, 39, 0.55);
+  border-radius: 10px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  padding: 1.35rem 1.4rem;
+}
+
+.admin-denied {
+  text-align: center;
+  max-width: 640px;
+  margin: 2rem auto;
+}
+
+.admin-denied-seal {
+  font-size: 2.75rem;
+}
+
+.admin-denied h2 {
+  font-family: var(--font-display);
+  color: #7a1223;
+  margin: 0.5rem 0;
+}
+
+.admin-denied p {
+  font-family: var(--font-story);
+  color: #5a4032;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.admin-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 1.25rem;
+}
+
+.admin-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(260px, 1.4fr);
+  gap: 1rem;
+}
+
+.admin-stat {
+  background: rgba(255, 249, 235, 0.96);
+  border: 1px solid rgba(197, 155, 39, 0.5);
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+.admin-stat-value {
+  font-family: var(--font-display);
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: #7a1223;
+  line-height: 1.1;
+}
+
+.admin-stat-label {
+  font-family: var(--font-story);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #6a5040;
+}
+
+.admin-stat-actions {
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.admin-stat-hint {
+  font-family: var(--font-story);
+  font-size: 0.78rem;
+  color: #6a5040;
+  font-style: italic;
+}
+
+.admin-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.9rem;
+}
+
+.admin-section-head h2 {
+  font-family: var(--font-display);
+  color: #7a1223;
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.admin-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.admin-controls input,
+.admin-controls select,
+.lb-filter-select {
+  font-family: var(--font-story);
+  font-size: 0.95rem;
+  padding: 0.42rem 0.65rem;
+  border: 1px solid #c9b184;
+  border-radius: 6px;
+  background: #fffaf0;
+  color: #3a2810;
+}
+
+.admin-small-btn {
+  padding: 0.42rem 0.9rem !important;
+  font-size: 0.82rem !important;
+}
+
+.admin-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.admin-table th {
+  text-align: left;
+  font-family: var(--font-story);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #6a5040;
+  border-bottom: 2px solid rgba(197, 155, 39, 0.55);
+  padding: 0.55rem 0.6rem;
+  white-space: nowrap;
+}
+
+.admin-table td {
+  padding: 0.65rem 0.6rem;
+  border-bottom: 1px solid rgba(197, 155, 39, 0.22);
+  color: #3a2810;
+  vertical-align: top;
+}
+
+.admin-table tbody tr:hover {
+  background: rgba(212, 175, 55, 0.08);
+}
+
+.admin-table-compact {
+  font-size: 0.84rem;
+}
+
+.admin-sub {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: #7b6350;
+  margin-top: 2px;
+}
+
+.admin-num {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.admin-date {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  color: #6a5040;
+  white-space: nowrap;
+}
+
+.admin-row-actions {
+  text-align: right;
+}
+
+.admin-danger-btn {
+  font-family: var(--font-story);
+  font-size: 0.76rem;
+  padding: 0.32rem 0.7rem;
+  border-radius: 5px;
+  border: 1px solid #b81d38;
+  background: #fff3f3;
+  color: #8d1428;
+  cursor: pointer;
+}
+
+.admin-danger-btn:hover {
+  background: #b81d38;
+  color: #fff;
+}
+
+.admin-danger-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.admin-diff {
+  text-transform: capitalize;
+  font-family: var(--font-story);
+  font-weight: 700;
+}
+
+.admin-diff-easy { color: #2d6a3e; }
+.admin-diff-medium { color: #8a5a10; }
+.admin-diff-hard { color: #7a1223; }
+
+.admin-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  font-family: var(--font-story);
+  color: #5a4032;
+}
+
+.admin-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+.admin-muted {
+  font-family: var(--font-story);
+  font-size: 0.8rem;
+  color: #7b6350;
+}
+
+.admin-loading {
+  text-align: center;
+  font-family: var(--font-story);
+  font-style: italic;
+  color: #7b6350;
+  padding: 1.2rem 0;
+}
+
+.admin-status {
+  margin: 0;
+  min-height: 1.2rem;
+  text-align: center;
+  font-family: var(--font-story);
+  color: #e9cf8a;
+}
+
+.admin-status.is-error {
+  color: #ffb3bd;
+}
+
+@media (max-width: 960px) {
+  .admin-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .admin-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-stage {
+    padding: 1.5rem 0.85rem 3rem;
+  }
+  .admin-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .admin-parchment {
+    padding: 1rem;
+  }
+  .admin-controls {
+    width: 100%;
+  }
+  .admin-controls input {
+    flex: 1;
+    min-width: 130px;
+  }
+}

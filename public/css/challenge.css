@@ -1,0 +1,459 @@
+/* ==========================================================================
+   WONDERHACK — Challenge Workbench & Cipher Lab Styles
+   ========================================================================== */
+
+body.challenge-body {
+  background-image: url('../assets/images/backgrounds/queen-castle.jpg');
+  background-position: center top;
+  background-size: cover;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.lab-container {
+  flex: 1;
+  max-width: 1040px;
+  width: 100%;
+  margin: 0 auto;
+  padding: calc(var(--nav-height) + 2rem) 1.5rem 4rem 1.5rem;
+  position: relative;
+  z-index: 10;
+}
+
+.lab-header-banner {
+  text-align: center;
+  margin-bottom: 2rem;
+  background: rgba(20, 14, 26, 0.9);
+  border: 2px solid var(--color-gold-antique);
+  border-radius: 8px;
+  padding: 1.5rem 2rem;
+  box-shadow: var(--shadow-gothic-md);
+  backdrop-filter: blur(8px);
+}
+
+.lab-title {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  letter-spacing: 2px;
+  color: #fff;
+  text-shadow: 0 0 15px rgba(240, 207, 101, 0.4);
+}
+
+.lab-subtitle {
+  font-family: var(--font-story);
+  font-style: italic;
+  font-size: 1.15rem;
+  color: var(--color-lavender-bright);
+}
+
+/* 2-Column Lab Layout */
+.lab-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.lab-card {
+  background-color: #fbf5e6 !important;
+  background: #fbf5e6;
+  border: 3px double var(--parchment-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-parchment);
+  padding: 2rem;
+  color: var(--parchment-ink);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.lab-card-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: #7a1223;
+  border-bottom: 1.5px solid rgba(138, 19, 39, 0.2);
+  padding-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Cipher Decoder Tool */
+.decoder-controls {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.decoder-tool-btn {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #bda078;
+  border-radius: 4px;
+  background: #ede1cb;
+  color: #4a3429;
+  transition: var(--transition-gentle);
+}
+
+.decoder-tool-btn:hover {
+  background: #dfcfb2;
+  border-color: #8a1327;
+}
+
+.decoder-tool-btn.active {
+  background: #8a1327;
+  color: #fff;
+  border-color: #8a1327;
+}
+
+.decoder-textarea {
+  width: 100%;
+  height: 110px;
+  background: #ffffff;
+  border: 2px solid #b8a483;
+  border-radius: 4px;
+  padding: 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  color: #1a100f;
+  resize: vertical;
+}
+
+.decoder-textarea:focus {
+  border-color: #8a1327;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(138, 19, 39, 0.15);
+}
+
+.decoder-output {
+  background: #ede3cc;
+  border: 1px solid #d4c09d;
+  border-radius: 4px;
+  padding: 0.85rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  min-height: 70px;
+  word-break: break-all;
+  user-select: all;
+  color: #1a100f;
+}
+
+.lab-card .btn-victorian {
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  padding: 0.65rem 0.85rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .lab-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   Cheshire Cat Character Sprite (Right Side)
+   ========================================================================== */
+
+.cheshire-character-wrapper {
+  position: fixed;
+  right: 2vw;
+  bottom: 20px;
+  width: 270px;
+  max-width: 22vw;
+  z-index: 15;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease;
+  filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.85));
+  cursor: pointer;
+}
+
+.cheshire-character-wrapper img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.cheshire-character-wrapper:hover {
+  transform: scale(1.06) rotate(3deg);
+  filter: drop-shadow(0 20px 40px rgba(184, 138, 224, 0.6)) drop-shadow(0 0 30px rgba(240, 207, 101, 0.6));
+}
+
+/* The cat only becomes clickable after every Easy hint is purchased.
+   Until then it vanishes when approached and ignores clicks. */
+.cheshire-character-wrapper img,
+.cheshire-character-wrapper .character-tag {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.cheshire-character-wrapper.cat-locked {
+  cursor: default;
+}
+
+.cheshire-character-wrapper.cat-locked:hover {
+  transform: none;
+  filter: none;
+}
+
+.cheshire-character-wrapper.cat-locked:hover img,
+.cheshire-character-wrapper.cat-locked:hover .character-tag,
+.cheshire-character-wrapper.is-vanished img,
+.cheshire-character-wrapper.is-vanished .character-tag {
+  opacity: 0;
+  transform: translateY(8px) scale(0.94);
+  pointer-events: none;
+}
+
+#cheshire-bubble {
+  position: fixed;
+  right: 280px;
+  bottom: 240px;
+  top: auto;
+  z-index: 25;
+}
+
+@media (max-width: 1350px) {
+  .cheshire-character-wrapper {
+    width: 220px;
+    right: 1vw;
+  }
+  #cheshire-bubble {
+    right: 230px;
+    bottom: 210px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .cheshire-character-wrapper {
+    width: 170px;
+    right: 1vw;
+    opacity: 0.95;
+  }
+  #cheshire-bubble {
+    right: 180px;
+  }
+}
+
+@media (max-width: 900px) {
+  .cheshire-character-wrapper {
+    width: 140px;
+    right: 10px;
+    bottom: 10px;
+    opacity: 0.92;
+  }
+  #cheshire-bubble {
+    position: fixed;
+    top: calc(var(--nav-height) + 60px);
+    bottom: auto;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    max-width: 90vw;
+  }
+}
+
+@media (max-width: 600px) {
+  .cheshire-character-wrapper {
+    width: 110px;
+    right: 5px;
+    bottom: 5px;
+  }
+}
+
+/* ==========================================================================
+   Cheshire Cat — Step-by-step decryption guide
+   ========================================================================== */
+
+.cat-guide-card {
+  margin-top: 2rem;
+  border-color: #8a5796;
+  box-shadow:
+    0 0 0 3px rgba(74, 33, 85, 0.35),
+    var(--shadow-parchment);
+  background:
+    radial-gradient(circle at 92% 6%, rgba(138, 87, 150, 0.18) 0%, transparent 45%),
+    #fbf5e6;
+}
+
+.cat-guide-card[hidden] {
+  display: none !important;
+}
+
+.cat-guide-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.cat-guide-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  color: #4a2155;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.cat-guide-step-label {
+  font-family: var(--font-story);
+  font-size: 1rem;
+  font-weight: 700;
+  color: #7a1223;
+  letter-spacing: 0.5px;
+}
+
+.cat-guide-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.cat-guide-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #8a5796;
+  background: transparent;
+  transition: var(--transition-gentle);
+}
+
+.cat-guide-dot.done {
+  background: #3c8d45;
+  border-color: #3c8d45;
+}
+
+.cat-guide-dot.active {
+  background: #f0cf65;
+  border-color: #8a1327;
+  box-shadow: 0 0 10px rgba(240, 207, 101, 0.8);
+}
+
+.cat-guide-instruction {
+  font-family: var(--font-story);
+  font-size: 1.18rem;
+  line-height: 1.6;
+  color: #3e2815;
+  background: rgba(138, 87, 150, 0.1);
+  border-left: 4px solid #8a5796;
+  border-radius: 6px;
+  padding: 0.9rem 1.1rem;
+}
+
+.cat-guide-instruction strong {
+  color: #4a2155;
+}
+
+.cat-guide-cipher-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.cat-guide-label {
+  font-family: var(--font-story);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #5a4032;
+}
+
+.cat-guide-cipher {
+  flex: 1;
+  min-width: 220px;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  word-break: break-all;
+  color: #f0cf65;
+  background: #20131f;
+  border: 1px solid #8c6d1d;
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+}
+
+.cat-guide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.cat-guide-result {
+  display: none;
+  font-family: var(--font-story);
+  font-size: 1.1rem;
+  line-height: 1.6;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+}
+
+.cat-guide-result.show {
+  display: block;
+}
+
+.cat-guide-result.success {
+  background: #eef6ee;
+  border: 2px solid #3c8d45;
+  color: #18471b;
+}
+
+.cat-guide-result.error {
+  background: #fff3f3;
+  border: 2px solid #b81d38;
+  color: #7a1223;
+}
+
+/* The final decoded message is deliberately not the flag. */
+.cat-guide-message {
+  display: block;
+  margin-top: 0.6rem;
+  font-family: var(--font-story);
+  font-size: 1.08rem;
+  font-style: italic;
+  line-height: 1.55;
+  color: #0e4b17;
+  background: #fff;
+  border: 1px dashed #3c8d45;
+  border-radius: 6px;
+  padding: 0.7rem 0.9rem;
+  word-break: break-word;
+}
+
+/* Narrow screens: the fixed cat sprite sits in the bottom-right corner, so
+   stack the guide's buttons full-width and keep their labels clear of it. */
+@media (max-width: 600px) {
+  .cat-guide-card {
+    padding: 1.35rem 1.1rem;
+  }
+
+  .cat-guide-head {
+    gap: 0.5rem;
+  }
+
+  .cat-guide-title {
+    font-size: 1.2rem;
+  }
+
+  .cat-guide-cipher {
+    min-width: 0;
+    flex-basis: 100%;
+  }
+
+  .cat-guide-actions {
+    flex-direction: column;
+  }
+
+  .cat-guide-actions .btn-victorian {
+    width: 100%;
+  }
+
+  .cat-guide-result {
+    font-size: 1rem;
+    padding: 0.85rem 1rem;
+  }
+}

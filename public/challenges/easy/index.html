@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Easy Trials: The Garden Gate — WonderHack</title>
+  <link rel="stylesheet" href="../../css/main.css?v=15">
+  <link rel="stylesheet" href="../../css/puzzles.css?v=14">
+  <link rel="stylesheet" href="../../css/queen-corruption.css?v=1">
+  <link rel="icon" type="image/svg+xml" href="../../assets/images/ui/card-suits.svg">
+  <style>
+    /* Hat icon position override for Easy */
+    .parchment-window .puzzle-hat-btn { display: none !important; }
+    .parchment-window .puzzle-hat-shop-link {
+      position: absolute !important;
+      left: auto !important; right: 18px !important;
+      bottom: 18px !important; top: auto !important;
+    }
+    .parchment-window .puzzle-hat-shop-link .puzzle-hat-icon {
+      width: 134px !important; height: 67px !important;
+    }
+    @media (max-width: 768px) {
+      .parchment-window .puzzle-hat-shop-link .puzzle-hat-icon {
+        width: 98px !important; height: 49px !important;
+      }
+    }
+
+    /* ---- Puzzle question display ---- */
+    .puzzle-question-box {
+      background: rgba(122, 18, 35, 0.06);
+      border: 1.5px solid rgba(122, 18, 35, 0.18);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      font-family: var(--font-story);
+      font-size: 1.45rem;
+      line-height: 1.75;
+      color: var(--parchment-ink);
+      font-style: italic;
+      text-align: center;
+    }
+
+    /* ---- Hint log below input ---- */
+    #hint-log {
+      display: none;
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      background: rgba(240, 207, 101, 0.08);
+      border: 1px dashed rgba(197, 155, 39, 0.4);
+      border-radius: 6px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .hint-log-item {
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-start;
+      padding: 0.35rem 0;
+      border-bottom: 1px dashed rgba(138, 19, 39, 0.1);
+      font-family: var(--font-story);
+      font-size: 0.95rem;
+      color: var(--parchment-ink);
+    }
+    .hint-log-item:last-child { border-bottom: none; }
+    .hint-log-number {
+      white-space: nowrap;
+      font-weight: 700;
+      color: #7a3010;
+      flex-shrink: 0;
+    }
+    .hint-log-text { font-style: italic; }
+
+    /* ---- Locked tab style ---- */
+    .puzzle-tab-btn.locked {
+      opacity: 0.42;
+      cursor: not-allowed;
+      border-color: rgba(100, 100, 100, 0.3);
+    }
+    .puzzle-tab-btn.locked:hover {
+      transform: none;
+      background: rgba(20, 14, 26, 0.85);
+      border-color: rgba(100, 100, 100, 0.3);
+      color: var(--color-lavender-bright);
+    }
+
+    /* ---- Queen's Forbidden Gate Banner & Card Styles ---- */
+    .gate-challenge-banner {
+      background: rgba(20, 14, 26, 0.9);
+      border: 1.5px solid var(--color-gold-antique);
+      border-radius: 8px;
+      padding: 0.9rem 1.4rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.25rem;
+      box-shadow: var(--shadow-gothic-md);
+      backdrop-filter: blur(8px);
+    }
+    .gate-banner-content {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .gate-banner-icon {
+      font-size: 2.2rem;
+    }
+    .gate-banner-title {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      color: var(--color-gold-bright);
+      margin: 0 0 0.25rem 0;
+      letter-spacing: 0.5px;
+    }
+    .gate-banner-text {
+      font-family: var(--font-story);
+      font-size: 0.95rem;
+      color: #ede1cb;
+      margin: 0;
+      font-style: italic;
+    }
+    .narrative-clue {
+      background: rgba(240, 207, 101, 0.1);
+      border-left: 3px solid #c59b27;
+      padding: 0.75rem 1.2rem;
+      margin: 1.25rem 0;
+      border-radius: 4px;
+      font-family: var(--font-story);
+      font-size: 1.05rem;
+      color: #5a3010;
+      line-height: 1.5;
+    }
+    .gate-status-card {
+      background: #fdf8ef;
+      border: 1.5px dashed #c4ab85;
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      justify-content: space-around;
+      align-items: center;
+    }
+    .gate-status-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+    }
+    .gate-status-label {
+      font-weight: 700;
+      color: #6a4020;
+    }
+    .gate-status-val.status-locked {
+      color: #8a1327;
+      font-weight: 700;
+      background: rgba(138, 19, 39, 0.1);
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+    }
+    .gate-status-val.status-granted {
+      color: #25612c;
+      font-weight: 700;
+      background: rgba(37, 97, 44, 0.12);
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+    }
+    .gate-status-val.status-denied {
+      color: #8a1327;
+      font-weight: 700;
+    }
+    .gate-action-container {
+      display: flex;
+      justify-content: center;
+      margin: 1.5rem 0;
+    }
+    .gate-unlock-btn {
+      font-size: 1.15rem;
+      padding: 0.85rem 2rem;
+    }
+    .gate-success-panel {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      animation: fadeIn 0.4s ease;
+    }
+    .flag-container-card {
+      background: #f3f9f3;
+      border: 2px solid #3c8d45;
+      border-radius: 8px;
+      padding: 1.25rem 1.75rem;
+      box-shadow: 0 4px 12px rgba(45, 106, 52, 0.15);
+    }
+    .flag-card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .flag-crown-icon {
+      font-size: 1.8rem;
+    }
+    .flag-card-title {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      color: #1e5a26;
+      margin: 0;
+      letter-spacing: 0.5px;
+    }
+    .flag-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      background: #fff;
+      border: 1px solid #94cb9b;
+      padding: 0.85rem 1.25rem;
+      border-radius: 6px;
+    }
+    .flag-label {
+      font-family: var(--font-story);
+      font-weight: 700;
+      color: #2a522e;
+    }
+    .flag-code {
+      font-family: var(--font-mono);
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0e4b17;
+      background: rgba(37, 97, 44, 0.08);
+      padding: 0.3rem 0.75rem;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    }
+    .educational-feedback-card {
+      background: #fffdf5;
+      border: 1.5px solid #d4af37;
+      border-left: 5px solid #8a1327;
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+    }
+    .edu-title {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      color: #7a1223;
+      margin: 0 0 0.5rem 0;
+      letter-spacing: 0.5px;
+    }
+    .edu-text {
+      font-family: var(--font-story);
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: #3e2815;
+      margin: 0;
+    }
+    .gate-tab-btn {
+      border-color: rgba(197, 155, 39, 0.6) !important;
+      color: var(--color-gold-bright) !important;
+      font-weight: 700;
+    }
+    .gate-tab-btn.active {
+      background: rgba(122, 18, 35, 0.85) !important;
+      border-color: var(--color-gold-bright) !important;
+    }
+  </style>
+</head>
+<body class="puzzle-room-body" data-base-path="../../">
+
+  <!-- Mount Point for Shared Header Navigation -->
+  <header id="wonder-header-mount"></header>
+
+  <!-- Ambient Floating Playing Cards -->
+  <div class="floating-card-decor heart"    style="top: 14%; left: 18%; transform: rotate(-12deg);"><span>A♥</span><span style="align-self:flex-end;">♥A</span></div>
+  <div class="floating-card-decor spade"   style="top: 22%; right: 19%; transform: rotate(18deg);"><span>K♠</span><span style="align-self:flex-end;">♠K</span></div>
+  <div class="floating-card-decor diamond" style="bottom: 18%; left: 24%; transform: rotate(8deg);"><span>Q♦</span><span style="align-self:flex-end;">♦Q</span></div>
+  <div class="floating-card-decor club"    style="bottom: 25%; right: 22%; transform: rotate(-15deg);"><span>J♣</span><span style="align-self:flex-end;">♣J</span></div>
+
+  <!-- Queen of Hearts -->
+  <aside class="queen-character-wrapper character-sprite" id="queen-sprite" title="Click to provoke Her Majesty's royal wrath">
+    <img src="../../assets/images/characters/queen.png" alt="The Queen of Hearts">
+    <div class="character-tag">Her Imperial Majesty</div>
+  </aside>
+
+  <!-- Queen's Speech Bubble -->
+  <div class="dialogue-bubble bubble-queen" id="queen-bubble" role="dialog" aria-live="polite">
+    <div class="dialogue-bubble-header">
+      <span class="dialogue-speaker-name">Queen of Hearts</span>
+      <button class="dialogue-close-btn" aria-label="Close speech bubble">&times;</button>
+    </div>
+    <div class="dialogue-bubble-text">"Off with their passwords! You dare enter my royal sanctuary?"</div>
+  </div>
+
+  <!-- White Rabbit -->
+  <aside class="rabbit-character-wrapper character-sprite" id="rabbit-sprite" title="Click the White Rabbit for a hint!">
+    <img src="../../assets/images/characters/white-rabbit.png" alt="The White Rabbit">
+    <div class="character-tag">The White Rabbit (Click for a hint!)</div>
+  </aside>
+
+  <!-- White Rabbit's Speech Bubble -->
+  <div class="dialogue-bubble bubble-rabbit" id="rabbit-bubble" role="dialog" aria-live="polite">
+    <div class="dialogue-bubble-header">
+      <span class="dialogue-speaker-name">White Rabbit</span>
+      <button class="dialogue-close-btn" aria-label="Close speech bubble">&times;</button>
+    </div>
+    <div class="dialogue-bubble-text">"Oh dear, oh dear! You'll need my hints — click on me!"</div>
+  </div>
+
+  <!-- Main Puzzle Stage -->
+  <main class="puzzle-stage-container">
+    <div class="puzzle-main-content">
+
+      <!-- Chamber switcher bar -->
+      <nav class="difficulty-switcher-bar" aria-label="Current Chamber">
+        <span class="diff-btn active" style="cursor:default;" title="Active Chamber: Easy">
+          <span>🌿</span> Easy Chamber
+        </span>
+        <a href="../../puzzles.html" class="diff-hub-btn" title="Return to Castle Grand Hall">
+          <span>🏰</span> Change Difficulty
+        </a>
+      </nav>
+
+      <!-- Queen's Forbidden Gate challenge now lives on the landing page as
+           the checkIsSolved() helper. The chamber itself only hosts riddles. -->
+
+      <!-- Puzzle Tabs Bar -->
+      <div class="puzzle-tabs-bar" id="puzzle-tabs" role="tablist" aria-label="Puzzle Navigator">
+        <!-- Tabs rendered by WonderPuzzleEngine from the backend catalogue -->
+      </div>
+
+      <!-- Parchment Window -->
+      <article class="parchment-window" id="main-parchment-window" style="position:relative;">
+
+        <!-- Riddle View (Chamber Riddles I–V) -->
+        <div id="riddle-view">
+          <header class="parchment-header">
+            <div>
+              <div class="parchment-meta">
+                <span class="puzzle-number-badge" id="puzzle-number-badge">I</span>
+                <span class="puzzle-difficulty-tag" id="puzzle-difficulty-tag">Easy · Riddle</span>
+              </div>
+              <h1 class="parchment-title" id="puzzle-title">Loading…</h1>
+            </div>
+            <div class="parchment-reward" id="puzzle-reward-pts">+50 Sovereigns</div>
+          </header>
+
+          <div class="parchment-body">
+
+            <!-- Question -->
+            <div class="puzzle-question-box" id="puzzle-question-text">
+              Loading puzzle…
+            </div>
+
+            <!-- Answer Form -->
+            <form id="puzzle-solution-form" autocomplete="off" style="margin-bottom:0;">
+              <div class="puzzle-answer-row">
+                <input
+                  type="text"
+                  id="puzzle-answer-input"
+                  class="puzzle-answer-input"
+                  placeholder="Type your answer here…"
+                  aria-label="Your answer"
+                  autocomplete="off"
+                  spellcheck="false"
+                >
+                <button type="submit" id="submit-answer-btn" class="btn-victorian btn-crimson puzzle-submit-btn">
+                  Propose Solution
+                </button>
+              </div>
+
+              <!-- Feedback Banner -->
+              <div id="puzzle-feedback" class="feedback-banner" style="display:none;" role="alert" aria-live="polite"></div>
+
+              <!-- Hint log — accumulates each revealed hint -->
+              <div id="hint-log" aria-live="polite" aria-label="Revealed hints"></div>
+
+              <!-- Hint / shop quick bar -->
+              <div class="hints-quick-bar">
+                <button type="button" id="rabbit-hint-btn" class="rabbit-hint-btn" title="Ask the White Rabbit for a hint">
+                  🐇 Ask the White Rabbit for a Hint
+                </button>
+                <a href="../../mad-hatter.html?from=easy" class="hatter-shop-link" title="Visit Mad Hatter's Tea Shop">
+                  🎩 Visit Shop
+                </a>
+              </div>
+            </form>
+
+          </div><!-- .parchment-body -->
+        </div><!-- #riddle-view -->
+
+        <!-- Hat shop icon -->
+        <a href="../../mad-hatter.html?from=easy" class="puzzle-hat-shop-link" title="Visit Mad Hatter's Tea Shop">
+          <img src="../../assets/images/ui/hat.png" alt="Mad Hatter's Hat" class="puzzle-hat-icon">
+          <span class="character-tag">Visit Shop 🎩</span>
+        </a>
+
+      </article><!-- .parchment-window -->
+
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script src="../../js/main.js?v=21"></script>
+  <script src="../../js/characters.js?v=19"></script>
+  <script src="../../js/session.js?v=9"></script>
+  <script src="../../js/check-is-solved.js?v=4"></script>
+  <script src="../../js/puzzle-engine.js?v=21"></script>
+  <script src="../../js/chamber.js?v=1"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      WonderUI.initHeader('puzzles', '../../');
+    });
+  </script>
+</body>
+</html>

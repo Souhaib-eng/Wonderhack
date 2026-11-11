@@ -1,0 +1,50 @@
+======================================================================================
+WONDERHACK — VALID ACCOUNT REGISTRY (DEBUG COPY)
+======================================================================================
+Generated: 2026-11-09 11:45:52 UTC
+Database:  db/wonderhack.db
+Accounts:  2
+
+!! DEBUG FILE — CONTAINS PLAINTEXT PASSWORDS. DO NOT PUBLISH OR COMMIT. !!
+
+Login accepts either the Username or the Display Name (case-insensitive).
+
+--------------------------------------------------------------------------------------
+USERNAME           DISPLAY NAME               COINS  PASSWORD
+--------------------------------------------------------------------------------------
+admin              The Court Administrator      850  WonderAdmin2026!
+hearts_queen       The Heart's Queen              0  hearts_and_tarts_2026
+--------------------------------------------------------------------------------------
+
+ACCOUNT DETAILS
+--------------------------------------------------------------------------------------
+Username:       admin
+Display name:   The Court Administrator
+Role:           Court Administrator (Admin)
+Character:      admin
+Coins (Total):  850
+  - Easy:       50
+  - Medium:     0
+  - Hard:       800
+Email:          admin@wonderhack.local
+Solved puzzles: 5
+Purchased hints:0
+Password:       WonderAdmin2026!
+
+Username:       hearts_queen
+Display name:   The Heart's Queen
+Role:           The Heart's Queen — Sovereign of the Rose Court
+Character:      queen
+Coins (Total):  0
+  - Easy:       0
+  - Medium:     0
+  - Hard:       0
+Email:          heartsqueen@court.hearts.gov
+Solved puzzles: 0
+Purchased hints:0
+Password:       hearts_and_tarts_2026
+
+Newly registered players have salted PBKDF2 hashes only; their plaintext
+passwords are not stored and cannot be listed here.
+Re-run: python3 db/export_accounts.py
+======================================================================================

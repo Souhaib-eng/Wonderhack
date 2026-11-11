@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Mad Hatter Top Hat -->
+  <path d="M12 48 C16 45 48 45 52 48 C56 50 56 53 50 55 C42 57 22 57 14 55 C8 53 8 50 12 48 Z" fill="#2d1f14" stroke="#c59b27" stroke-width="2"/>
+  <path d="M18 46 L21 16 C21 14 43 14 43 16 L46 46 Z" fill="#3b2b1e" stroke="#c59b27" stroke-width="2"/>
+  <ellipse cx="32" cy="16" rx="11" ry="3" fill="#4a3727" stroke="#c59b27" stroke-width="1.5"/>
+  <!-- Hat band -->
+  <path d="M19.5 41 C24 39 40 39 44.5 41 L45.2 46 C41 44 23 44 18.8 46 Z" fill="#8b1527" stroke="#c59b27" stroke-width="1"/>
+  <!-- 10/6 Card tucked in brim -->
+  <rect x="36" y="24" width="12" height="15" rx="1" transform="rotate(15 42 31)" fill="#f5eedc" stroke="#3b2b1e" stroke-width="1"/>
+  <text x="39" y="34" font-family="'Cinzel', Georgia, serif" font-size="6" font-weight="bold" fill="#8b1527" transform="rotate(15 39 34)">10/6</text>
+</svg>

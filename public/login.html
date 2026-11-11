@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Royal Gatekeeper Login — WonderHack</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/menu.css">
+  <link rel="stylesheet" href="css/puzzles.css">
+  <link rel="icon" type="image/svg+xml" href="assets/images/ui/antique-key.svg">
+  <style>
+    .login-container {
+      max-width: 620px;
+      width: 100%;
+      margin: 0 auto;
+      padding: calc(var(--nav-height) + 1.5rem) 1.25rem 4rem 1.25rem;
+      position: relative;
+      z-index: 20;
+    }
+
+    .login-parchment {
+      background-color: #fbf5e6 !important;
+      background-image: 
+        radial-gradient(circle at 10% 10%, rgba(212, 175, 55, 0.12) 0%, transparent 60%),
+        radial-gradient(circle at 90% 90%, rgba(138, 19, 39, 0.08) 0%, transparent 60%);
+      border: 3px solid #8c6d3b;
+      box-shadow: 
+        0 0 0 4px #2b1828,
+        0 0 0 8px #c59b27,
+        0 25px 60px rgba(0, 0, 0, 0.95);
+      border-radius: 8px;
+      padding: 2.25rem 2rem;
+      position: relative;
+    }
+
+    .chamber-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(197, 155, 39, 0.5);
+      background: #2b1828;
+      color: var(--color-gold-bright);
+    }
+
+    .login-feedback {
+      display: none;
+      padding: 0.75rem 1rem;
+      border-radius: 4px;
+      margin-bottom: 1.2rem;
+      font-family: var(--font-story);
+      font-size: 1rem;
+      line-height: 1.4;
+    }
+
+    .login-feedback.error {
+      display: block;
+      background: #fde8e8;
+      color: #9b1c1c;
+      border: 1px solid #f8b4b4;
+    }
+
+    .login-feedback.success {
+      display: block;
+      background: #def7ec;
+      color: #03543f;
+      border: 1px solid #84e1bc;
+    }
+
+    /* Login / Register mode switch */
+    .auth-mode-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .auth-mode-tab {
+      flex: 1;
+      padding: 0.65rem 0.5rem;
+      border: 2px solid #c4ab85;
+      border-radius: 6px;
+      background: #f3e9d0;
+      color: #6b4c3a;
+      font-family: var(--font-display);
+      font-size: 0.92rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: var(--transition-gentle);
+    }
+
+    .auth-mode-tab:hover {
+      border-color: var(--color-gold-bright);
+    }
+
+    .auth-mode-tab.active {
+      background: #7a1223;
+      border-color: var(--color-gold-antique);
+      color: var(--color-gold-bright);
+      box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.35);
+    }
+
+    .auth-hint {
+      margin: 1rem 0 0 0;
+      font-family: var(--font-story);
+      font-size: 0.9rem;
+      line-height: 1.45;
+      color: #6d5345;
+      text-align: center;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body class="puzzle-room-body">
+
+  <!-- Mount Point for Shared Header Navigation -->
+  <header id="wonder-header-mount"></header>
+
+  <!-- Ambient Floating Playing Cards -->
+  <div class="floating-card-decor heart" style="top: 14%; left: 18%; transform: rotate(-12deg);">
+    <span>A♥</span><span style="align-self: flex-end;">♥A</span>
+  </div>
+  <div class="floating-card-decor spade" style="top: 22%; right: 19%; transform: rotate(18deg);">
+    <span>K♠</span><span style="align-self: flex-end;">♠K</span>
+  </div>
+
+  <!-- Queen of Hearts (Left Character Sprite - ENLARGED) -->
+  <aside class="queen-character-wrapper character-sprite" id="queen-sprite" title="Click to hear Her Majesty's Gate Decree">
+    <img src="assets/images/characters/queen.png" alt="The Queen of Hearts, screaming in royal fury">
+    <div class="character-tag">Her Imperial Majesty</div>
+  </aside>
+
+  <!-- Queen's Speech Bubble -->
+  <div class="dialogue-bubble bubble-queen" id="queen-bubble" role="dialog" aria-live="polite">
+    <div class="dialogue-bubble-header">
+      <span class="dialogue-speaker-name">Queen of Hearts</span>
+      <button class="dialogue-close-btn" aria-label="Close speech bubble">&times;</button>
+    </div>
+    <div class="dialogue-bubble-text">“Halt! Name yourself in Her Majesty's database, or face the executioner!”</div>
+  </div>
+
+  <!-- White Rabbit (Right Character Sprite) -->
+  <aside class="rabbit-character-wrapper character-sprite" id="rabbit-sprite" title="Click the White Rabbit for login advice">
+    <img src="assets/images/characters/white-rabbit.png" alt="The White Rabbit in waistcoat consulting his pocket watch">
+    <div class="character-tag">The White Rabbit</div>
+  </aside>
+
+  <!-- White Rabbit's Speech Bubble -->
+  <div class="dialogue-bubble bubble-rabbit" id="rabbit-bubble" role="dialog" aria-live="polite">
+    <div class="dialogue-bubble-header">
+      <span class="dialogue-speaker-name">White Rabbit</span>
+      <button class="dialogue-close-btn" aria-label="Close speech bubble">&times;</button>
+    </div>
+    <div class="dialogue-bubble-text">“Oh dear, oh dear! Look at the pocket watch! Present your royal credentials to proceed!”</div>
+  </div>
+
+  <!-- Main Login Parchment Stage -->
+  <main class="login-container">
+    <article class="login-parchment">
+      
+      <!-- Chamber Difficulty Badge -->
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+        <div class="chamber-indicator" id="target-chamber-badge">
+          <span>🌿</span> <span id="target-chamber-name">Easy Chamber Selected</span>
+        </div>
+        <a href="puzzles.html" style="font-family: var(--font-story); color:#7a1223; font-weight:bold; font-size:0.95rem; text-decoration:none;">
+          ← Change Difficulty
+        </a>
+      </div>
+
+      <header style="text-align: center; margin-bottom: 1.5rem;">
+        <h1 style="font-family: var(--font-display); font-size: 1.9rem; color: #7a1223; margin: 0 0 0.5rem 0; letter-spacing: 1px;">
+          Castle Gatekeeper Login
+        </h1>
+        <p style="font-family: var(--font-story); font-size: 1.1rem; color: #5a4032; margin: 0;">
+          Authenticate against Her Majesty's database registry to proceed into the chamber.
+        </p>
+      </header>
+
+      <!-- Feedback Alert Banner -->
+      <div class="login-feedback" id="login-feedback-alert"></div>
+
+      <!-- Login / Register mode switch -->
+      <div class="auth-mode-tabs" role="tablist" aria-label="Account access mode">
+        <button type="button" class="auth-mode-tab active" data-mode="login" role="tab" aria-selected="true">
+          🗝️ Enter the Court
+        </button>
+        <button type="button" class="auth-mode-tab" data-mode="register" role="tab" aria-selected="false">
+          ✒️ Register a Courtier
+        </button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="gatekeeper-login-form" autocomplete="on">
+        <div style="margin-bottom: 1.25rem;">
+          <label for="login-username-input" style="display: block; font-family: var(--font-story); font-weight: bold; font-size: 1.05rem; margin-bottom: 0.35rem; color: var(--parchment-ink);">
+            Royal Username:
+          </label>
+          <input 
+            type="text" 
+            id="login-username-input" 
+            class="parchment-input" 
+            placeholder="Enter your username"
+            autocomplete="username"
+            maxlength="24"
+            required
+            style="width: 100%; font-size: 1.05rem;"
+          >
+        </div>
+
+        <!-- Registration-only fields -->
+        <div id="register-only-fields" style="display: none;">
+          <div style="margin-bottom: 1.25rem;">
+            <label for="register-display-name" style="display: block; font-family: var(--font-story); font-weight: bold; font-size: 1.05rem; margin-bottom: 0.35rem; color: var(--parchment-ink);">
+              Display Name (shown on your court dossier):
+            </label>
+            <input 
+              type="text" 
+              id="register-display-name" 
+              class="parchment-input" 
+              placeholder="e.g. The Curious Hacker"
+              autocomplete="nickname"
+              maxlength="32"
+              style="width: 100%; font-size: 1.05rem;"
+            >
+          </div>
+          <div style="margin-bottom: 1.25rem;">
+            <label for="register-email" style="display: block; font-family: var(--font-story); font-weight: bold; font-size: 1.05rem; margin-bottom: 0.35rem; color: var(--parchment-ink);">
+              Court Telegraph / Email (optional):
+            </label>
+            <input 
+              type="email" 
+              id="register-email" 
+              class="parchment-input" 
+              placeholder="you@realm.example"
+              autocomplete="email"
+              style="width: 100%; font-size: 1.05rem;"
+            >
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem;">
+          <label for="login-password-input" style="display: block; font-family: var(--font-story); font-weight: bold; font-size: 1.05rem; margin-bottom: 0.35rem; color: var(--parchment-ink);">
+            Royal Passphrase:
+          </label>
+          <input 
+            type="password" 
+            id="login-password-input" 
+            class="parchment-input" 
+            placeholder="Enter royal passphrase"
+            autocomplete="current-password"
+            maxlength="128"
+            required
+            style="width: 100%; font-size: 1.05rem;"
+          >
+        </div>
+
+        <button type="submit" class="btn-victorian btn-crimson" id="login-submit-btn" style="width: 100%; padding: 0.85rem; font-size: 1.1rem;">
+          <span id="auth-submit-label">Verify Identity & Enter Chamber ➔</span>
+        </button>
+      </form>
+
+      <div class="oauth-section" id="oauth-section" hidden>
+        <div class="auth-divider" aria-hidden="true"><span>or</span></div>
+        <a class="btn-victorian btn-secondary oauth-btn" id="oauth-btn" href="/api/oauth/start">
+          <span aria-hidden="true">🎭</span>
+          <span id="oauth-provider-label">Sign in with Wonderland SSO</span>
+        </a>
+        <p class="oauth-hint">
+          Single sign-on creates or restores your court account without a local passphrase.
+        </p>
+      </div>
+
+      <p class="auth-hint" id="auth-mode-hint">
+        Your coins and solved enigmas are saved to this account on Her Majesty's server.
+        <br>Court credentials are issued by the Court Administrator.
+      </p>
+
+    </article>
+  </main>
+
+  <!-- Core Scripts -->
+  <script src="js/main.js?v=21"></script>
+  <script src="js/characters.js"></script>
+  <script src="js/session.js?v=9"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      WonderUI.initHeader('puzzles');
+
+      // 1. Determine selected difficulty from URL query param
+      const urlParams = new URLSearchParams(window.location.search);
+      const rawDiff = (urlParams.get('difficulty') || '').toLowerCase();
+      if (!['easy', 'medium', 'hard'].includes(rawDiff)) {
+        // Must choose difficulty first from the options page
+        window.location.replace('puzzles.html');
+        return;
+      }
+      const diff = rawDiff;
+
+      // Remember the choice and tell the backend immediately; the Queen's
+      // answer scroll shows the flag for the selected difficulty.
+      try { localStorage.setItem('wonderhack_last_difficulty', diff); } catch (e) {}
+      if (typeof WonderSession !== 'undefined' && WonderSession.selectDifficulty) {
+        try { await WonderSession.selectDifficulty(diff); } catch (e) {}
+      }
+
+      const diffMetadata = {
+        easy: {
+          name: 'Easy Chamber (The Garden Gate)',
+          icon: '🌿',
+          dest: 'challenges/easy/index.html'
+        },
+        medium: {
+          name: 'Medium Chamber (The Royal Court)',
+          icon: '⚔️',
+          dest: 'challenges/medium/index.html'
+        },
+        hard: {
+          name: 'Hard Chamber (The Queen\'s Inner Sanctum)',
+          icon: '👑',
+          dest: 'challenges/hard/index.html'
+        }
+      };
+
+      const meta = diffMetadata[diff];
+      document.getElementById('target-chamber-badge').innerHTML = `<span>${meta.icon}</span> <span>${meta.name}</span>`;
+      document.title = `Login: ${meta.name} — WonderHack`;
+
+      // 2. Restore an existing server session (if the cookie is still valid)
+      let alreadySignedIn = false;
+      try {
+        alreadySignedIn = await WonderSession.boot();
+      } catch (e) {}
+
+      // 3. Characters Dialogue Bindings
+      const queenSprite = document.getElementById('queen-sprite');
+      if (queenSprite) {
+        queenSprite.onclick = () => {
+          WonderCharacters.triggerQueenTaunt("“Present your royal credentials! No impostors allowed in Her Majesty's chambers!”");
+        };
+      }
+      const rabbitSprite = document.getElementById('rabbit-sprite');
+      if (rabbitSprite) {
+        rabbitSprite.onclick = () => {
+          WonderCharacters.triggerRabbitTip("“Hurry! Speak your name and secret passphrase to enter the trial chambers!”");
+        };
+      }
+
+      // 4. Login / Register form behaviour
+      const form = document.getElementById('gatekeeper-login-form');
+      const userInput = document.getElementById('login-username-input');
+      const passInput = document.getElementById('login-password-input');
+      const displayInput = document.getElementById('register-display-name');
+      const emailInput = document.getElementById('register-email');
+      const registerFields = document.getElementById('register-only-fields');
+      const submitLabel = document.getElementById('auth-submit-label');
+      const feedback = document.getElementById('login-feedback-alert');
+      const hint = document.getElementById('auth-mode-hint');
+      const submitBtn = document.getElementById('login-submit-btn');
+      const tabs = Array.from(document.querySelectorAll('.auth-mode-tab'));
+
+      // Surface an OAuth callback result before the player starts typing.
+      const oauthParam = (urlParams.get('oauth') || '').toLowerCase();
+      const oauthMessages = {
+        disabled: 'Single sign-on is not configured on this server.',
+        denied: 'The identity provider declined the sign-in request.',
+        invalid_state: 'The single sign-on response could not be verified. Please try again.',
+        provider_error: 'The identity provider could not be reached. Please try again.',
+        invalid_profile: 'The identity provider did not return a usable account.',
+        account_error: 'That single sign-on account could not be linked. Please contact the Court Administrator.',
+      };
+      if (oauthMessages[oauthParam]) {
+        feedback.textContent = oauthMessages[oauthParam];
+        feedback.className = 'login-feedback error';
+        feedback.style.display = 'block';
+      }
+
+      // Show the provider button only when the server has a complete OAuth config.
+      try {
+        const oauth = await WonderSession.oauthStatus();
+        if (oauth.ok && oauth.enabled) {
+          const section = document.getElementById('oauth-section');
+          const label = document.getElementById('oauth-provider-label');
+          const link = document.getElementById('oauth-btn');
+          if (section) section.hidden = false;
+          if (label) label.textContent = `Sign in with ${oauth.provider || 'Wonderland SSO'}`;
+          if (link) link.href = oauth.startUrl || '/api/oauth/start';
+        }
+      } catch (e) {
+        console.info('WonderSession: OAuth status unavailable.', e);
+      }
+
+      let mode = 'login';
+
+      function setMode(nextMode) {
+        mode = nextMode;
+        tabs.forEach(tab => {
+          const active = tab.dataset.mode === mode;
+          tab.classList.toggle('active', active);
+          tab.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+
+        registerFields.style.display = mode === 'register' ? 'block' : 'none';
+        submitLabel.textContent = mode === 'register'
+          ? 'Register Courtier & Enter Chamber ➔'
+          : 'Verify Identity & Enter Chamber ➔';
+        passInput.autocomplete = mode === 'register' ? 'new-password' : 'current-password';
+        if (mode === 'register') {
+          passInput.setAttribute('minlength', '6');
+        } else {
+          passInput.removeAttribute('minlength');
+        }
+        hint.innerHTML = mode === 'register'
+          ? 'Choose a unique username. Coins are awarded by the server and saved to your new account.'
+          : 'Your coins and solved enigmas are saved to this account on Her Majesty\'s server.<br>Court credentials are issued by the Court Administrator.';
+
+        feedback.className = 'login-feedback';
+        feedback.style.display = 'none';
+        (mode === 'register' ? displayInput : userInput).focus();
+      }
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => setMode(tab.dataset.mode));
+      });
+
+      if (alreadySignedIn) {
+        const current = WonderSession.currentUser();
+        if (current) {
+          feedback.textContent = `✓ Already signed in as ${current.displayName || current.username}. Submitting will switch accounts.`;
+          feedback.className = 'login-feedback success';
+          feedback.style.display = 'block';
+        }
+      }
+
+      async function attemptAuth(username, password) {
+        feedback.className = 'login-feedback';
+        feedback.style.display = 'none';
+
+        if (typeof WonderSession === 'undefined') {
+          feedback.textContent = 'Session client failed to load. Please refresh the page.';
+          feedback.className = 'login-feedback error';
+          feedback.style.display = 'block';
+          return false;
+        }
+
+        submitBtn.disabled = true;
+        submitLabel.textContent = mode === 'register' ? 'Registering with the Court…' : 'Consulting the Royal Registry…';
+
+        let result;
+        if (mode === 'register') {
+          result = await WonderSession.register({
+            username,
+            password,
+            displayName: displayInput.value.trim() || username,
+            email: emailInput.value.trim()
+          });
+        } else {
+          result = await WonderSession.login(username, password);
+        }
+
+        submitBtn.disabled = false;
+        submitLabel.textContent = mode === 'register'
+          ? 'Register Courtier & Enter Chamber ➔'
+          : 'Verify Identity & Enter Chamber ➔';
+
+        if (!result || !result.success) {
+          feedback.textContent = (result && result.error) || 'Authentication failed.';
+          feedback.className = 'login-feedback error';
+          feedback.style.display = 'block';
+          WonderAudio.playGong();
+          return false;
+        }
+
+        // Success — the server has set the HttpOnly wh_session cookie.
+        const name = result.user.displayName || result.user.display_name || username;
+        const isQueen = result.user.isQueen === true
+          || (result.user.username || '').toLowerCase() === 'hearts_queen';
+
+        if (isQueen) {
+          feedback.textContent = `♛ Her Majesty ${name} has returned. Unrolling the royal answer scroll…`;
+          feedback.className = 'login-feedback success';
+          feedback.style.display = 'block';
+          WonderAudio.playChime();
+          setTimeout(() => { window.location.href = 'royal-answers.html'; }, 900);
+          return true;
+        }
+
+        feedback.textContent = mode === 'register'
+          ? `✓ Courtier registered! Welcome, ${name}. Your account is ready. Entering ${meta.name}…`
+          : `✓ Court Access Granted! Welcome, ${name}. Entering ${meta.name}…`;
+        feedback.className = 'login-feedback success';
+        feedback.style.display = 'block';
+        WonderAudio.playChime();
+
+        try { localStorage.setItem('wonderhack_last_difficulty', diff); } catch (e) {}
+
+        setTimeout(() => { window.location.href = meta.dest; }, 800);
+        return true;
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = userInput.value.trim();
+        const password = passInput.value;
+        if (!username || !password) return;
+        if (mode === 'register' && password.length < 6) {
+          feedback.textContent = 'The royal passphrase must be at least 6 characters.';
+          feedback.className = 'login-feedback error';
+          feedback.style.display = 'block';
+          passInput.focus();
+          return;
+        }
+        await attemptAuth(username, password);
+      });
+
+      // Auto-focus username
+      userInput.focus();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,402 @@
+/* ==========================================================================
+   WONDERHACK — The Queen's Answer Scroll
+   Crimson, gold and parchment styles for the sovereign's private answer key.
+   ========================================================================== */
+
+.ra-stage {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: calc(var(--nav-height) + 2rem) 1.5rem 4.5rem;
+  position: relative;
+  z-index: 5;
+}
+
+.ra-container {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+/* ── Hero banner ──────────────────────────────────────────────────────────── */
+
+.ra-hero {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 2rem 2rem 1.65rem;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(138, 19, 39, 0.35) 0%, transparent 65%),
+    rgba(20, 10, 28, 0.94) !important;
+  border: 2px solid var(--color-gold-antique);
+  border-radius: 8px;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.85), inset 0 0 34px rgba(138, 19, 39, 0.22);
+  position: relative;
+  overflow: hidden;
+}
+
+.ra-hero::before,
+.ra-hero::after {
+  content: '♥';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(184, 29, 56, 0.5);
+  font-size: 2.4rem;
+}
+
+.ra-hero::before { left: 1.1rem; }
+.ra-hero::after  { right: 1.1rem; }
+
+.ra-crown {
+  font-size: 2.9rem;
+  line-height: 1;
+  color: var(--color-gold-bright);
+  text-shadow: 0 0 18px var(--color-gold-glow);
+  margin-bottom: 0.55rem;
+}
+
+.ra-hero-title {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  letter-spacing: 1.5px;
+  color: var(--color-gold-bright);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+  margin: 0 0 0.55rem 0;
+}
+
+.ra-hero-subtitle {
+  font-family: var(--font-story);
+  font-style: italic;
+  font-size: 1.08rem;
+  line-height: 1.6;
+  color: var(--color-lavender-bright);
+  max-width: 660px;
+  margin: 0 auto 1rem auto;
+}
+
+.ra-seal {
+  display: inline-block;
+  padding: 0.35rem 1.1rem;
+  border: 1px solid rgba(197, 155, 39, 0.55);
+  border-radius: 20px;
+  background: rgba(138, 19, 39, 0.35);
+  color: var(--color-gold-bright);
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  letter-spacing: 1.2px;
+}
+
+/* ── Shared parchment panels ──────────────────────────────────────────────── */
+
+.ra-parchment {
+  background-color: #fbf5e6 !important;
+  background-image:
+    radial-gradient(ellipse at 8% 8%, rgba(200, 160, 110, 0.18) 0%, transparent 52%),
+    radial-gradient(ellipse at 92% 88%, rgba(180, 140, 90, 0.2) 0%, transparent 54%),
+    repeating-linear-gradient(transparent, transparent 31px, rgba(160, 130, 90, 0.07) 32px);
+  border: 3px double var(--parchment-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-parchment);
+  padding: 2rem 2.25rem;
+  color: var(--parchment-ink);
+}
+
+/* ── Access gate ──────────────────────────────────────────────────────────── */
+
+.ra-gate {
+  text-align: center;
+  padding: 3.5rem 2.5rem;
+}
+
+.ra-gate-seal {
+  font-size: 3.4rem;
+  line-height: 1;
+  margin-bottom: 1rem;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
+}
+
+.ra-gate-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  letter-spacing: 1.5px;
+  color: #7a1223;
+  margin: 0 0 0.85rem 0;
+}
+
+.ra-gate-text {
+  font-family: var(--font-story);
+  font-style: italic;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: #5a4032;
+  max-width: 580px;
+  margin: 0 auto 2rem auto;
+}
+
+.ra-gate-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* ── Flag panel ───────────────────────────────────────────────────────────── */
+
+.ra-flag-panel {
+  margin-bottom: 1.75rem;
+  border-color: #8c6d3b;
+  box-shadow:
+    0 0 0 3px #2b1828,
+    0 0 0 6px #c59b27,
+    0 18px 44px rgba(0, 0, 0, 0.75);
+  background-color: #f6ecd6 !important;
+}
+
+.ra-flag-heading {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ra-flag-icon {
+  font-size: 2.4rem;
+  line-height: 1;
+  color: #7a1223;
+}
+
+.ra-flag-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: #7a1223;
+  letter-spacing: 1px;
+  margin: 0 0 0.2rem 0;
+}
+
+.ra-flag-note {
+  font-family: var(--font-story);
+  font-style: italic;
+  font-size: 0.98rem;
+  color: #6d5345;
+  margin: 0;
+}
+
+.ra-flag-difficulty {
+  color: #7a1223;
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.ra-flag-value {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  letter-spacing: 1px;
+  text-align: center;
+  color: var(--color-gold-bright);
+  background: #2b1828;
+  border: 2px solid #c59b27;
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.55);
+  word-break: break-all;
+}
+
+/* ── Difficulty sections & tables ─────────────────────────────────────────── */
+
+.ra-tables {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.ra-difficulty {
+  padding: 1.75rem 2rem 1.5rem;
+}
+
+.ra-diff-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid rgba(122, 18, 35, 0.35);
+}
+
+.ra-diff-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  letter-spacing: 0.5px;
+  color: #7a1223;
+  margin: 0;
+}
+
+.ra-diff-icon {
+  font-size: 1.4rem;
+}
+
+.ra-diff-suit {
+  color: #8a1327;
+  font-size: 1.2rem;
+}
+
+.ra-diff-count {
+  font-family: var(--font-story);
+  font-style: italic;
+  font-size: 0.95rem;
+  color: #6d5345;
+}
+
+.ra-table-wrap {
+  overflow-x: auto;
+}
+
+.ra-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-body);
+  font-size: 1.02rem;
+}
+
+.ra-table thead th {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--color-gold-bright);
+  background: linear-gradient(180deg, #7a1223 0%, #5c0d1a 100%);
+  border: 1px solid #4a0a14;
+  padding: 0.7rem 0.85rem;
+}
+
+.ra-table thead th:first-child { border-top-left-radius: 5px; }
+.ra-table thead th:last-child  { border-top-right-radius: 5px; }
+
+.ra-table tbody td {
+  padding: 0.8rem 0.85rem;
+  border: 1px solid rgba(140, 109, 59, 0.35);
+  vertical-align: top;
+}
+
+.ra-table tbody tr:nth-child(odd)  { background: rgba(255, 252, 244, 0.55); }
+.ra-table tbody tr:nth-child(even) { background: rgba(232, 220, 196, 0.45); }
+
+.ra-table tbody tr:hover {
+  background: rgba(240, 207, 101, 0.22);
+}
+
+.ra-td-id {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  color: #7a1223;
+  white-space: nowrap;
+  width: 3rem;
+}
+
+.ra-td-title {
+  min-width: 220px;
+}
+
+.ra-title {
+  font-family: var(--font-story);
+  font-weight: bold;
+  color: #3d2a24;
+  margin-bottom: 0.3rem;
+}
+
+.ra-question {
+  font-family: var(--font-story);
+  font-style: italic;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: #6d5345;
+}
+
+.ra-td-answer {
+  min-width: 220px;
+}
+
+.ra-answer-primary {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: bold;
+  color: #7a1223;
+  background: rgba(240, 207, 101, 0.28);
+  border: 1px solid rgba(197, 155, 39, 0.55);
+  border-radius: 4px;
+  padding: 0.15rem 0.55rem;
+}
+
+.ra-aliases {
+  margin-top: 0.35rem;
+  font-family: var(--font-story);
+  font-style: italic;
+  font-size: 0.88rem;
+  color: #6d5345;
+}
+
+.ra-td-points {
+  font-family: var(--font-mono);
+  font-weight: bold;
+  color: #7a1223;
+  text-align: right;
+  white-space: nowrap;
+  width: 6.5rem;
+}
+
+.ra-th-id,
+.ra-th-points {
+  width: 4.5rem;
+}
+
+.ra-th-points { text-align: right !important; }
+
+/* ── Status line ──────────────────────────────────────────────────────────── */
+
+.ra-status {
+  margin-top: 1.5rem;
+  text-align: center;
+  font-family: var(--font-story);
+  font-style: italic;
+  font-size: 1rem;
+  color: var(--color-lavender-bright);
+  min-height: 1.4em;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 760px) {
+  .ra-parchment {
+    padding: 1.5rem 1rem;
+  }
+
+  .ra-gate {
+    padding: 2.5rem 1.25rem;
+  }
+
+  .ra-hero-title {
+    font-size: 1.6rem;
+  }
+
+  .ra-hero::before,
+  .ra-hero::after {
+    display: none;
+  }
+
+  .ra-table {
+    font-size: 0.95rem;
+    min-width: 560px;
+  }
+
+  .ra-diff-title {
+    font-size: 1.15rem;
+  }
+}

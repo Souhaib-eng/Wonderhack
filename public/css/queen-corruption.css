@@ -1,0 +1,135 @@
+/* ==========================================================================
+   WONDERHACK — Queen's Corruption Effect
+   Applied to puzzles the Queen has corrupted with dark magic.
+   ========================================================================== */
+
+/* Wrapper that holds the corrupted question text */
+.queen-corrupted-question {
+  position: relative;
+  display: block;
+  color: #8b0000;
+  font-family: var(--font-mono, monospace);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  letter-spacing: 0.04em;
+  animation: corruption-flicker 0.12s infinite;
+  user-select: none;
+  pointer-events: none;
+  text-shadow:
+    2px 0  0 rgba(255, 0, 60, 0.6),
+   -2px 0  0 rgba(0, 200, 255, 0.4),
+    0  2px 0 rgba(255, 0, 60, 0.3);
+}
+
+/* Chromatic glitch before-pseudo layer */
+.queen-corrupted-question::before {
+  content: attr(data-glitch);
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  color: rgba(255, 0, 60, 0.55);
+  clip-path: inset(0 0 85% 0);
+  transform: translateX(-3px) skewX(-8deg);
+  animation: glitch-slice-top 2.4s infinite;
+  pointer-events: none;
+}
+
+.queen-corrupted-question::after {
+  content: attr(data-glitch);
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  color: rgba(0, 200, 255, 0.55);
+  clip-path: inset(70% 0 0 0);
+  transform: translateX(3px) skewX(6deg);
+  animation: glitch-slice-bottom 1.9s infinite;
+  pointer-events: none;
+}
+
+/* Flicker animation for the main text */
+@keyframes corruption-flicker {
+  0%   { opacity: 1; }
+  7%   { opacity: 0.85; transform: translateX(1px); }
+  8%   { opacity: 1; transform: translateX(0); }
+  54%  { opacity: 1; }
+  55%  { opacity: 0.9; transform: translateX(-1px) skewX(-2deg); }
+  56%  { opacity: 1; transform: none; }
+  100% { opacity: 1; }
+}
+
+/* Top slice glitch */
+@keyframes glitch-slice-top {
+  0%   { clip-path: inset(0 0 90% 0); transform: translateX(-3px); }
+  10%  { clip-path: inset(5% 0 80% 0); transform: translateX(3px) skewX(-10deg); }
+  20%  { clip-path: inset(0 0 95% 0); transform: translateX(-2px); }
+  30%  { clip-path: inset(10% 0 75% 0); transform: translateX(4px); }
+  50%  { clip-path: inset(0 0 90% 0); transform: translateX(0); }
+  70%  { clip-path: inset(2% 0 85% 0); transform: translateX(-3px) skewX(5deg); }
+  100% { clip-path: inset(0 0 90% 0); transform: translateX(-3px); }
+}
+
+/* Bottom slice glitch */
+@keyframes glitch-slice-bottom {
+  0%   { clip-path: inset(75% 0 0 0); transform: translateX(3px); }
+  15%  { clip-path: inset(80% 0 0 0); transform: translateX(-3px) skewX(8deg); }
+  35%  { clip-path: inset(70% 0 2% 0); transform: translateX(5px); }
+  60%  { clip-path: inset(78% 0 0 0); transform: translateX(-2px); }
+  85%  { clip-path: inset(72% 0 0 0); transform: translateX(4px) skewX(-6deg); }
+  100% { clip-path: inset(75% 0 0 0); transform: translateX(3px); }
+}
+
+/* Banner shown above a corrupted puzzle */
+.corruption-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: linear-gradient(135deg, rgba(80, 0, 0, 0.92), rgba(40, 0, 0, 0.95));
+  border: 2px solid #8b0000;
+  border-radius: 6px;
+  padding: 0.65rem 1rem;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 0 18px rgba(180, 0, 0, 0.5), inset 0 0 10px rgba(0,0,0,0.5);
+  animation: corruption-banner-pulse 2s ease-in-out infinite;
+}
+
+.corruption-banner-icon {
+  font-size: 1.4rem;
+  animation: corruption-flicker 0.18s infinite;
+  flex-shrink: 0;
+}
+
+.corruption-banner-text {
+  font-family: var(--font-display, serif);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  color: #ff4444;
+  text-shadow: 0 0 8px rgba(255, 50, 50, 0.8);
+  line-height: 1.4;
+}
+
+@keyframes corruption-banner-pulse {
+  0%, 100% { box-shadow: 0 0 18px rgba(180, 0, 0, 0.5), inset 0 0 10px rgba(0,0,0,0.5); }
+  50%       { box-shadow: 0 0 32px rgba(220, 0, 0, 0.8), inset 0 0 15px rgba(0,0,0,0.6); }
+}
+
+/* Input disabled state for corrupted puzzles */
+.corrupted-input-wrap {
+  position: relative;
+}
+
+.corrupted-input-wrap::after {
+  content: '👑 CORRUPTED BY THE QUEEN';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(60, 0, 0, 0.75);
+  color: #ff4444;
+  font-family: var(--font-display, serif);
+  font-size: 0.75rem;
+  letter-spacing: 0.15em;
+  border-radius: 4px;
+  pointer-events: none;
+  animation: corruption-flicker 0.15s infinite;
+}

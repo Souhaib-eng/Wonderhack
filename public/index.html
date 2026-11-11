@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>WonderHack: The Queen's Riddles</title>
+  <link rel="stylesheet" href="css/main.css?v=15">
+  <link rel="stylesheet" href="css/menu.css?v=2">
+  <link rel="icon" type="image/svg+xml" href="assets/images/ui/hatter-hat.svg">
+  <style>
+    /* Landing page: never show the account widget, even if an older cached script renders it. */
+    .menu-body .nav-profile,
+    .menu-body .nav-points-chip,
+    .menu-body .nav-logout-btn { display: none !important; }
+
+    /* The first page offers one choice only: begin the castle trial. */
+    .menu-body .nav-links { display: none !important; }
+
+    /* Long-form storybook lore */
+    .menu-lore {
+      text-align: left;
+      font-size: 1.08rem;
+      line-height: 1.75;
+      max-width: 760px;
+    }
+
+    .menu-lore p {
+      margin-bottom: 1rem;
+    }
+
+    .menu-lore > p:first-child::first-letter {
+      font-family: var(--font-display);
+      font-size: 3.4rem;
+      float: left;
+      line-height: 0.85;
+      padding: 0.1rem 0.55rem 0 0;
+      color: var(--color-gold-bright);
+    }
+
+    .menu-lore .lore-climax {
+      margin-top: 1.6rem;
+      text-align: center;
+      color: var(--color-gold-bright);
+      font-size: 1.15rem;
+    }
+
+    .menu-lore .lore-welcome {
+      margin-top: 1.2rem;
+      text-align: center;
+      font-size: 1.35rem;
+      color: var(--color-gold-bright);
+    }
+  </style>
+</head>
+<body class="menu-body">
+
+  <!-- Mount Point for Shared Header Navigation -->
+  <header id="wonder-header-mount"></header>
+
+  <main class="menu-stage">
+    
+    <!-- Victorian Storybook Opening -->
+    <article class="book-cover-container">
+      
+      <!-- Brand Royal Crest -->
+      <div class="menu-crest">
+        <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      </div>
+
+      <h1 class="menu-title">WONDERHACK</h1>
+      <p class="menu-subtitle">The Queen's Riddles</p>
+
+      <div class="menu-prologue menu-lore">
+        <p>&ldquo;Off with her head!&rdquo; shouted the Queen of Hearts, condemning Alice for defying her rule.</p>
+
+        <p>But the King intervened. &ldquo;Spare her life if she can solve your riddles.&rdquo;</p>
+
+        <p>The Queen agreed, confident that Alice would fail. As Alice ventured through Wonderland, she discovered riddles, hidden secrets, and rules that weren&rsquo;t always what they seemed. The White Rabbit offered clues, the Mad Hatter sold hints, and the Cheshire Cat watched with a mysterious grin.</p>
+
+        <p>But the Queen had a trick of her own: she began corrupting the riddles to ensure Alice&rsquo;s failure.</p>
+
+        <p>Now, Alice must outsmart the Queen, uncover the truth, and earn her freedom.</p>
+
+        <p class="lore-climax"><strong>Solve the riddles. Question the rules. Survive Wonderland.</strong></p>
+
+        <p class="lore-welcome"><em>Welcome to WonderHack.</em></p>
+      </div>
+
+      <!-- Primary Call to Action — the only option on the first page -->
+      <div style="margin: 2.5rem 0 2rem;">
+        <a href="puzzles.html" class="btn-victorian btn-crimson" style="font-size: 1.15rem; padding: 0.9rem 2.5rem; text-decoration: none;">
+          Begin Castle Trials ➔
+        </a>
+      </div>
+
+      <!-- Character Cast Strip -->
+      <div class="cast-strip">
+        <div class="cast-item">
+          <img src="assets/images/characters/queen.png" alt="Queen of Hearts">
+          <div>
+            <div class="cast-name">The Queen</div>
+            <div class="cast-role">Court Inquisitor</div>
+          </div>
+        </div>
+
+        <div class="cast-item">
+          <img src="assets/images/characters/white-rabbit.png" alt="White Rabbit">
+          <div>
+            <div class="cast-name">White Rabbit</div>
+            <div class="cast-role">Royal Herald & Hints</div>
+          </div>
+        </div>
+
+        <div class="cast-item">
+          <img src="assets/images/characters/mad-hatter.png" alt="Mad Hatter">
+          <div>
+            <div class="cast-name">Mad Hatter</div>
+            <div class="cast-role">Hint Shop Proprietor</div>
+          </div>
+        </div>
+
+        <div class="cast-item">
+          <img src="assets/images/characters/cheshire-cat.png" alt="Cheshire Cat">
+          <div>
+            <div class="cast-name">Cheshire Cat</div>
+            <div class="cast-role">Cryptic Decryptor</div>
+          </div>
+        </div>
+      </div>
+
+    </article>
+
+  </main>
+
+  <!-- Core Scripts -->
+  <script src="js/main.js?v=21"></script>
+  <script src="js/session.js?v=9"></script>
+  <script src="js/check-is-solved.js?v=4"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      WonderUI.initHeader('', null, { hideAccount: true });
+    });
+  </script>
+</body>
+</html>

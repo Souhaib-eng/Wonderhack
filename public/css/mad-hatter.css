@@ -1,0 +1,482 @@
+/* ==========================================================================
+   WONDERHACK — Mad Hatter's Tea Room & Hint Shop Styles
+   ========================================================================== */
+
+/* Local copies of the storybook face, so the tea-room hints keep their themed
+   look even when the browser cannot reach Google Fonts. */
+@font-face {
+  font-family: 'IM Fell English Local';
+  src: url('../assets/fonts/im-fell-english-regular.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'IM Fell English Local';
+  src: url('../assets/fonts/im-fell-english-italic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+}
+
+body.tea-room-body {
+  background-image: url('../assets/images/backgrounds/mad-hatter-tea-room.jpg');
+  background-position: center bottom;
+  background-size: cover;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tea Room Stage Layout */
+.tea-room-stage {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: calc(var(--nav-height) + 2rem) 1.5rem 4rem 1.5rem;
+  position: relative;
+  z-index: 5;
+}
+
+/* Mad Hatter Sprite (Left / Mid-left seated with tea and coin sacks - Enlarged) */
+.hatter-character-wrapper {
+  position: fixed;
+  left: 2vw;
+  bottom: 0;
+  width: 460px;
+  max-width: 35vw;
+  z-index: 12;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.85));
+}
+
+.hatter-character-wrapper img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.hatter-character-wrapper:hover {
+  transform: translateY(-8px) scale(1.03);
+  filter: drop-shadow(0 20px 40px rgba(74, 33, 85, 0.7)) drop-shadow(0 0 25px rgba(240, 207, 101, 0.5));
+}
+
+/* Cheshire Cat Sprite (Right / Perched with banjo) */
+.cheshire-character-wrapper {
+  position: fixed;
+  right: 2vw;
+  bottom: 20px;
+  width: 280px;
+  max-width: 22vw;
+  z-index: 12;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.85));
+}
+
+.cheshire-character-wrapper img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.cheshire-character-wrapper:hover {
+  transform: scale(1.06) rotate(3deg);
+  filter: drop-shadow(0 20px 40px rgba(184, 138, 224, 0.6)) drop-shadow(0 0 30px rgba(240, 207, 101, 0.6));
+}
+
+/* Speech bubbles in Tea Room */
+#hatter-bubble {
+  position: fixed;
+  left: calc(2vw + 340px);
+  bottom: 390px;
+  max-width: 360px;
+}
+
+#cheshire-bubble {
+  position: fixed;
+  right: calc(2vw + 240px);
+  bottom: 340px;
+  max-width: 340px;
+}
+
+/* Tea Room Center Hint Shop Container */
+.shop-main-content {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 20;
+}
+
+/* Navigation return banner */
+.shop-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  background: rgba(20, 14, 26, 0.9);
+  border: 1.5px solid var(--color-gold-antique);
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  box-shadow: var(--shadow-gothic-md);
+  backdrop-filter: blur(8px);
+}
+
+.shop-return-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  color: var(--color-gold-bright);
+  letter-spacing: 1px;
+  transition: var(--transition-gentle);
+}
+
+.shop-return-btn:hover {
+  color: #fff;
+  transform: translateX(-4px);
+}
+
+.shop-wallet-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  color: var(--color-gold-bright);
+}
+
+/* Tea Table Parchment Hint Menu (Inspired by the antique notebook) */
+.tea-menu-parchment {
+  background-color: #fbf5e6 !important;
+  background-image: 
+    radial-gradient(circle at 10% 10%, rgba(160, 110, 60, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(140, 90, 40, 0.2) 0%, transparent 45%),
+    repeating-linear-gradient(transparent, transparent 31px, rgba(160, 130, 90, 0.1) 32px);
+  border: 3px double #bda078;
+  border-radius: 10px;
+  box-shadow: var(--shadow-parchment);
+  padding: 2.5rem 3rem;
+  position: relative;
+  color: var(--parchment-ink);
+}
+
+/* Playing Cards Border Strip Decor */
+.tea-menu-header {
+  text-align: center;
+  border-bottom: 2px solid rgba(138, 19, 39, 0.25);
+  padding-bottom: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.tea-menu-subtitle {
+  font-family: var(--font-story);
+  font-style: italic;
+  font-size: 1.15rem;
+  color: #694b3a;
+  margin-bottom: 0.35rem;
+}
+
+.tea-menu-title {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #7a1223;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* Hatter opening quote banner */
+.hatter-intro-banner {
+  background: rgba(122, 18, 35, 0.07);
+  border: 1.5px solid rgba(122, 18, 35, 0.25);
+  border-radius: 8px;
+  padding: 1.25rem 1.75rem;
+  margin-bottom: 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.hatter-quote-icon {
+  font-size: 2.2rem;
+  flex-shrink: 0;
+}
+
+.hatter-intro-text {
+  margin: 0;
+  font-family: var(--font-story);
+  font-size: 1.2rem;
+  font-style: italic;
+  line-height: 1.6;
+  color: #5a1520;
+}
+
+/* Cheshire Cat Free Assistance Highlight Box */
+.cheshire-assist-box {
+  background: #f3ebf6 !important;
+  border: 1.5px dashed #8a5796;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.cheshire-assist-info h3 {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  color: #4a2155;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cheshire-assist-info p {
+  font-family: var(--font-story);
+  font-size: 1.05rem;
+  color: var(--parchment-ink);
+  line-height: 1.4;
+}
+
+/* Filter buttons for hint selection */
+.shop-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.shop-filter-btn {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  padding: 0.35rem 0.85rem;
+  border-radius: 16px;
+  border: 1px solid #c4ab85;
+  background: #ede1cb;
+  color: #4a3429;
+  transition: var(--transition-gentle);
+}
+
+.shop-filter-btn:hover {
+  background: #dfcfb2;
+  border-color: #8a1327;
+  color: #8a1327;
+}
+
+.shop-filter-btn.active {
+  background: #8a1327;
+  border-color: #8a1327;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(138, 19, 39, 0.3);
+}
+
+/* Hints Catalog Grid */
+.hints-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+.hint-card {
+  background: #fffefb;
+  border: 1.5px solid #d4c29c;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: var(--transition-gentle);
+  position: relative;
+}
+
+.hint-card:hover {
+  border-color: var(--color-gold-antique);
+  box-shadow: 0 6px 15px rgba(197, 155, 39, 0.15);
+}
+
+.hint-card.unlocked {
+  background: #f7fbf7;
+  border-color: #4a8f53;
+}
+
+.hint-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.hint-card-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1a100f;
+  line-height: 1.2;
+}
+
+.hint-card-badge {
+  font-family: var(--font-story);
+  font-size: 0.85rem;
+  color: #8a5732;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.hint-cost-pill {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #8c6d1d;
+  background: rgba(197, 155, 39, 0.15);
+  border: 1px solid rgba(197, 155, 39, 0.4);
+  padding: 0.25rem 0.75rem;
+  border-radius: 14px;
+  white-space: nowrap;
+}
+
+.hint-card-body {
+  font-family: 'IM Fell English Local', var(--font-story);
+  font-size: 1.14rem;
+  line-height: 1.55;
+  color: var(--parchment-ink);
+}
+
+.hint-card-body.locked {
+  font-style: italic;
+  color: #7d6b5e;
+}
+
+/* The revealed hint is the star of the tea table: unmistakably storybook. */
+.hint-unlocked-content {
+  background: #eef6ee;
+  border-left: 3px solid #3c8d45;
+  padding: 0.8rem 1rem;
+  border-radius: 4px;
+  font-family: 'IM Fell English Local', 'IM Fell English', 'Cormorant Garamond', Georgia, serif !important;
+  font-size: 1.18rem;
+  font-style: italic;
+  line-height: 1.6;
+  color: #18471b;
+  word-break: break-word;
+}
+
+.hint-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #ebdcc5;
+}
+
+/* Responsive Rules for Tea Room */
+@media (max-width: 1300px) {
+  .hatter-character-wrapper {
+    width: 350px;
+    left: 0;
+  }
+  .cheshire-character-wrapper {
+    width: 220px;
+    right: -20px;
+  }
+  #hatter-bubble {
+    left: 270px;
+  }
+  #cheshire-bubble {
+    right: 180px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .hatter-character-wrapper,
+  .cheshire-character-wrapper {
+    display: none;
+  }
+  .tea-menu-parchment {
+    padding: 2rem 1.5rem;
+  }
+}
+
+/* ── Empty shop state ─────────────────────────────────────────────────────── */
+.shop-empty {
+  text-align: center;
+  padding: 3.25rem 1.5rem;
+  background: rgba(212, 175, 55, 0.08);
+  border: 1.5px dashed rgba(197, 155, 39, 0.45);
+  border-radius: 8px;
+}
+
+.shop-empty-icon {
+  font-size: 3rem;
+  line-height: 1;
+  margin-bottom: 0.75rem;
+}
+
+.shop-empty-title {
+  font-family: var(--font-story);
+  font-style: italic;
+  font-size: 1.6rem;
+  color: #7a1223;
+  margin: 0 0 0.75rem 0;
+}
+
+.shop-empty-text {
+  font-family: var(--font-story);
+  font-size: 1.08rem;
+  line-height: 1.6;
+  color: #5a4032;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* ── Cheshire Cat vanishes until every Easy hint is purchased ─────────────── */
+.cheshire-character-wrapper img,
+.cheshire-character-wrapper .character-tag {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.cheshire-character-wrapper.cat-locked:hover img,
+.cheshire-character-wrapper.cat-locked:hover .character-tag {
+  opacity: 0;
+  transform: translateY(8px) scale(0.94);
+  /* The image stops receiving clicks as soon as it fades. */
+  pointer-events: none;
+}
+
+.cheshire-character-wrapper {
+  cursor: pointer;
+}
+
+.cheshire-character-wrapper.cat-locked {
+  cursor: default;
+}
+
+.cheshire-character-wrapper.cat-locked:hover {
+  transform: none;
+  filter: none;
+}
+
+/* Once the cat has fully vanished it is no longer clickable. */
+.cheshire-character-wrapper.is-vanished {
+  cursor: default;
+}
+
+.cheshire-character-wrapper.is-vanished img,
+.cheshire-character-wrapper.is-vanished .character-tag {
+  opacity: 0;
+  pointer-events: none;
+}

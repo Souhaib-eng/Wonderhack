@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Royal Leaderboard — WonderHack</title>
+  <link rel="stylesheet" href="css/main.css?v=15">
+  <link rel="stylesheet" href="css/leaderboard.css?v=3">
+  <link rel="icon" type="image/svg+xml" href="assets/images/ui/card-suits.svg">
+</head>
+<body class="puzzle-room-body">
+
+  <!-- Mount Point for Shared Header Navigation -->
+  <header id="wonder-header-mount"></header>
+
+  <!-- Ambient Floating Playing Cards -->
+  <div class="floating-card-decor heart"    style="top:12%;left:16%;transform:rotate(-10deg)"><span>A♥</span><span style="align-self:flex-end">♥A</span></div>
+  <div class="floating-card-decor spade"   style="top:20%;right:17%;transform:rotate(14deg)"><span>K♠</span><span style="align-self:flex-end">♠K</span></div>
+  <div class="floating-card-decor diamond" style="bottom:16%;left:22%;transform:rotate(6deg)"><span>Q♦</span><span style="align-self:flex-end">♦Q</span></div>
+  <div class="floating-card-decor club"    style="bottom:22%;right:20%;transform:rotate(-13deg)"><span>J♣</span><span style="align-self:flex-end">♣J</span></div>
+
+  <main class="lb-stage">
+    <div class="lb-container">
+
+      <!-- Hero Banner -->
+      <header class="lb-hero">
+        <div class="lb-hero-crown">👑</div>
+        <h1 class="lb-hero-title">Royal Court Leaderboard</h1>
+        <p class="lb-hero-subtitle">
+          Her Majesty's registry of the most cunning cryptographic minds in the realm.
+          Gold Sovereigns determine your standing among the court.
+        </p>
+      </header>
+
+      <!-- Court Administrator gate -->
+      <section class="lb-parchment lb-denied" id="lb-denied" hidden>
+        <div class="lb-denied-seal" aria-hidden="true">⚖️</div>
+        <h2 class="lb-denied-title">By Royal Decree</h2>
+        <p class="lb-denied-text" id="lb-denied-text">
+          The Royal Court Leaderboard is sealed to all but the Court Administrator.
+        </p>
+        <div class="lb-denied-actions">
+          <a href="puzzles.html" class="btn-victorian btn-secondary" style="padding:0.7rem 2rem;font-size:0.95rem;text-decoration:none;">
+            🏰 Return to Castle
+          </a>
+          <a href="login.html?difficulty=easy" class="btn-victorian btn-gold" id="lb-denied-login" style="padding:0.7rem 2rem;font-size:0.95rem;text-decoration:none;">
+            🗝️ Administrator Login
+          </a>
+        </div>
+      </section>
+
+      <div id="lb-content" hidden>
+        <!-- Current player standing -->
+        <div class="lb-you" id="lb-you" hidden></div>
+
+        <!-- Live table -->
+        <section class="lb-parchment" aria-label="Leaderboard">
+
+          <!-- Filters: chamber and season -->
+          <div class="lb-filters" role="group" aria-label="Leaderboard filters">
+            <div class="lb-filter-group">
+              <label class="lb-filter-label" for="lb-difficulty">Chamber</label>
+              <select id="lb-difficulty" class="lb-filter-select">
+                <option value="all">All chambers</option>
+                <option value="easy">🌿 Easy</option>
+                <option value="medium">⚔️ Medium</option>
+                <option value="hard">👑 Hard</option>
+              </select>
+            </div>
+            <div class="lb-filter-group">
+              <label class="lb-filter-label" for="lb-season">Season</label>
+              <select id="lb-season" class="lb-filter-select">
+                <option value="current">Current season</option>
+                <option value="all">All time</option>
+              </select>
+            </div>
+            <span class="lb-season-note" id="lb-season-note"></span>
+          </div>
+
+          <!-- Top-3 Podium -->
+          <div class="lb-podium" id="lb-podium">
+            <!-- Rendered by JS -->
+          </div>
+
+          <!-- Full ranking table -->
+          <div class="lb-table-wrap">
+            <table class="lb-table" aria-label="Full Rankings">
+              <thead>
+                <tr>
+                  <th class="lb-th-rank">Rank</th>
+                  <th class="lb-th-name">Courtier</th>
+                  <th class="lb-th-role">Royal Title</th>
+                  <th class="lb-th-solved" id="lb-solved-heading">Enigmas Solved</th>
+                  <th class="lb-th-pts" id="lb-points-heading">Gold Sovereigns</th>
+                </tr>
+              </thead>
+              <tbody id="lb-tbody">
+                <tr><td colspan="5" class="lb-loading">Consulting the Queen's registry…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Refresh button -->
+          <div style="display:flex;justify-content:center;margin-top:1.75rem;gap:1rem;flex-wrap:wrap;">
+            <button type="button" class="btn-victorian btn-crimson" id="lb-refresh-btn" style="padding:0.7rem 2rem;font-size:0.95rem;">
+              ↺ Refresh Rankings
+            </button>
+            <a href="puzzles.html" class="btn-victorian btn-secondary" style="padding:0.7rem 2rem;font-size:0.95rem;text-decoration:none;">
+              🏰 Return to Castle
+            </a>
+            <a href="admin.html" class="btn-victorian btn-gold" style="padding:0.7rem 2rem;font-size:0.95rem;text-decoration:none;">
+              🛡️ Admin Monitoring
+            </a>
+          </div>
+
+          <!-- Last updated / status -->
+          <p class="lb-timestamp" id="lb-timestamp"></p>
+          <p class="lb-timestamp lb-error" id="lb-status"></p>
+        </section>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script src="js/main.js?v=21"></script>
+  <script src="js/session.js?v=9"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      await WonderSession.boot();
+      WonderUI.initHeader('leaderboard');
+
+      const denied = document.getElementById('lb-denied');
+      const deniedText = document.getElementById('lb-denied-text');
+      const deniedLogin = document.getElementById('lb-denied-login');
+      const content = document.getElementById('lb-content');
+
+      // The server enforces this too — the UI gate is only for a clear message.
+      if (!WonderSession.isAdmin()) {
+        denied.hidden = false;
+        content.hidden = true;
+        if (!WonderSession.isAuthenticated()) {
+          deniedText.textContent = 'The Royal Court Leaderboard is sealed. Present the Court Administrator\'s credentials to unroll it.';
+          deniedLogin.style.display = 'inline-block';
+        } else {
+          const current = WonderSession.currentUser();
+          const who = (current && (current.displayName || current.username)) || 'This courtier';
+          deniedText.textContent = `${who} is not the Court Administrator. This registry remains sealed.`;
+          deniedLogin.style.display = 'none';
+        }
+        return;
+      }
+
+      denied.hidden = true;
+      content.hidden = false;
+
+      const difficultySelect = document.getElementById('lb-difficulty');
+      const seasonSelect = document.getElementById('lb-season');
+
+      await loadLeaderboard();
+
+      [difficultySelect, seasonSelect].forEach((select) => {
+        if (select) select.addEventListener('change', () => loadLeaderboard());
+      });
+
+      document.getElementById('lb-refresh-btn').addEventListener('click', async () => {
+        document.getElementById('lb-refresh-btn').textContent = '↺ Refreshing…';
+        await loadLeaderboard();
+        document.getElementById('lb-refresh-btn').textContent = '↺ Refresh Rankings';
+      });
+
+      // Keep standings fresh for the administrator's event screen.
+      setInterval(() => {
+        if (!document.hidden) loadLeaderboard(true);
+      }, 20000);
+    });
+
+    const CHARACTER_EMOJI = {
+      alice:  '🐇',
+      queen:  '👑',
+      hatter: '🎩',
+      admin:  '🛡️',
+    };
+    const RANK_MEDAL = ['🥇', '🥈', '🥉'];
+
+    async function loadLeaderboard(silent = false) {
+      const difficultySelect = document.getElementById('lb-difficulty');
+      const seasonSelect = document.getElementById('lb-season');
+      const difficulty = difficultySelect ? difficultySelect.value : 'all';
+      const season = seasonSelect ? seasonSelect.value : 'current';
+      const result = await WonderSession.leaderboard({ difficulty, season });
+      const status = document.getElementById('lb-status');
+
+      if (!result.ok) {
+        if (status) status.textContent = result.error || 'The royal registry refused this request.';
+        if (result.status === 401 || result.status === 403) {
+          setTimeout(() => window.location.reload(), 1200);
+        }
+        return;
+      }
+
+      const board = result.entries;
+      renderPodium(board.slice(0, 3));
+      renderTable(board, result);
+      renderYourStanding(board);
+
+      const pointsHeading = document.getElementById('lb-points-heading');
+      const solvedHeading = document.getElementById('lb-solved-heading');
+      const seasonNote = document.getElementById('lb-season-note');
+      const chamberLabel = {
+        all: 'All chambers',
+        easy: 'Easy chamber',
+        medium: 'Medium chamber',
+        hard: 'Hard chamber',
+      }[result.difficulty] || 'All chambers';
+      if (pointsHeading) pointsHeading.textContent = `Gold Sovereigns · ${chamberLabel}`;
+      if (solvedHeading) solvedHeading.textContent = `Enigmas Solved · ${chamberLabel}`;
+      if (seasonNote) {
+        seasonNote.textContent = result.seasonMode === 'all'
+          ? 'Showing every archived season.'
+          : `Showing season ${result.season || '—'} only.`;
+      }
+
+      const ts = document.getElementById('lb-timestamp');
+      if (ts) ts.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+
+      if (status) {
+        if (!WonderSession.isServerAvailable()) {
+          status.textContent = '⚠️ Cannot reach the royal registry. Start server.py to load saved scores.';
+        } else if (!board.length) {
+          status.textContent = 'The royal registry is empty. Be the first courtier to claim coins!';
+        } else if (!silent) {
+          status.textContent = '';
+        }
+      }
+    }
+
+    function renderYourStanding(board) {
+      const el = document.getElementById('lb-you');
+      if (!el) return;
+      const me = board.find(p => p.isYou);
+      if (!me) {
+        el.hidden = true;
+        el.innerHTML = '';
+        return;
+      }
+      el.hidden = false;
+      el.innerHTML = `
+        <span class="lb-you-crown">🪙</span>
+        <span class="lb-you-text">
+          You stand at <strong>#${me.rank}</strong> among
+          ${board.length} courtier${board.length !== 1 ? 's' : ''}
+        </span>
+        <span class="lb-you-points">
+          ${Number(me.points).toLocaleString()} <span>🪙</span>
+          <span style="display:block; font-size:0.75rem; opacity:0.85; font-weight:normal; margin-top:2px;">
+            🌿 ${me.pointsEasy || 0} &nbsp;|&nbsp; ⚔️ ${me.pointsMedium || 0} &nbsp;|&nbsp; 👑 ${me.pointsHard || 0}
+          </span>
+        </span>
+        <span class="lb-you-solved">${me.solvedCount} enigma${me.solvedCount !== 1 ? 's' : ''} solved</span>
+      `;
+    }
+
+    function renderPodium(top3) {
+      const el = document.getElementById('lb-podium');
+      if (!el) return;
+      if (!top3 || !top3.length) {
+        el.innerHTML = '';
+        return;
+      }
+      // Reorder: 2nd | 1st | 3rd for visual podium effect
+      const order = top3.length >= 3
+        ? [top3[1], top3[0], top3[2]]
+        : top3.length === 2
+          ? [top3[1], top3[0]]
+          : [top3[0]];
+
+      el.innerHTML = order.map((p) => {
+        const isFirst = p.rank === 1;
+        const medal   = RANK_MEDAL[p.rank - 1] || `#${p.rank}`;
+        const emoji   = CHARACTER_EMOJI[p.character] || '🃏';
+        return `
+          <div class="lb-podium-card ${isFirst ? 'lb-podium-first' : ''} ${p.isYou ? 'lb-podium-you' : ''}">
+            <div class="lb-podium-medal">${medal}</div>
+            <div class="lb-podium-avatar">${emoji}</div>
+            <div class="lb-podium-name">${escHtml(p.username)}${p.isYou ? ' <span class="lb-you-badge">YOU</span>' : ''}</div>
+            <div class="lb-podium-pts">${Number(p.points).toLocaleString()} <span>🪙</span></div>
+            <div style="font-size:0.75rem; opacity:0.85; font-weight:normal; margin:2px 0;">🌿${p.pointsEasy || 0} · ⚔️${p.pointsMedium || 0} · 👑${p.pointsHard || 0}</div>
+            <div class="lb-podium-solved">${p.solvedCount} enigma${p.solvedCount !== 1 ? 's' : ''}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderTable(board) {
+      const tbody = document.getElementById('lb-tbody');
+      if (!tbody) return;
+      if (!board || !board.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="lb-loading">The royal registry is empty.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = board.map(p => {
+        const medal  = RANK_MEDAL[p.rank - 1] || '';
+        const emoji  = CHARACTER_EMOJI[p.character] || '🃏';
+        const isTop3 = p.rank <= 3;
+        return `
+          <tr class="lb-row ${isTop3 ? 'lb-row-top3' : ''} ${p.isYou ? 'lb-row-you' : ''}">
+            <td class="lb-td-rank">${medal || `<span class="lb-rank-num">${p.rank}</span>`}</td>
+            <td class="lb-td-name">
+              <span class="lb-char-emoji">${emoji}</span>
+              <span class="lb-name-text">${escHtml(p.username)}</span>
+              ${p.isYou ? '<span class="lb-you-badge">YOU</span>' : ''}
+            </td>
+            <td class="lb-td-role">${escHtml(p.role)}</td>
+            <td class="lb-td-solved">${p.solvedCount}</td>
+            <td class="lb-td-pts">
+              <div>
+                <span class="lb-pts-val">${Number(p.points).toLocaleString()}</span>
+                <span class="lb-pts-icon">🪙</span>
+              </div>
+              <div style="font-size:0.75rem; opacity:0.75; font-family:var(--font-mono); margin-top:2px;" title="Easy: ${p.pointsEasy || 0} | Medium: ${p.pointsMedium || 0} | Hard: ${p.pointsHard || 0}">
+                🌿 ${p.pointsEasy || 0} &nbsp;|&nbsp; ⚔️ ${p.pointsMedium || 0} &nbsp;|&nbsp; 👑 ${p.pointsHard || 0}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function escHtml(str) {
+      return String(str)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;');
+    }
+  </script>
+</body>
+</html>
