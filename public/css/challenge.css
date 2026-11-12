@@ -149,6 +149,105 @@ body.challenge-body {
   white-space: nowrap;
 }
 
+/* ── The two Cipher Lab menus ───────────────────────────────────────────── */
+
+.lab-menu-lead {
+  font-family: var(--font-story);
+  font-size: 0.95rem;
+  font-style: italic;
+  line-height: 1.55;
+  color: #5a4032;
+  margin: 0;
+}
+
+.lab-menu-lead code {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  color: #7a1223;
+  background: rgba(138, 19, 39, 0.08);
+  border-radius: 3px;
+  padding: 0.05rem 0.3rem;
+}
+
+.decoder-pane-label {
+  display: block;
+  font-family: var(--font-story);
+  font-weight: bold;
+  font-size: 0.95rem;
+  color: var(--parchment-ink);
+  margin-bottom: 0.35rem;
+}
+
+.decoder-output-block {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.decoder-output-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.decoder-output-head .decoder-pane-label {
+  margin-bottom: 0;
+}
+
+.decoder-output {
+  flex: 1;
+}
+
+.decoder-input-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.lab-cat-tip {
+  background: rgba(74, 33, 85, 0.08);
+  border: 1px dashed #8a5796;
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.lab-cat-tip img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.lab-cat-tip-text {
+  font-family: var(--font-story);
+  font-size: 0.95rem;
+  font-style: italic;
+  color: #4a2155;
+  line-height: 1.5;
+}
+
+.lab-menu-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
+.lab-menu-actions .btn-victorian {
+  flex: 1;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .lab-menu-actions {
+    flex-direction: column;
+  }
+}
+
 @media (max-width: 900px) {
   .lab-grid {
     grid-template-columns: 1fr;
@@ -349,79 +448,30 @@ body.challenge-body {
   color: #4a2155;
 }
 
-.cat-guide-cipher-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-}
-
-.cat-guide-label {
-  font-family: var(--font-story);
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: #5a4032;
-}
-
-.cat-guide-cipher {
-  flex: 1;
-  min-width: 220px;
-  font-family: var(--font-mono);
-  font-size: 0.88rem;
-  line-height: 1.5;
-  word-break: break-all;
-  color: #f0cf65;
-  background: #20131f;
-  border: 1px solid #8c6d1d;
-  border-radius: 6px;
-  padding: 0.6rem 0.8rem;
-}
-
 .cat-guide-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
 }
 
-.cat-guide-result {
-  display: none;
+/* The cat only speaks instructions; the player decodes in the lab. */
+.cat-guide-note {
   font-family: var(--font-story);
-  font-size: 1.1rem;
-  line-height: 1.6;
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
-}
-
-.cat-guide-result.show {
-  display: block;
-}
-
-.cat-guide-result.success {
-  background: #eef6ee;
-  border: 2px solid #3c8d45;
-  color: #18471b;
-}
-
-.cat-guide-result.error {
-  background: #fff3f3;
-  border: 2px solid #b81d38;
-  color: #7a1223;
-}
-
-/* The final decoded message is deliberately not the flag. */
-.cat-guide-message {
-  display: block;
-  margin-top: 0.6rem;
-  font-family: var(--font-story);
-  font-size: 1.08rem;
+  font-size: 0.98rem;
   font-style: italic;
   line-height: 1.55;
-  color: #0e4b17;
-  background: #fff;
-  border: 1px dashed #3c8d45;
+  color: #5a4032;
+  background: rgba(240, 207, 101, 0.16);
+  border: 1px dashed #b8933b;
   border-radius: 6px;
-  padding: 0.7rem 0.9rem;
-  word-break: break-word;
+  padding: 0.75rem 0.95rem;
+  margin: 0;
+}
+
+.cat-guide-note code {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  color: #7a1223;
 }
 
 /* Narrow screens: the fixed cat sprite sits in the bottom-right corner, so
@@ -439,21 +489,11 @@ body.challenge-body {
     font-size: 1.2rem;
   }
 
-  .cat-guide-cipher {
-    min-width: 0;
-    flex-basis: 100%;
-  }
-
   .cat-guide-actions {
     flex-direction: column;
   }
 
   .cat-guide-actions .btn-victorian {
     width: 100%;
-  }
-
-  .cat-guide-result {
-    font-size: 1rem;
-    padding: 0.85rem 1rem;
   }
 }

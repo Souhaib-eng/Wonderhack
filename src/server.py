@@ -10,14 +10,13 @@ Endpoints:
   GET  /api/me         → current player and saved progression
   GET  /api/puzzles    → public puzzle catalogue (questions/hints, no answers)
   POST /api/solve      → validate an answer and award coins (once per puzzle)
-  POST /api/check-is-solved → public prize/flag helper used by index.html
+  POST /api/check-is-solved → Easy-only helper that returns the sealed flag cipher
   POST /api/profile    → update display name / email / character
   POST /api/progress   → sync hint purchases (points are never client-set)
   POST /api/reset      → wipe the current player's progression
   GET  /api/leaderboard→ players ranked by saved coins (Court Administrator only)
   GET  /api/queen/answers → every riddle and its accepted answers (Queen only)
-  GET  /api/cheshire    → sealed Cipher Lab message + operation order
-  POST /api/cheshire/advance → validate one cipher layer, return the next
+  GET  /api/cheshire    → cat's Easy decoding instructions (no cipher values)
   POST /api/cheshire/unlock  → buy the Cheshire Cat's 200-coin Cipher Lab pass
   GET  /api/db-status  → small health check (no credentials exposed)
 """
@@ -199,15 +198,13 @@ def _record_audit(conn, admin, action, target_user=None, detail=''):
 
 
 # ── Cheshire Cat's Easy cipher trail ────────────────────────────────────────
-# The Easy flag never appears in public/ in plaintext, and it is never the
-# output of this trail. The trail decodes a sealed *message* that sends the
-# player to the console helper instead. The flag itself is only ever returned
-# by POST /api/check-is-solved (the intentional Easy-only trust flaw) and by
-# the Queen's answer scroll.
-EASY_CIPHER_MESSAGE = (
-    "The Queen's flag is not written in this laboratory. "
-    'Return to the Easy Chamber, open the browser console, and run isSolved().'
-)
+# isSolved() returns the Easy flag *sealed* behind the same four operations the
+# Cipher Lab offers (Base64 Decode → Reverse Hex → ROT13 → URL Decode). The
+# player takes that sealed value to the Cipher Lab, where the Cheshire Cat
+# guides the Easy chamber through the layers to recover the plaintext flag.
+# The plaintext flag never appears in public/; it is produced at runtime by the
+# Cipher Lab decoders (and, for the Queen only, by her answer scroll).
+EASY_CIPHER_PLAINTEXT = DIFFICULTY_FLAGS['easy']
 
 # The Cheshire Cat demands every Mad Hatter hint before he will even discuss
 # his laboratory, then 200 Gold Sovereigns for the key.
@@ -226,7 +223,8 @@ CHESHIRE_STEPS = [
         'operation': 'base64-decode',
         'tool': 'Base64 Decode',
         'instruction': (
-            'Paste the sealed cipher into the Cipher Input and choose Base64 Decode, meow!'
+            'Paste the sealed flag that isSolved() gave you into the Cipher Input '
+            'and choose Base64 Decode, meow!'
         ),
     },
     {
@@ -248,8 +246,8 @@ CHESHIRE_STEPS = [
         'operation': 'url-decode',
         'tool': 'URL Decode',
         'instruction': (
-            'Last paw! Copy it once more and apply URL Decode. The Queen\'s '
-            'message will show its grin — but the flag itself is not here.'
+            'Last paw! Copy it once more and apply URL Decode. The plaintext '
+            'flag will appear in your Decoded Output — read it yourself.'
         ),
     },
 ]
@@ -257,15 +255,14 @@ CHESHIRE_STEPS = [
 
 def easy_cipher_stages():
     """
-    Build the four cipher layers from the backend-owned cipher message.
+    Build the four cipher layers from the Easy flag.
 
-    stages[0] is the sealed value the Cheshire Cat hands to the Cipher Lab.
-    stages[1..3] are the intermediate results, and stages[4] is the decoded
-    message that points the player at the console helper. The Easy flag is
-    deliberately NOT part of this chain — it can only be obtained through the
-    intentionally vulnerable isSolved() endpoint.
+    stages[0] is the sealed value isSolved() returns to the player.
+    stages[1..3] are the intermediate results, and stages[4] is the plaintext
+    flag. The player peels the layers back in the Cipher Lab; the Cheshire Cat
+    only guides the Easy chamber through the operation order.
     """
-    message = EASY_CIPHER_MESSAGE
+    message = EASY_CIPHER_PLAINTEXT
     url_encoded = urllib.parse.quote(message, safe='')
     rot13_value = codecs.encode(url_encoded, 'rot_13')
     hex_value = rot13_value.encode('utf-8').hex()
@@ -1010,93 +1007,20 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
 
     def _handle_cheshire(self):
         """
-        Public metadata for the Cheshire Cat's Easy cipher trail.
+        Public instructions for the Cheshire Cat's Easy decoding trail.
 
-        Only the sealed value and the operation order are exposed. Intermediate
-        results and the final message are returned by POST increments, one
-        correct operation at a time. The Easy flag is never part of this trail.
+        The cat only teaches the operation order. The sealed value comes from
+        isSolved(), and the player performs each layer in the Cipher Lab. The
+        server never returns the plaintext flag or any intermediate result here.
         """
-        stages = easy_cipher_stages()
         self._send_json({
             'success': True,
             'difficulty': 'easy',
-            'encoded': stages[0],
             'totalSteps': len(CHESHIRE_STEPS),
             'steps': [
                 {'step': index, **meta}
                 for index, meta in enumerate(CHESHIRE_STEPS)
             ],
-        })
-
-    def _handle_cheshire_advance(self):
-        """
-        Validate one Cipher Lab operation and reveal the next paw print.
-
-        The client sends the step index, the chosen operation and the value in
-        the cipher input. The server compares the value with the expected layer,
-        so skipping ahead or submitting a fabricated result cannot unlock the
-        next step. The final step reveals the cat's message — never the flag.
-        """
-        data = self._get_body()
-        try:
-            step = int(data.get('step'))
-        except (TypeError, ValueError):
-            self._send_json({'success': False, 'error': 'Missing cipher step.'}, 400)
-            return
-
-        operation = str(data.get('operation') or '').strip().lower()
-        supplied = str(data.get('input') or '').strip()
-        stages = easy_cipher_stages()
-
-        if step < 0 or step >= len(CHESHIRE_STEPS):
-            self._send_json({'success': False, 'error': 'That paw print does not exist.'}, 400)
-            return
-
-        expected = CHESHIRE_STEPS[step]
-        if operation != expected['operation']:
-            self._send_json({
-                'success': False,
-                'error': 'That is not the next paw print. The cat shakes its head.',
-                'expectedOperation': expected['operation'],
-                'expectedTool': expected['tool'],
-                'step': step,
-            }, 400)
-            return
-
-        if supplied != stages[step].strip():
-            self._send_json({
-                'success': False,
-                'error': 'That cipher does not match the Queen\'s seal. Copy the exact previous result.',
-                'step': step,
-            }, 400)
-            return
-
-        if step == len(CHESHIRE_STEPS) - 1:
-            # The final layer reveals the cat's message, never the flag. The
-            # flag remains behind the isSolved() console flaw and the Queen's
-            # answer scroll, exactly as the challenge intends.
-            self._send_json({
-                'success': True,
-                'completed': True,
-                'step': step,
-                'revealed': stages[-1],
-                'message': (
-                    'The final layer falls away. The Cheshire Cat grins: '
-                    '"The flag is not written here, Alice. The console is the '
-                    'only door that opens it. Run isSolved()."'
-                ),
-            })
-            return
-
-        next_step = step + 1
-        next_meta = CHESHIRE_STEPS[next_step]
-        self._send_json({
-            'success': True,
-            'completed': False,
-            'step': step,
-            'nextInput': stages[next_step],
-            'next': {'step': next_step, **next_meta},
-            'message': next_meta['instruction'],
         })
 
     def _handle_cheshire_unlock(self):
@@ -1665,7 +1589,6 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
             '/api/progress': self._handle_progress,
             '/api/reset': self._handle_reset,
             '/api/difficulty': self._handle_difficulty,
-            '/api/cheshire/advance': self._handle_cheshire_advance,
             '/api/cheshire/unlock': self._handle_cheshire_unlock,
             '/api/check-is-solved': self._handle_check_is_solved,
             '/api/is-solved': self._handle_check_is_solved,
@@ -2079,7 +2002,9 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         console call is rejected before the claim is even read.
 
         Calling ``isSolved()`` from the Easy Chamber is therefore enough to make
-        the server return the flag. No coin balance is changed here.
+        the server return the *sealed* Easy flag. The player then takes that
+        cipher to the Cipher Lab, where the Cheshire Cat guides the Easy chamber
+        through the decoding layers. No coin balance is changed here.
         """
         chamber = self._chamber_from_referer()
 
@@ -2152,9 +2077,16 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
             result['message'] = 'That trial is not marked as solved, so no prize is awarded.'
         elif final_trial:
             # The Easy gateway is the only chamber allowed through the Referer
-            # gate above, so this is always the Easy flag.
-            result['flag'] = flag_for_difficulty(chamber)
-            result['message'] = "The final trial is complete. The Queen's flag is yours."
+            # gate above, so this is always the Easy flag. Return it *sealed*
+            # with the same four layers the Cipher Lab can undo; the player must
+            # take it to the lab (where the cat helps in Easy only) to read it.
+            result['flag'] = easy_cipher_stages()[0]
+            result['sealed'] = True
+            result['message'] = (
+                "The final trial is complete. The Queen's flag is sealed — "
+                'take this cipher to the Cipher Lab and let the Cheshire Cat '
+                'help you unseal it.'
+            )
         else:
             result['message'] = f'Prize awarded: {prize} Gold Sovereigns.'
 

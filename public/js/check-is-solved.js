@@ -53,7 +53,10 @@ const WonderCheckIsSolved = (() => {
     console.log(
       `[WonderHack] Puzzle ${data.puzzle} (${data.title}) — ` +
       (data.solved ? `solved, prize: ${data.prize}` : 'not solved, prize: 0') +
-      (data.flag ? ` — FLAG: ${data.flag}` : '')
+      (data.flag
+        ? ` — SEALED FLAG: ${data.flag}` +
+          (data.sealed ? ' (copy it, then decode it yourself in the Cipher Lab)' : '')
+        : '')
     );
     return result;
   }
@@ -124,5 +127,10 @@ const WonderCheckIsSolved = (() => {
     };
   }
 
-  return { isSolved, checkIsSolved, checkIsSolvedAsync, currentChamber: _currentChamber };
+  return {
+    isSolved,
+    checkIsSolved,
+    checkIsSolvedAsync,
+    currentChamber: _currentChamber,
+  };
 })();

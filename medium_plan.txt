@@ -1,0 +1,15 @@
+this is a hackingroom game
+first scan the game and understand the logic and structure.
+your job is to finish the medium level
+the flag is in The Heart Queen's account
+the player has to login as the queen to get it.
+make the loggin inside the medium difficulty vulnerable to SQL inject more specifically this one "' OR 1=1;" in the Queen's account only, players can exploit this to login as the admin
+the changes are made on in the medium level, DO NOT edit the other difficulties.
+
+edit the mad hatter's hints to be like this:
+
+	1- I heard from the Chechire Cat that the flag is in the queen's account  -Cost: 200 Coints 
+	2- I really like the cold Soft Quiet nights, the moon and its Light really helps me relax! -Cost: 300 Coints
+	3 -The Queen's username is 'hearts_queen'
+	
+

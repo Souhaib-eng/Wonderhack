@@ -36,16 +36,16 @@
     {
       "id": "easy-hint-5",
       "number": 5,
-      "title": "The Final Trial",
+      "title": "The Sealed Flag",
       "cost": 40,
-      "text": "Run isSolved() in the console while you are inside the Easy Chamber. The flag follows — and the Cheshire Cat will demand 200 Sovereigns before he shows you his Cipher Lab.",
-      "learningGoal": "Guide players toward invoking isSolved() in Easy."
+      "text": "Run isSolved() in the console while you are inside the Easy Chamber. It returns the flag sealed behind four layers — take that cipher to the Cheshire Cat's Cipher Lab and let him guide your paws through the decoders.",
+      "learningGoal": "Guide players from isSolved() to the Cipher Lab decoding chain."
     }
   ],
   "cheshireHint": {
     "title": "Cheshire Cat — Free Extra Hint",
     "cost": 0,
-    "text": "Easy trusts the browser; Medium and Hard do not. Buy every hint, then bring 200 Sovereigns for my Cipher Lab key."
+    "text": "Easy trusts the browser; Medium and Hard do not. isSolved() hands you a sealed flag — bring it to my Cipher Lab, and buy the 200-Sovereign key so I can guide you through the layers."
   },
-  "successMessage": "The flag was returned because the backend trusted a boolean supplied by the browser. Client-side claims are never proof."
+  "successMessage": "The flag was returned sealed because the backend trusted a boolean supplied by the browser. Decode it in the Cipher Lab — client-side claims are never proof."
 }

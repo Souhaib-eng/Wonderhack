@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cipher Lab — WonderHack Workbench</title>
   <link rel="stylesheet" href="css/main.css?v=15">
-  <link rel="stylesheet" href="css/challenge.css?v=13">
+  <link rel="stylesheet" href="css/challenge.css?v=14">
   <link rel="icon" type="image/svg+xml" href="assets/images/ui/antique-key.svg">
 </head>
 <body class="challenge-body">
@@ -38,39 +38,17 @@
 
     <div class="lab-grid">
       
-      <!-- Left: Active Challenge Dossier & Quick Loader -->
+      <!-- Menu I: Cipher Type & Output -->
       <section class="lab-card">
         <h2 class="lab-card-title">
-          <span>📜</span> Royal Enigma Dossier
+          <span>⚙️</span> Menu I — Cipher Type &amp; Output
         </h2>
 
-        <div id="lab-puzzle-overview" style="margin-bottom: 1.5rem;">
-          <p style="font-family: var(--font-story); font-size: 0.95rem; color: #5a4032; margin: 0 0 0.75rem 0; font-style: italic;">
-            Use the cipher tools on the right to decode clues from the puzzle chambers.
-          </p>
-        </div>
+        <p class="lab-menu-lead">
+          Choose the decoding instrument, then read the result in the output pane.
+        </p>
 
-        <!-- Cheshire Cat Quick Tip -->
-        <div style="background: rgba(74, 33, 85, 0.08); border: 1px dashed #8a5796; border-radius: 6px; padding: 0.85rem 1rem; display:flex; align-items:center; gap: 0.75rem; margin-bottom: 1.5rem;">
-          <img src="assets/images/characters/cheshire-cat.png" alt="Cheshire Cat" style="width: 44px; height: 44px; object-fit: contain;">
-          <div style="font-family: var(--font-story); font-size: 0.95rem; font-style: italic; color: #4a2155;">
-            <strong id="lab-cat-tip-title">Cheshire's Whisper:</strong>
-            <span id="lab-cat-tip-text">“Click on me on the right anytime you need cryptographic wisdom or decoding hints!”</span>
-          </div>
-        </div>
-
-        <a href="challenges/easy/index.html" class="btn-victorian btn-crimson" id="return-castle-btn" style="align-self: flex-start; text-decoration:none;">
-          ← Back to Puzzles
-        </a>
-      </section>
-
-      <!-- Right: Interactive Victorian Cipher Decoder -->
-      <section class="lab-card">
-        <h2 class="lab-card-title">
-          <span>⚙️</span> Antique Decoding Instrument
-        </h2>
-
-        <!-- Tool Selection Buttons -->
+        <!-- Tool Selection Buttons (the cipher type) -->
         <div class="decoder-controls" id="decoder-tools">
           <button type="button" class="decoder-tool-btn active" data-op="rot13">ROT13</button>
           <button type="button" class="decoder-tool-btn" data-op="base64-decode">Base64 Decode</button>
@@ -79,28 +57,50 @@
           <button type="button" class="decoder-tool-btn" data-op="url-decode">URL Decode</button>
         </div>
 
-        <!-- Input Textarea -->
-        <div>
-          <label for="decoder-input" style="font-family: var(--font-story); font-weight: bold; font-size: 0.95rem; display:block; margin-bottom: 0.35rem;">
+        <!-- Decoded Output Viewport -->
+        <div class="decoder-output-block">
+          <div class="decoder-output-head">
+            <span class="decoder-pane-label" id="decoder-output-label">Decoded Output:</span>
+            <button type="button" class="copy-btn" id="copy-output-btn">Copy Output</button>
+          </div>
+          <div class="decoder-output" id="decoder-output" role="status" aria-live="polite">Awaiting cryptographic transformation...</div>
+        </div>
+      </section>
+
+      <!-- Menu II: Cipher Input -->
+      <section class="lab-card">
+        <h2 class="lab-card-title">
+          <span>📜</span> Menu II — Cipher Input
+        </h2>
+
+        <p class="lab-menu-lead">
+          Paste the sealed value that <code>isSolved()</code> gave you in the Easy
+          Chamber console, then apply each decoding tool yourself. The Cheshire
+          Cat only tells you which tool to use next.
+        </p>
+
+        <div class="decoder-input-block">
+          <label for="decoder-input" class="decoder-pane-label">
             Cipher Input:
           </label>
           <textarea id="decoder-input" class="decoder-textarea" placeholder="Paste encoded bytes or letters here..."></textarea>
         </div>
 
-        <!-- Decoded Output Viewport -->
-        <div>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.35rem;">
-            <label style="font-family: var(--font-story); font-weight: bold; font-size: 0.95rem;">
-              Decoded Output:
-            </label>
-            <button type="button" class="copy-btn" id="copy-output-btn">Copy Output</button>
+        <!-- Cheshire Cat Quick Tip -->
+        <div class="lab-cat-tip">
+          <img src="assets/images/characters/cheshire-cat.png" alt="Cheshire Cat">
+          <div class="lab-cat-tip-text">
+            <strong id="lab-cat-tip-title">Cheshire's Whisper:</strong>
+            <span id="lab-cat-tip-text">“Click on me on the right anytime you need cryptographic wisdom or decoding hints!”</span>
           </div>
-          <div class="decoder-output" id="decoder-output">Awaiting cryptographic transformation...</div>
         </div>
 
-        <!-- The Cipher Lab decodes messages; the flag itself is console-only. -->
-        <div style="display:flex; gap: 0.75rem; margin-top: auto;">
-          <a href="challenges/easy/index.html" class="btn-victorian btn-crimson" id="submit-castle-btn" style="flex: 1; text-align: center; text-decoration: none;">
+        <!-- The Cipher Lab decodes the sealed flag; the cat guides Easy only. -->
+        <div class="lab-menu-actions">
+          <a href="challenges/easy/index.html" class="btn-victorian btn-crimson" id="return-castle-btn" style="text-decoration:none;">
+            ← Back to Puzzles
+          </a>
+          <a href="challenges/easy/index.html" class="btn-victorian btn-crimson" id="submit-castle-btn" style="text-decoration: none;">
             Back to Puzzles →
           </a>
         </div>
@@ -109,11 +109,11 @@
 
     </div>
 
-    <!-- Cheshire Cat's step-by-step decryption guide (Easy, all hints bought) -->
-    <section class="lab-card cat-guide-card" id="cat-guide-card" aria-label="Cheshire Cat decryption guide" hidden>
+    <!-- Cheshire Cat's instruction-only guide (Easy, all hints bought) -->
+    <section class="lab-card cat-guide-card" id="cat-guide-card" aria-label="Cheshire Cat decryption instructions" hidden>
       <div class="cat-guide-head">
-        <h2 class="cat-guide-title"><span aria-hidden="true">🐈‍⬛</span> Cheshire's Decryption Guide</h2>
-        <span class="cat-guide-step-label" id="cat-guide-step-label">Step 1 of 4</span>
+        <h2 class="cat-guide-title"><span aria-hidden="true">🐈‍⬛</span> Cheshire's Decryption Instructions</h2>
+        <span class="cat-guide-step-label" id="cat-guide-step-label">Instruction 1 of 4</span>
         <div class="cat-guide-dots" id="cat-guide-dots" aria-hidden="true"></div>
       </div>
 
@@ -121,33 +121,29 @@
         The cat is waking up…
       </div>
 
-      <div class="cat-guide-cipher-row">
-        <span class="cat-guide-label">Cipher for this step:</span>
-        <code class="cat-guide-cipher" id="cat-guide-cipher">…</code>
-        <button type="button" class="btn-victorian btn-gold" id="cat-guide-load">
-          Load into Cipher Input
-        </button>
-      </div>
-
       <div class="cat-guide-actions">
-        <button type="button" class="btn-victorian btn-crimson" id="cat-guide-validate">
-          Show the Cat My Result
+        <button type="button" class="btn-victorian btn-crimson" id="cat-guide-next">
+          Next Instruction →
         </button>
         <button type="button" class="btn-victorian" id="cat-guide-reset">
           Start Over
         </button>
       </div>
 
-      <div class="cat-guide-result" id="cat-guide-result" role="status" aria-live="polite"></div>
+      <p class="cat-guide-note">
+        The cat only gives instructions. Paste the sealed flag from
+        <code>isSolved()</code> into Cipher Input, apply each tool yourself, and
+        read the flag in Decoded Output.
+      </p>
     </section>
 
   </main>
 
   <!-- Core Scripts -->
   <script src="js/main.js?v=21"></script>
-  <script src="js/characters.js?v=19"></script>
+  <script src="js/characters.js?v=20"></script>
   <script src="js/session.js?v=9"></script>
-  <script src="js/cheshire-cipher.js?v=2"></script>
+  <script src="js/cheshire-cipher.js?v=3"></script>
   <script src="js/wonderhack-easy-hints.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
@@ -184,22 +180,18 @@
       if (returnBtn) returnBtn.href = puzzleRoomUrl;
       if (submitBtn) submitBtn.href = puzzleRoomUrl;
 
-      // ── Cheshire Cat guide state ──────────────────────────────────────────
+      // ── Cheshire Cat instruction state ────────────────────────────────────
       const catTipTitle = document.getElementById('lab-cat-tip-title');
       const catTipText = document.getElementById('lab-cat-tip-text');
       const guideCard = document.getElementById('cat-guide-card');
       const guideStepLabel = document.getElementById('cat-guide-step-label');
       const guideDots = document.getElementById('cat-guide-dots');
       const guideInstruction = document.getElementById('cat-guide-instruction');
-      const guideCipher = document.getElementById('cat-guide-cipher');
-      const guideLoadBtn = document.getElementById('cat-guide-load');
-      const guideValidateBtn = document.getElementById('cat-guide-validate');
+      const guideNextBtn = document.getElementById('cat-guide-next');
       const guideResetBtn = document.getElementById('cat-guide-reset');
-      const guideResult = document.getElementById('cat-guide-result');
 
       let cipherInfo = null;
-      let guide = { step: 0, currentInput: '', completed: false };
-      let guideAdvancing = false;
+      let guideStep = 0;
 
       function escapeHtml(value) {
         return String(value == null ? '' : value).replace(/[&<>"']/g, (ch) => ({
@@ -228,8 +220,8 @@
           && WonderCharacters.hasCheshirePass();
       }
 
-      // The guide is only available after the hints have woken the cat AND the
-      // 200-Sovereign Cipher Lab pass has been paid.
+      // The instructions are only available after the hints have woken the cat
+      // AND the 200-Sovereign Cipher Lab pass has been paid.
       function catAccessGranted() {
         return catUnlockedNow() && hasCheshirePassNow();
       }
@@ -241,116 +233,29 @@
         WonderCharacters.triggerCheshireHelp(`“${clean}”`, duration);
       }
 
-      function saveGuide() {
-        if (typeof WonderCheshire === 'undefined') return;
-        // The guide only stores its progress and the cat's final message. The
-        // Easy flag is never written to localStorage or rendered here.
-        WonderCheshire.saveProgress({
-          completed: guide.completed,
-          step: guide.step,
-          currentInput: guide.currentInput,
-        });
-      }
-
-      function showGuideResult(kind, html) {
-        if (!guideResult) return;
-        guideResult.className = `cat-guide-result show ${kind}`;
-        guideResult.innerHTML = html;
-      }
-
-      function hideGuideResult() {
-        if (!guideResult) return;
-        guideResult.className = 'cat-guide-result';
-        guideResult.innerHTML = '';
-      }
-
-      function renderGuideDots() {
-        if (!guideDots || !cipherInfo) return;
-        guideDots.innerHTML = cipherInfo.steps.map((item, index) => {
-          let cls = 'cat-guide-dot';
-          if (guide.completed || index < guide.step) cls += ' done';
-          else if (index === guide.step) cls += ' active';
-          return `<span class="${cls}"></span>`;
-        }).join('');
-      }
-
       function renderGuide() {
         if (!cipherInfo) return;
         if (guideCard) guideCard.hidden = false;
-        renderGuideDots();
 
         if (guideStepLabel) {
-          guideStepLabel.textContent = guide.completed
-            ? 'All four layers unsealed'
-            : `Step ${guide.step + 1} of ${cipherInfo.totalSteps}`;
+          guideStepLabel.textContent = `Instruction ${guideStep + 1} of ${cipherInfo.totalSteps}`;
         }
 
-        if (guide.completed) {
-          if (guideInstruction) {
-            guideInstruction.innerHTML = '<strong>The seal is broken — but the flag is not here.</strong> Every layer has been peeled away. The final message points you back to the Easy Chamber console.';
-          }
-          if (guideCipher) guideCipher.textContent = guide.currentInput;
-          if (catTipTitle) catTipTitle.textContent = 'Cheshire grins:';
-          if (catTipText) catTipText.textContent = '“The console is the only door that opens it, Alice. Run isSolved() where the Queen still trusts the browser.”';
-          showGuideResult(
-            'success',
-            `🎉 <strong>The final layer falls away.</strong><span class="cat-guide-message">${escapeHtml(guide.currentInput)}</span>`
-          );
-          return;
+        if (guideDots) {
+          guideDots.innerHTML = cipherInfo.steps.map((item, index) => {
+            let cls = 'cat-guide-dot';
+            if (index < guideStep) cls += ' done';
+            else if (index === guideStep) cls += ' active';
+            return `<span class="${cls}"></span>`;
+          }).join('');
         }
 
-        const meta = cipherInfo.steps[guide.step];
+        const meta = cipherInfo.steps[guideStep];
         if (guideInstruction) {
           guideInstruction.innerHTML = `<strong>${escapeHtml(meta.tool)}:</strong> ${escapeHtml(meta.instruction)}`;
         }
-        if (guideCipher) guideCipher.textContent = guide.currentInput;
-        if (catTipTitle) catTipTitle.textContent = `Cheshire's Paw Print ${guide.step + 1}:`;
+        if (catTipTitle) catTipTitle.textContent = `Cheshire's Paw Print ${guideStep + 1}:`;
         if (catTipText) catTipText.textContent = `“${meta.instruction}”`;
-      }
-
-      function applyAdvance(res) {
-        if (res.completed) {
-          guide.completed = true;
-          // The backend returns the cat's final message in `revealed`, never
-          // the flag. Store only that message so the console remains the only
-          // place the Easy flag can be obtained.
-          guide.currentInput = res.revealed || '';
-          saveGuide();
-          renderGuide();
-          catSay('You did it, Alice! Four layers, one curious cat — and a message that sends you back to the console. Run isSolved() in the Easy Chamber. The flag is not written here.', 12000);
-          if (typeof WonderAudio !== 'undefined') WonderAudio.playChime();
-          if (typeof WonderUI !== 'undefined') WonderUI.showToast('The final layer falls away — the flag waits in the Easy Chamber console.', 'gold');
-          return;
-        }
-
-        guide.step = res.next.step;
-        guide.currentInput = res.nextInput;
-        saveGuide();
-        renderGuide();
-        showGuideResult('success', escapeHtml(res.message));
-        catSay(res.message, 9000);
-        if (typeof WonderAudio !== 'undefined') WonderAudio.playChime();
-      }
-
-      async function tryAdvance() {
-        if (!cipherInfo || guide.completed || guideAdvancing) return false;
-        const meta = cipherInfo.steps[guide.step];
-        const inputValue = decoderInput.value.trim();
-        if (currentOp !== meta.operation) return false;
-        if (inputValue !== String(guide.currentInput).trim()) return false;
-
-        guideAdvancing = true;
-        try {
-          const res = await WonderCheshire.advance(guide.step, currentOp, inputValue);
-          if (!res.ok) {
-            showGuideResult('error', `⚠️ ${escapeHtml(res.error || 'The cat is not convinced.')}`);
-            return false;
-          }
-          applyAdvance(res);
-          return true;
-        } finally {
-          guideAdvancing = false;
-        }
       }
 
       async function initCatGuide() {
@@ -374,60 +279,24 @@
         }
 
         cipherInfo = info;
-        const saved = WonderCheshire.savedProgress();
-        if (saved && saved.completed) {
-          guide = {
-            step: info.totalSteps,
-            currentInput: saved.currentInput || '',
-            completed: true,
-          };
-        } else {
-          const savedStep = Number.isInteger(saved && saved.step) ? saved.step : 0;
-          guide = {
-            step: Math.max(0, Math.min(savedStep, info.totalSteps - 1)),
-            currentInput: (saved && saved.currentInput) || info.encoded,
-            completed: false,
-          };
-          hideGuideResult();
-        }
+        guideStep = 0;
         renderGuide();
       }
 
-      if (guideLoadBtn) {
-        guideLoadBtn.addEventListener('click', () => {
-          if (!cipherInfo || guide.completed) return;
-          decoderInput.value = guide.currentInput;
-          decoderInput.dispatchEvent(new Event('input'));
-          if (typeof WonderUI !== 'undefined') {
-            WonderUI.showToast('Cipher loaded. Choose the tool the cat named.', 'gold');
-          }
-        });
-      }
-
-      if (guideValidateBtn) {
-        guideValidateBtn.addEventListener('click', async () => {
-          if (!cipherInfo || guide.completed) return;
-          const meta = cipherInfo.steps[guide.step];
-          if (currentOp !== meta.operation) {
-            showGuideResult('error', `⚠️ The cat shakes its head. Use <strong>${escapeHtml(meta.tool)}</strong> first, meow!`);
-            catSay(`Use ${meta.tool} first, meow!`, 7000);
-            return;
-          }
-          if (decoderInput.value.trim() !== String(guide.currentInput).trim()) {
-            showGuideResult('error', '⚠️ That is not the cipher for this paw print. Copy the exact value shown above.');
-            catSay('That is not the cipher for this paw print. Copy the exact value shown above.', 8000);
-            return;
-          }
-          await tryAdvance();
+      if (guideNextBtn) {
+        guideNextBtn.addEventListener('click', () => {
+          if (!cipherInfo) return;
+          guideStep = (guideStep + 1) % cipherInfo.totalSteps;
+          renderGuide();
+          catSay(cipherInfo.steps[guideStep].instruction, 9000);
+          if (typeof WonderAudio !== 'undefined') WonderAudio.playChime();
         });
       }
 
       if (guideResetBtn) {
         guideResetBtn.addEventListener('click', () => {
           if (!cipherInfo) return;
-          if (typeof WonderCheshire !== 'undefined') WonderCheshire.clearProgress();
-          guide = { step: 0, currentInput: cipherInfo.encoded, completed: false };
-          hideGuideResult();
+          guideStep = 0;
           renderGuide();
           catSay(cipherInfo.steps[0].instruction, 9000);
           if (typeof WonderUI !== 'undefined') WonderUI.showToast('The paw prints are fresh again. Start with Base64 Decode.', 'gold');
@@ -467,13 +336,6 @@
             res = decodeURIComponent(input);
           }
           decoderOutput.textContent = res;
-
-          // The cat watches every keystroke. If the player just performed the
-          // paw print he asked for, verify it with the backend and reveal the
-          // next instruction automatically.
-          if (cipherInfo && !guide.completed && !guideCard.hidden) {
-            tryAdvance();
-          }
         } catch (err) {
           decoderOutput.textContent = `[Decoding Anomaly]: ${err.message}`;
         }
@@ -487,7 +349,7 @@
 
       // Cheshire Cat speech tip on the Easy chamber.
       if (activeDiff === 'easy' && catTipText) {
-        catTipText.textContent = '“You are searching for a secret, but the interesting thing is not the secret itself. It is the little rule standing between you and it. Find the rule, and perhaps the grin will make sense.”';
+        catTipText.textContent = '“Run isSolved() in the Easy Chamber console, copy the sealed flag, and paste it into the Cipher Input. I will only tell you which tool to use next — you must read the flag yourself.”';
       }
 
       // Cheshire Cat sprite: clickable only in Easy after every hint is bought.
@@ -553,12 +415,10 @@
             return;
           }
 
-          if (cipherInfo && guide.completed) {
-            catSay('The flag is not written here, Alice. Return to the Easy Chamber and run isSolved() in the console. The grin remembers you.', 10000);
-          } else if (cipherInfo) {
-            catSay(cipherInfo.steps[guide.step].instruction, 10000);
+          if (cipherInfo) {
+            catSay(cipherInfo.steps[guideStep].instruction, 10000);
           } else {
-            catSay('You are searching for a secret, but the interesting thing is not the secret itself. It is the little rule standing between you and it. Find the rule, and perhaps the grin will make sense.', 9000);
+            catSay('Run isSolved() in the Easy Chamber console, Alice. Paste its sealed flag into my Cipher Lab and I will tell you which tool to use next.', 9000);
           }
         });
 
