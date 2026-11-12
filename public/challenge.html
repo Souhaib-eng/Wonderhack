@@ -74,8 +74,7 @@
         </h2>
 
         <p class="lab-menu-lead">
-          Paste the sealed value that <code>isSolved()</code> gave you in the Easy
-          Chamber console, then apply each decoding tool yourself. The Cheshire
+          Paste the sealed value from the Easy Chamber console, then apply each decoding tool yourself. The Cheshire
           Cat only tells you which tool to use next.
         </p>
 
@@ -99,9 +98,6 @@
         <div class="lab-menu-actions">
           <a href="challenges/easy/index.html" class="btn-victorian btn-crimson" id="return-castle-btn" style="text-decoration:none;">
             ← Back to Puzzles
-          </a>
-          <a href="challenges/easy/index.html" class="btn-victorian btn-crimson" id="submit-castle-btn" style="text-decoration: none;">
-            Back to Puzzles →
           </a>
         </div>
 
@@ -132,7 +128,7 @@
 
       <p class="cat-guide-note">
         The cat only gives instructions. Paste the sealed flag from
-        <code>isSolved()</code> into Cipher Input, apply each tool yourself, and
+        the Easy Chamber console into Cipher Input, apply each tool yourself, and
         read the flag in Decoded Output.
       </p>
     </section>
@@ -176,9 +172,7 @@
         : savedDiff;
       const puzzleRoomUrl = `challenges/${activeDiff}/index.html`;
       const returnBtn = document.getElementById('return-castle-btn');
-      const submitBtn = document.getElementById('submit-castle-btn');
       if (returnBtn) returnBtn.href = puzzleRoomUrl;
-      if (submitBtn) submitBtn.href = puzzleRoomUrl;
 
       // ── Cheshire Cat instruction state ────────────────────────────────────
       const catTipTitle = document.getElementById('lab-cat-tip-title');
@@ -349,7 +343,7 @@
 
       // Cheshire Cat speech tip on the Easy chamber.
       if (activeDiff === 'easy' && catTipText) {
-        catTipText.textContent = '“Run isSolved() in the Easy Chamber console, copy the sealed flag, and paste it into the Cipher Input. I will only tell you which tool to use next — you must read the flag yourself.”';
+        catTipText.textContent = '“Run the check in the Easy Chamber console, copy the sealed flag, and paste it into the Cipher Input. I will only tell you which tool to use next — you must read the flag yourself.”';
       }
 
       // Cheshire Cat sprite: clickable only in Easy after every hint is bought.
@@ -418,7 +412,7 @@
           if (cipherInfo) {
             catSay(cipherInfo.steps[guideStep].instruction, 10000);
           } else {
-            catSay('Run isSolved() in the Easy Chamber console, Alice. Paste its sealed flag into my Cipher Lab and I will tell you which tool to use next.', 9000);
+            catSay('Run the check in the Easy Chamber console, Alice. Paste its sealed flag into my Cipher Lab and I will tell you which tool to use next.', 9000);
           }
         });
 
