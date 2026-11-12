@@ -276,6 +276,10 @@ const WonderHatterShop = (() => {
           }
         } else if (typeof WonderCharacters !== 'undefined' && WonderCharacters.triggerHatterQuip) {
           WonderCharacters.triggerHatterQuip();
+        } else if (typeof WonderAudio !== 'undefined') {
+          // The tea table always giggles, even without the shared characters module.
+          if (WonderAudio.playHatterLaugh) WonderAudio.playHatterLaugh();
+          else if (WonderAudio.playClick) WonderAudio.playClick();
         }
       });
     }
@@ -287,11 +291,12 @@ const WonderHatterShop = (() => {
 
     if (cheshireSprite) {
       const openCipherLab = async () => {
-        if (!catUnlocked()) return;
+        // A meow greets every click, even before the cat wakes up.
         if (typeof WonderAudio !== 'undefined') {
           if (WonderAudio.playCatMeow) WonderAudio.playCatMeow();
           else WonderAudio.playClick();
         }
+        if (!catUnlocked()) return;
 
         // The cat is visible after every Easy hint, but the laboratory is a
         // private party: the 200-Sovereign key must be paid first.

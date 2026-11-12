@@ -74,8 +74,7 @@
         </h2>
 
         <p class="lab-menu-lead">
-          Paste the sealed value from the Easy Chamber console, then apply each decoding tool yourself. The Cheshire
-          Cat only tells you which tool to use next.
+          Paste the cipher you wish to decode, choose a tool in Menu I, then read the result in the output pane.
         </p>
 
         <div class="decoder-input-block">
@@ -94,7 +93,7 @@
           </div>
         </div>
 
-        <!-- The Cipher Lab decodes the sealed flag; the cat guides Easy only. -->
+        <!-- Single return action: the duplicate button was removed. -->
         <div class="lab-menu-actions">
           <a href="challenges/easy/index.html" class="btn-victorian btn-crimson" id="return-castle-btn" style="text-decoration:none;">
             ← Back to Puzzles
@@ -127,20 +126,18 @@
       </div>
 
       <p class="cat-guide-note">
-        The cat only gives instructions. Paste the sealed flag from
-        the Easy Chamber console into Cipher Input, apply each tool yourself, and
-        read the flag in Decoded Output.
+        The cat only gives instructions. Apply each tool yourself in Menu I and
+        read the result in Decoded Output.
       </p>
     </section>
 
   </main>
 
   <!-- Core Scripts -->
-  <script src="js/main.js?v=22"></script>
-  <script src="js/characters.js?v=21"></script>
+  <script src="js/main.js?v=23"></script>
+  <script src="js/characters.js?v=23"></script>
   <script src="js/session.js?v=10"></script>
-  <script src="js/cheshire-cipher.js?v=4"></script>
-  <script src="js/wonderhack-easy-hints.js?v=2"></script>
+  <script src="js/cheshire-cipher.js?v=5"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       WonderUI.initHeader('challenge');
@@ -161,7 +158,7 @@
 
       decoderInput.addEventListener('input', runDecoding);
 
-      // ── Active difficulty & return links ──────────────────────────────────
+      // ── Active difficulty & return link ──────────────────────────────────
       const urlParams = new URLSearchParams(window.location.search);
       const fromParam = urlParams.get('from') || urlParams.get('difficulty');
       const savedDiff = localStorage.getItem('wh_last_difficulty')
@@ -170,9 +167,8 @@
       const activeDiff = (fromParam && ['easy', 'medium', 'hard'].includes(fromParam.toLowerCase()))
         ? fromParam.toLowerCase()
         : savedDiff;
-      const puzzleRoomUrl = `challenges/${activeDiff}/index.html`;
       const returnBtn = document.getElementById('return-castle-btn');
-      if (returnBtn) returnBtn.href = puzzleRoomUrl;
+      if (returnBtn) returnBtn.href = `challenges/${activeDiff}/index.html`;
 
       // ── Cheshire Cat instruction state ────────────────────────────────────
       const catTipTitle = document.getElementById('lab-cat-tip-title');
@@ -222,7 +218,12 @@
 
       function catSay(text, duration = 9000) {
         if (typeof WonderCharacters === 'undefined'
-          || typeof WonderCharacters.triggerCheshireHelp !== 'function') return;
+          || typeof WonderCharacters.triggerCheshireHelp !== 'function') {
+          if (typeof WonderAudio !== 'undefined' && WonderAudio.playCatMeow) {
+            WonderAudio.playCatMeow();
+          }
+          return;
+        }
         const clean = String(text || '').replace(/^[“"]|[”"]$/g, '');
         WonderCharacters.triggerCheshireHelp(`“${clean}”`, duration);
       }
@@ -343,7 +344,7 @@
 
       // Cheshire Cat speech tip on the Easy chamber.
       if (activeDiff === 'easy' && catTipText) {
-        catTipText.textContent = '“Run the check in the Easy Chamber console, copy the sealed flag, and paste it into the Cipher Input. I will only tell you which tool to use next — you must read the flag yourself.”';
+        catTipText.textContent = '“Bring me a cipher, Alice, and I shall tell you which tool to try. The reading is yours to do.”';
       }
 
       // Cheshire Cat sprite: clickable only in Easy after every hint is bought.
@@ -392,7 +393,15 @@
 
         cheshireSprite.addEventListener('click', async (e) => {
           e.stopPropagation();
-          if (!catUnlockedNow()) return;
+
+          if (!catUnlockedNow()) {
+            // The cat is still asleep, but a click always earns a curious meow.
+            if (typeof WonderAudio !== 'undefined') {
+              if (WonderAudio.playCatMeow) WonderAudio.playCatMeow();
+              else if (WonderAudio.playClick) WonderAudio.playClick();
+            }
+            return;
+          }
 
           if (!hasCheshirePassNow()) {
             if (typeof WonderAudio !== 'undefined' && WonderAudio.playCatMeow) {
@@ -412,7 +421,7 @@
           if (cipherInfo) {
             catSay(cipherInfo.steps[guideStep].instruction, 10000);
           } else {
-            catSay('Run the check in the Easy Chamber console, Alice. Paste its sealed flag into my Cipher Lab and I will tell you which tool to use next.', 9000);
+            catSay('Bring me a cipher, Alice, and I shall tell you which tool to try. The reading is yours to do.', 9000);
           }
         });
 

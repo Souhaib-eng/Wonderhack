@@ -223,8 +223,8 @@ CHESHIRE_STEPS = [
         'operation': 'base64-decode',
         'tool': 'Base64 Decode',
         'instruction': (
-            'Paste the sealed flag that isSolved() gave you into the Cipher Input '
-            'and choose Base64 Decode, meow!'
+            'Paste the sealed flag you carried out of the Easy Chamber into the '
+            'Cipher Input and choose Base64 Decode, meow!'
         ),
     },
     {
@@ -512,6 +512,24 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=PUBLIC_DIR, **kwargs)
+
+    def end_headers(self):
+        """
+        Never let a browser (or a proxy) hold on to a page document.
+
+        SimpleHTTPRequestHandler sends ``Last-Modified`` and honours conditional
+        GETs, which lets Chrome/Edge restore an old DOM snapshot from the HTTP
+        cache or the back/forward cache — the edit appears for a moment and then
+        flips back to the previous markup. HTML documents therefore go out with
+        ``no-store`` so every navigation is a fresh read from ``public/``.
+        Static assets keep their normal caching (they are versioned with ?v=).
+        """
+        path = urllib.parse.urlparse(self.path).path.lower()
+        if path.endswith(('.html', '.htm', '/')):
+            self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+            self.send_header('Pragma', 'no-cache')
+            self.send_header('Expires', '0')
+        super().end_headers()
 
     # ── helpers ─────────────────────────────────────────────────────────────
 

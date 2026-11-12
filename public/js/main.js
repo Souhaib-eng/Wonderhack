@@ -370,9 +370,10 @@ const WonderAudio = (() => {
   }
 
   function shouldPlay() {
-    return WonderState.isAudioEnabled()
-      && !(typeof WonderState.prefersReducedMotion === 'function'
-        && WonderState.prefersReducedMotion());
+    // Sound effects are controlled by the audio toggle alone. Reduced-motion
+    // preferences govern animation, not audio, so they must not mute feedback
+    // such as the cat's meow or the Hatter's giggle.
+    return WonderState.isAudioEnabled();
   }
 
   return {
@@ -918,14 +919,16 @@ if (typeof document !== 'undefined' && document.addEventListener) {
         e.target.closest('.cat-cipher-trigger')
       );
       if (catTrigger) {
+        // Every poke at the cat earns a meow, even while it is still asleep.
+        if (typeof WonderAudio !== 'undefined') {
+          if (WonderAudio.playCatMeow) WonderAudio.playCatMeow();
+          else if (WonderAudio.playClick) WonderAudio.playClick();
+        }
+
         const unlocked = typeof WonderCharacters !== 'undefined'
           && typeof WonderCharacters.isCheshireUnlocked === 'function'
           && WonderCharacters.isCheshireUnlocked();
         if (!unlocked) return;
-
-        if (typeof WonderAudio !== 'undefined' && WonderAudio.playCatMeow) {
-          WonderAudio.playCatMeow();
-        }
 
         const isAlreadyInLab = /challenge(\.html)?$/i.test(window.location.pathname);
         if (!isAlreadyInLab) {

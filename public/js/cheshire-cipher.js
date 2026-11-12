@@ -2,8 +2,8 @@
  * WONDERHACK — Cheshire Cat instruction client
  *
  * The cat only teaches the operation order. The sealed Easy flag comes from
- * isSolved() in the Easy Chamber console; the player pastes it into the Cipher
- * Lab and performs each layer with the lab's own decoders. This script simply
+ * the Easy Chamber console; the player pastes it into the Cipher Lab and
+ * performs each layer with the lab's own decoders. This script simply
  * loads the instruction list from the backend — it never receives a cipher
  * value, an intermediate result, or the plaintext flag.
  *

@@ -52,7 +52,7 @@ const WonderCharacters = (() => {
     "“Need a paw with that Easy challenge? Look closely at the letters shifted by thirteen positions!”",
     "“ROT13 rotates halfway round the clock—thirteen steps forward, thirteen steps back!”",
     "“Base64 ends in '=' like a Cheshire cat's whiskers waving farewell!”",
-    "“isSolved() hands you the flag wearing four disguises, Alice. Bring it to my lab and we shall undress it layer by layer!”",
+    "“The Queen's secret wears four disguises, Alice. Bring the sealed text to my lab and we shall undress it layer by layer!”",
     "“Base64, then Reverse Hex, then ROT13, then URL Decode. Four paw prints, one grinning flag.”"
   ];
 
