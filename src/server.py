@@ -340,6 +340,11 @@ EASY_HINT_IDS = (
     'easy-hint-4',
     'easy-hint-5',
 )
+MEDIUM_HINT_IDS = (
+    'medium-hint-1',
+    'medium-hint-2',
+    'medium-hint-3',
+)
 CHESHIRE_PASS_ID = 'cheshire-cat-pass'
 CHESHIRE_PASS_COST = 200
 
@@ -1341,16 +1346,31 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
 
     def _handle_cheshire_unlock(self):
         """
-        Sell the Cheshire Cat's 200-Sovereign pass to the Cipher Lab.
+        Sell the Cheshire Cat's pass to the Cipher Lab.
 
-        The cat is only accessible after every Easy hint has been purchased,
-        and the pass is recorded in the account so it survives reloads. The
-        deduction happens server-side, so the browser cannot simply claim it
-        already paid.
+        Easy chamber: the cat only speaks after every Mad Hatter hint is
+        bought, then charges a fixed 200 Easy Sovereigns for the key.
+
+        Medium chamber: the cat speaks after every Medium hint is bought, and
+        then asks for *the rest of the player's coins* — their whole remaining
+        Medium balance, whatever the quantity (even an empty purse opens the
+        door). The quantity does not matter; the remainder is the price.
+
+        The pass is recorded in the account either way so it survives reloads,
+        and the deduction happens server-side so the browser cannot simply
+        claim it already paid.
         """
         user = self._require_session()
         if not user:
             return
+
+        # Which chamber's cat was knocked on? The tea room / chamber page the
+        # request came from decides; an unattributable request is Easy's.
+        chamber = self._shop_chamber()
+        if chamber not in ('easy', 'medium'):
+            chamber = 'easy'
+        required_hints = EASY_HINT_IDS if chamber == 'easy' else MEDIUM_HINT_IDS
+        points_column = f'points_{chamber}'
 
         with db_conn() as conn:
             conn.execute('BEGIN IMMEDIATE')
@@ -1371,47 +1391,60 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
                     'user': public,
                     'points': public['points'],
                     'points_easy': public['points_easy'],
+                    'points_medium': public['points_medium'],
                     'pointsByDifficulty': public['pointsByDifficulty'],
                     'purchasedHints': public['purchasedHints'],
                 })
                 return
 
-            missing = [hint_id for hint_id in EASY_HINT_IDS if hint_id not in purchased]
+            missing = [hint_id for hint_id in required_hints
+                       if hint_id not in purchased]
             if missing:
                 self._send_json({
                     'success': False,
                     'locked': True,
                     'error': (
-                        'The Cheshire Cat only speaks to an Alice who has bought '
-                        'every Mad Hatter hint first.'
+                        'The Cheshire Cat only speaks to an Alice who has '
+                        'bought every '
+                        + ('Mad Hatter' if chamber == 'easy' else 'Medium')
+                        + ' hint first.'
                     ),
                     'missingHints': missing,
                 }, 403)
                 return
 
             user_points = int(row['points'] or 0)
-            user_points_easy = int(row['points_easy'] or 0)
-            if user_points < CHESHIRE_PASS_COST or user_points_easy < CHESHIRE_PASS_COST:
-                self._send_json({
-                    'success': False,
-                    'error': (
-                        f'The Cheshire Cat wants {CHESHIRE_PASS_COST} Gold '
-                        f'Sovereigns for the key. You have {user_points_easy}.'
-                    ),
-                    'needed': CHESHIRE_PASS_COST,
-                    'available': user_points_easy,
-                }, 400)
-                return
+            user_chamber_points = int(row[points_column] or 0)
 
-            new_points = user_points - CHESHIRE_PASS_COST
-            new_points_easy = user_points_easy - CHESHIRE_PASS_COST
+            if chamber == 'easy':
+                # Easy keeps its fixed 200-Sovereign key.
+                cost = CHESHIRE_PASS_COST
+                if user_points < cost or user_chamber_points < cost:
+                    self._send_json({
+                        'success': False,
+                        'error': (
+                            f'The Cheshire Cat wants {CHESHIRE_PASS_COST} Gold '
+                            f'Sovereigns for the key. You have {user_chamber_points}.'
+                        ),
+                        'needed': cost,
+                        'available': user_chamber_points,
+                    }, 400)
+                    return
+            else:
+                # Medium: the cat asks for the rest of the player's coins —
+                # the whole remaining Medium purse, whatever it holds. The
+                # quantity does not matter, so an empty purse still gets in.
+                cost = user_chamber_points
+
+            new_points = user_points - cost
+            new_chamber_points = user_chamber_points - cost
             purchased.append(CHESHIRE_PASS_ID)
 
             conn.execute(
-                '''UPDATE users
-                   SET points = ?, points_easy = ?, purchased_hints = ?, updated_at = ?
-                   WHERE id = ?''',
-                (new_points, new_points_easy, json.dumps(purchased),
+                f'''UPDATE users
+                    SET points = ?, {points_column} = ?, purchased_hints = ?, updated_at = ?
+                    WHERE id = ?''',
+                (new_points, new_chamber_points, json.dumps(purchased),
                  _now_iso(), user['id'])
             )
             fresh = conn.execute('SELECT * FROM users WHERE id = ?',
@@ -1421,10 +1454,11 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         self._send_json({
             'success': True,
             'unlocked': True,
-            'cost': CHESHIRE_PASS_COST,
+            'cost': cost,
             'user': public,
             'points': public['points'],
             'points_easy': public['points_easy'],
+            'points_medium': public['points_medium'],
             'pointsByDifficulty': public['pointsByDifficulty'],
             'purchasedHints': public['purchasedHints'],
         })

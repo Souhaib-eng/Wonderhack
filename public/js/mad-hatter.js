@@ -331,9 +331,13 @@ const WonderHatterShop = (() => {
     cheshireSprite.classList.toggle('cat-locked', !unlocked);
     cheshireSprite.classList.remove('is-vanished');
     if (!unlocked) {
-      cheshireSprite.title = 'The Cheshire Cat appears only after every Easy hint is purchased';
+      cheshireSprite.title = activeDifficulty === 'medium'
+        ? 'The Cheshire Cat appears only after every Medium hint is purchased'
+        : 'The Cheshire Cat appears only after every Easy hint is purchased';
     } else if (!hasPass) {
-      cheshireSprite.title = 'Click the Cheshire Cat to pay 200 Sovereigns for the Cipher Lab';
+      cheshireSprite.title = activeDifficulty === 'medium'
+        ? 'Click the Cheshire Cat to hand over the rest of your coins for the Cipher Lab'
+        : 'Click the Cheshire Cat to pay 200 Sovereigns for the Cipher Lab';
     } else {
       cheshireSprite.title = "Click the Cheshire Cat to enter the Queen's Cipher Laboratory";
     }
@@ -344,7 +348,9 @@ const WonderHatterShop = (() => {
         ? (hasPass
           ? "The Cheshire Cat. Activate to enter the Queen's Cipher Laboratory."
           : 'The Cheshire Cat. Activate to purchase the Cipher Lab pass.')
-        : 'The Cheshire Cat is asleep until every Easy hint is purchased.'
+        : (activeDifficulty === 'medium'
+          ? 'The Cheshire Cat is asleep until every Medium hint is purchased.'
+          : 'The Cheshire Cat is asleep until every Easy hint is purchased.')
     );
     clearTimeout(cheshireVanishTimer);
   }
@@ -391,8 +397,9 @@ const WonderHatterShop = (() => {
         }
         if (!catUnlocked()) return;
 
-        // The cat is visible after every Easy hint, but the laboratory is a
-        // private party: the 200-Sovereign key must be paid first.
+        // The cat is visible once every clue of the current chamber is bought,
+        // but the laboratory is a private party: Easy pays a 200-Sovereign key,
+        // Medium hands over the rest of its coins.
         let hasPass = typeof WonderCharacters !== 'undefined'
           && typeof WonderCharacters.hasCheshirePass === 'function'
           && WonderCharacters.hasCheshirePass();

@@ -509,6 +509,53 @@ def test_medium_flow(base_url):
     check(status == 200 and data.get('cost') == 0,
           'medium-hint-3 is free once the earlier clues are bought')
 
+    # The Medium cat opens the Cipher Lab only after every Medium hint, and
+    # then asks for the rest of the player's coins — whatever the remainder.
+    medium_cat_referer = {'Referer': base_url + '/mad-hatter.html?from=medium'}
+
+    # A player with no Medium clues is locked out of the Medium cat.
+    fresh = Client(base_url)
+    status, _, _ = fresh.request('POST', '/api/register', {
+        'username': 'verify_medium_cat',
+        'password': 'VerifyCat2026!',
+        'displayName': 'Verify Medium Cat',
+    })
+    status, _, data = fresh.request('POST', '/api/cheshire/unlock',
+                                    headers=medium_cat_referer)
+    check(status == 403 and data.get('locked') is True,
+          'the Medium cat is locked until every Medium hint is bought')
+    check(set(data.get('missingHints', [])) == {'medium-hint-1', 'medium-hint-2',
+                                               'medium-hint-3'},
+          'the Medium cat names the missing Medium clues')
+
+    # The shop player owns every Medium hint and has an empty purse; solving
+    # one more riddle gives the cat something to take.
+    status, _, _ = shop.request('POST', '/api/solve', {
+        'puzzleId': 106,
+        'answer': _answer_for(106),
+    })
+    status, _, data = shop.request('POST', '/api/cheshire/unlock',
+                                   headers=medium_cat_referer)
+    check(status == 200 and data.get('success') is True,
+          'the Medium cat opens the lab once every Medium hint is owned')
+    check(data.get('cost') == 100,
+          'the Medium cat takes the rest of the Medium purse, whatever it holds')
+    check(data.get('points_medium') == 0,
+          'the Medium purse is emptied by the cat')
+    check('cheshire-cat-pass' in data.get('purchasedHints', []),
+          'the Medium cat records the lab pass in purchased hints')
+
+    status, _, data = shop.request('POST', '/api/cheshire/unlock',
+                                   headers=medium_cat_referer)
+    check(status == 200 and data.get('alreadyUnlocked') is True and data.get('cost') == 0,
+          'the Medium lab pass is idempotent and free afterwards')
+
+    # The Easy cat still demands its own five hints from a player without them.
+    status, _, data = fresh.request('POST', '/api/cheshire/unlock',
+                                    headers={'Referer': base_url + '/mad-hatter.html?from=easy'})
+    check(status == 403 and data.get('locked') is True,
+          'the Easy cat still requires every Easy hint')
+
     # Restore a neutral chamber for the next suite.
     Client(base_url).request('POST', '/api/difficulty', {'difficulty': 'easy'})
 

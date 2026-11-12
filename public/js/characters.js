@@ -9,6 +9,14 @@ const WonderCharacters = (() => {
   const CHESHIRE_PASS_ID = 'cheshire-cat-pass';
   const CHESHIRE_PASS_COST = 200;
 
+  // The hint catalogues the cat demands before he will talk, per chamber.
+  const EASY_HINT_IDS = [
+    'easy-hint-1', 'easy-hint-2', 'easy-hint-3', 'easy-hint-4', 'easy-hint-5'
+  ];
+  const MEDIUM_HINT_IDS = [
+    'medium-hint-1', 'medium-hint-2', 'medium-hint-3'
+  ];
+
   // Scripted dialogues & taunts
   const queenTaunts = [
     "“Off with their passwords! You dare enter my royal sanctuary with such trivial insolence?”",
@@ -127,16 +135,24 @@ const WonderCharacters = (() => {
   }
 
   function easyBalance() {
+    return chamberBalance('easy');
+  }
+
+  function chamberBalance(difficulty) {
     if (typeof WonderState === 'undefined') return 0;
     try {
       if (typeof WonderState.getPoints === 'function') {
-        return WonderState.getPoints('easy') || 0;
+        return WonderState.getPoints(difficulty) || 0;
       }
       const state = WonderState.getState();
-      return (state.pointsByDifficulty && state.pointsByDifficulty.easy) || 0;
+      return (state.pointsByDifficulty && state.pointsByDifficulty[difficulty]) || 0;
     } catch (e) {
       return 0;
     }
+  }
+
+  function chamberBalanceLabel(difficulty) {
+    return difficulty === 'medium' ? 'Medium' : 'Easy';
   }
 
   function ensurePassModal() {
@@ -153,7 +169,7 @@ const WonderCharacters = (() => {
         <h2 id="cheshire-pass-title" style="font-family: var(--font-display); color:#4a2155; text-align:center; margin:0.4rem 0 0.75rem; letter-spacing:1px;">
           The Cheshire Cat's Cipher Lab
         </h2>
-        <p style="font-family: var(--font-story); font-size:1.06rem; line-height:1.65; color:#5a4032; margin:0 0 0.75rem;">
+        <p id="cheshire-pass-lead" style="font-family: var(--font-story); font-size:1.06rem; line-height:1.65; color:#5a4032; margin:0 0 0.75rem;">
           “My laboratory is a private party, Alice. <strong>200 Gold Sovereigns</strong> buys the key — and only an Alice who has purchased <strong>every Mad Hatter hint</strong> may knock.”
         </p>
         <p id="cheshire-pass-balance" style="font-family: var(--font-story); font-size:1rem; color:#6a4835; margin:0 0 0.35rem;"></p>
@@ -176,20 +192,38 @@ const WonderCharacters = (() => {
     if (hasCheshirePass()) return Promise.resolve(true);
     if (passRequestPromise) return passRequestPromise;
 
-    // The cat will not discuss the lab until every Mad Hatter hint is bought.
-    const FALLBACK_HINTS = [
-      'easy-hint-1', 'easy-hint-2', 'easy-hint-3', 'easy-hint-4', 'easy-hint-5'
-    ];
-    const hintIds = (typeof WonderEasyHints !== 'undefined'
-      && Array.isArray(WonderEasyHints.hints)
-      && WonderEasyHints.hints.length)
-      ? WonderEasyHints.hints.map(hint => hint.id)
-      : FALLBACK_HINTS;
+    // The cat will not discuss the lab until every clue of the current
+    // chamber is bought: Easy needs the Mad Hatter hints, Medium the court
+    // clues.
+    let difficulty = 'easy';
+    if (typeof WonderUI !== 'undefined' && typeof WonderUI.getActiveDifficulty === 'function') {
+      difficulty = WonderUI.getActiveDifficulty() || 'easy';
+    }
+    if (!['easy', 'medium'].includes(difficulty)) {
+      try {
+        difficulty = (localStorage.getItem('wonderhack_last_difficulty') || 'easy').toLowerCase();
+      } catch (e) { /* keep easy */ }
+    }
+    if (!['easy', 'medium'].includes(difficulty)) difficulty = 'easy';
+    const isMedium = difficulty === 'medium';
+
+    const hintIds = isMedium
+      ? MEDIUM_HINT_IDS
+      : (typeof WonderEasyHints !== 'undefined'
+        && Array.isArray(WonderEasyHints.hints)
+        && WonderEasyHints.hints.length)
+        ? WonderEasyHints.hints.map(hint => hint.id)
+        : EASY_HINT_IDS;
     const owned = purchasedHints();
     const missing = hintIds.filter(id => !owned.includes(id));
     if (missing.length) {
       if (typeof WonderUI !== 'undefined') {
-        WonderUI.showToast('The Cheshire Cat flicks its tail. Buy every Mad Hatter hint first.', 'crimson');
+        WonderUI.showToast(
+          isMedium
+            ? 'The Cheshire Cat flicks its tail. Buy every Medium hint first.'
+            : 'The Cheshire Cat flicks its tail. Buy every Mad Hatter hint first.',
+          'crimson'
+        );
       }
       return Promise.resolve(false);
     }
@@ -244,8 +278,23 @@ const WonderCharacters = (() => {
         errorEl.style.display = 'block';
       };
 
+      const balance = chamberBalance(difficulty);
+      const payLabel = isMedium
+        ? (balance > 0
+          ? `Pay the rest — ${balance} Sovereigns 🪙`
+          : 'Enter the lab (your purse is empty) 🪙')
+        : `Pay ${CHESHIRE_PASS_COST} Sovereigns 🪙`;
+
+      const leadEl = document.getElementById('cheshire-pass-lead');
+      if (leadEl) {
+        leadEl.innerHTML = isMedium
+          ? '“My laboratory is a private party, Alice. Every <strong>Medium hint</strong> bought — and then <strong>the rest of your coins</strong>, whatever that rest may be, seals the bargain.”'
+          : '“My laboratory is a private party, Alice. <strong>200 Gold Sovereigns</strong> buys the key — and only an Alice who has purchased <strong>every Mad Hatter hint</strong> may knock.”';
+      }
       if (balanceEl) {
-        balanceEl.textContent = `Your Easy purse: ${easyBalance()} Gold Sovereigns (the key costs ${CHESHIRE_PASS_COST}).`;
+        balanceEl.textContent = isMedium
+          ? `Your ${chamberBalanceLabel(difficulty)} purse: ${balance} Gold Sovereigns (the cat takes the lot, great or small).`
+          : `Your Easy purse: ${balance} Gold Sovereigns (the key costs ${CHESHIRE_PASS_COST}).`;
       }
       if (errorEl) {
         errorEl.style.display = 'none';
@@ -253,7 +302,7 @@ const WonderCharacters = (() => {
       }
       if (payBtn) {
         payBtn.disabled = false;
-        payBtn.textContent = `Pay ${CHESHIRE_PASS_COST} Sovereigns 🪙`;
+        payBtn.textContent = payLabel;
       }
 
       if (closeBtn) closeBtn.onclick = () => finish(false);
@@ -282,9 +331,13 @@ const WonderCharacters = (() => {
                 failure = (res && res.error) || 'The royal registry refused the payment.';
               }
             } else if (typeof WonderState !== 'undefined' && typeof WonderState.purchaseHint === 'function') {
-              paid = WonderState.purchaseHint(CHESHIRE_PASS_ID, CHESHIRE_PASS_COST, 'easy');
+              // Offline fallback: Medium hands over the whole purse; Easy pays 200.
+              const fallbackCost = isMedium ? balance : CHESHIRE_PASS_COST;
+              paid = WonderState.purchaseHint(CHESHIRE_PASS_ID, fallbackCost, difficulty);
               if (!paid) {
-                failure = `You need ${CHESHIRE_PASS_COST} Easy Gold Sovereigns for the key.`;
+                failure = isMedium
+                  ? 'The Cheshire Cat could not empty your purse for the key.'
+                  : `You need ${CHESHIRE_PASS_COST} Easy Gold Sovereigns for the key.`;
               }
             } else {
               failure = 'The royal registry is unreachable. Try again when the server is running.';
@@ -296,7 +349,12 @@ const WonderCharacters = (() => {
           if (paid) {
             if (typeof WonderAudio !== 'undefined') WonderAudio.playCoin();
             if (typeof WonderUI !== 'undefined') {
-              WonderUI.showToast('The Cheshire Cat pockets your 200 Sovereigns and grins. The Cipher Lab is open!', 'gold');
+              WonderUI.showToast(
+                isMedium
+                  ? 'The Cheshire Cat pockets the rest of your coins and grins. The Cipher Lab is open!'
+                  : 'The Cheshire Cat pockets your 200 Sovereigns and grins. The Cipher Lab is open!',
+                'gold'
+              );
             }
             finish(true);
             return;
@@ -305,7 +363,7 @@ const WonderCharacters = (() => {
           if (typeof WonderAudio !== 'undefined') WonderAudio.playGong();
           showError(failure);
           payBtn.disabled = false;
-          payBtn.textContent = `Pay ${CHESHIRE_PASS_COST} Sovereigns 🪙`;
+          payBtn.textContent = payLabel;
         };
       }
 
@@ -390,9 +448,6 @@ const WonderCharacters = (() => {
     // The cat only becomes clickable in the Easy Chamber after every Easy hint
     // has been purchased. Everywhere else it fades away when approached.
     isCheshireUnlocked: () => {
-      const FALLBACK_HINTS = [
-        'easy-hint-1', 'easy-hint-2', 'easy-hint-3', 'easy-hint-4', 'easy-hint-5'
-      ];
       let difficulty = null;
       if (typeof WonderUI !== 'undefined' && typeof WonderUI.getActiveDifficulty === 'function') {
         difficulty = WonderUI.getActiveDifficulty();
@@ -404,14 +459,20 @@ const WonderCharacters = (() => {
           difficulty = 'easy';
         }
       }
-      if (difficulty !== 'easy') return false;
+      // The cat wakes for the chamber whose clues are all bought: Easy needs
+      // the five Mad Hatter hints, Medium the three court clues. Hard's cat
+      // never wakes.
+      if (difficulty !== 'easy' && difficulty !== 'medium') return false;
 
       if (typeof WonderState === 'undefined') return false;
-      const hintIds = (typeof WonderEasyHints !== 'undefined'
-        && Array.isArray(WonderEasyHints.hints)
-        && WonderEasyHints.hints.length)
-        ? WonderEasyHints.hints.map(hint => hint.id)
-        : FALLBACK_HINTS;
+      let hintIds = MEDIUM_HINT_IDS;
+      if (difficulty === 'easy') {
+        hintIds = (typeof WonderEasyHints !== 'undefined'
+          && Array.isArray(WonderEasyHints.hints)
+          && WonderEasyHints.hints.length)
+          ? WonderEasyHints.hints.map(hint => hint.id)
+          : EASY_HINT_IDS;
+      }
       const purchased = WonderState.getState().purchasedHints || [];
       return hintIds.length > 0 && hintIds.every(id => purchased.includes(id));
     },
