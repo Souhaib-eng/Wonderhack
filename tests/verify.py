@@ -270,9 +270,32 @@ def test_easy_exploit(base_url):
     client = Client(base_url)
     easy_referer = {'Referer': base_url + '/challenges/easy/index.html'}
 
-    status, _, cipher_lab = client.request('GET', '/api/cheshire')
-    check(status == 404,
-          'the cat publishes no decoding instructions — it does not help')
+    status, _, cipher_lab = client.request(
+        'GET', '/api/cheshire',
+        headers=easy_referer,
+    )
+    check(status == 200 and cipher_lab.get('success') is True,
+          'the cat helps the Easy chamber with decoding instructions')
+    operations = [entry['operation'] for entry in cipher_lab.get('steps', [])]
+    check(operations == ['base64-decode', 'rot13'],
+          'the cat teaches Base64 Decode then ROT13')
+    check('encoded' not in cipher_lab,
+          'the cat never hands out the sealed cipher value')
+    check(EASY_FLAG not in json.dumps(cipher_lab),
+          'the cat instructions never contain the plaintext flag')
+
+    for referer_path, label in (
+        ('/challenges/medium/index.html', 'Medium'),
+        ('/challenges/hard/index.html', 'Hard'),
+    ):
+        status, _, cat_refusal = client.request(
+            'GET', '/api/cheshire',
+            headers={'Referer': base_url + referer_path},
+        )
+        check(status == 403 and cat_refusal.get('immune') is True,
+              f'the cat gives no instructions in the {label} chamber')
+        check(EASY_FLAG not in json.dumps(cat_refusal),
+              f'the {label} cat refusal never leaks the flag')
 
     status, _, data = client.request('POST', '/api/check-is-solved', {
         'puzzle': 30,

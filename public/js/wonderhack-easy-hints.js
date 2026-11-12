@@ -41,7 +41,7 @@ const WonderEasyHints = {
       number: 5,
       title: "The Sealed Flag",
       cost: 40,
-      text: "Run isSolved() in the console while you are inside the Easy Chamber. It returns the flag sealed behind two layers — take that cipher to the Cipher Lab and peel them off yourself.",
+      text: "Run isSolved() in the console while you are inside the Easy Chamber. It returns the flag sealed behind two layers — take that cipher to the Cipher Lab and let the Cheshire Cat guide your paws through the decoders.",
     },
   ],
   successMessage:

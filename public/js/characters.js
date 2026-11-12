@@ -52,8 +52,8 @@ const WonderCharacters = (() => {
     "“Need a paw with that Easy challenge? Look closely at the letters shifted by thirteen positions!”",
     "“ROT13 rotates halfway round the clock—thirteen steps forward, thirteen steps back!”",
     "“Base64 ends in '=' like a Cheshire cat's whiskers waving farewell!”",
-    "“The Queen's secret wears disguises, Alice. Bring the sealed text to my lab and undress it layer by layer — yourself!”",
-    "“Every cipher is a joke, and every joke falls apart if you push it far enough. Push, Alice, push!”"
+    "“The Queen's secret wears two disguises, Alice. Bring the sealed text to my lab and we shall undress it layer by layer!”",
+    "“Base64, then ROT13. Two paw prints, one grinning flag.”"
   ];
 
   // Per-bubble timers — keyed by bubbleId so each bubble manages itself independently

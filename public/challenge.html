@@ -14,7 +14,7 @@
   <header id="wonder-header-mount"></header>
 
   <!-- Cheshire Cat (Right Character Sprite) -->
-  <aside class="cheshire-character-wrapper character-sprite" id="cheshire-sprite" role="button" tabindex="0" aria-label="The Cheshire Cat" title="Click the Cheshire Cat">
+  <aside class="cheshire-character-wrapper character-sprite" id="cheshire-sprite" role="button" tabindex="0" aria-label="The Cheshire Cat — cryptographic guide" title="Click the Cheshire Cat for cryptographic wisdom">
     <img src="assets/images/characters/cheshire-cat.png" alt="The grinning Cheshire Cat strumming a banjo">
     <div class="character-tag">Cheshire Cat (Grinning)</div>
   </aside>
@@ -25,7 +25,7 @@
       <span class="dialogue-speaker-name">Cheshire Cat</span>
       <button class="dialogue-close-btn" aria-label="Close speech bubble">&times;</button>
     </div>
-    <div class="dialogue-bubble-text">“Welcome to my Cipher Lab, Alice. The tools are yours to try.”</div>
+    <div class="dialogue-bubble-text">“Welcome to my Cipher Lab! Need a paw decoding Her Majesty's ciphers?”</div>
   </div>
 
   <main class="lab-container">
@@ -84,6 +84,15 @@
           <textarea id="decoder-input" class="decoder-textarea" placeholder="Paste encoded bytes or letters here..."></textarea>
         </div>
 
+        <!-- Cheshire Cat Quick Tip -->
+        <div class="lab-cat-tip">
+          <img src="assets/images/characters/cheshire-cat.png" alt="Cheshire Cat">
+          <div class="lab-cat-tip-text">
+            <strong id="lab-cat-tip-title">Cheshire's Whisper:</strong>
+            <span id="lab-cat-tip-text">“Click on me on the right anytime you need cryptographic wisdom or decoding hints!”</span>
+          </div>
+        </div>
+
         <!-- Single return action: the duplicate button was removed. -->
         <div class="lab-menu-actions">
           <a href="challenges/easy/index.html" class="btn-victorian btn-crimson" id="return-castle-btn" style="text-decoration:none;">
@@ -95,12 +104,40 @@
 
     </div>
 
+    <!-- Cheshire Cat's instruction-only guide (Easy, all hints bought) -->
+    <section class="lab-card cat-guide-card" id="cat-guide-card" aria-label="Cheshire Cat decryption instructions" hidden>
+      <div class="cat-guide-head">
+        <h2 class="cat-guide-title"><span aria-hidden="true">🐈‍⬛</span> Cheshire's Decryption Instructions</h2>
+        <span class="cat-guide-step-label" id="cat-guide-step-label">Instruction 1 of 2</span>
+        <div class="cat-guide-dots" id="cat-guide-dots" aria-hidden="true"></div>
+      </div>
+
+      <div class="cat-guide-instruction" id="cat-guide-instruction">
+        The cat is waking up…
+      </div>
+
+      <div class="cat-guide-actions">
+        <button type="button" class="btn-victorian btn-crimson" id="cat-guide-next">
+          Next Instruction →
+        </button>
+        <button type="button" class="btn-victorian" id="cat-guide-reset">
+          Start Over
+        </button>
+      </div>
+
+      <p class="cat-guide-note">
+        The cat only gives instructions. Apply each tool yourself in Menu I and
+        read the result in Decoded Output.
+      </p>
+    </section>
+
   </main>
 
   <!-- Core Scripts -->
   <script src="js/main.js?v=23"></script>
   <script src="js/characters.js?v=24"></script>
   <script src="js/session.js?v=11"></script>
+  <script src="js/cheshire-cipher.js?v=6"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       WonderUI.initHeader('challenge');
@@ -133,8 +170,28 @@
       const returnBtn = document.getElementById('return-castle-btn');
       if (returnBtn) returnBtn.href = `challenges/${activeDiff}/index.html`;
 
-      // ── Cheshire Cat state ───────────────────────────────────────────────
-      // The cat is decoration only: it never helps with the decoding.
+      // ── Cheshire Cat instruction state ────────────────────────────────────
+      const catTipTitle = document.getElementById('lab-cat-tip-title');
+      const catTipText = document.getElementById('lab-cat-tip-text');
+      const guideCard = document.getElementById('cat-guide-card');
+      const guideStepLabel = document.getElementById('cat-guide-step-label');
+      const guideDots = document.getElementById('cat-guide-dots');
+      const guideInstruction = document.getElementById('cat-guide-instruction');
+      const guideNextBtn = document.getElementById('cat-guide-next');
+      const guideResetBtn = document.getElementById('cat-guide-reset');
+
+      let cipherInfo = null;
+      let guideStep = 0;
+
+      function escapeHtml(value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, (ch) => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;',
+        }[ch]));
+      }
 
       function catUnlockedNow() {
         try {
@@ -153,8 +210,94 @@
           && WonderCharacters.hasCheshirePass();
       }
 
-      // The cat is only awake after the hints have woken it AND the
-      // 200-Sovereign Cipher Lab pass has been paid.
+      // The instructions are only available after the hints have woken the cat
+      // AND the 200-Sovereign Cipher Lab pass has been paid.
+      function catAccessGranted() {
+        return catUnlockedNow() && hasCheshirePassNow();
+      }
+
+      function catSay(text, duration = 9000) {
+        if (typeof WonderCharacters === 'undefined'
+          || typeof WonderCharacters.triggerCheshireHelp !== 'function') {
+          if (typeof WonderAudio !== 'undefined' && WonderAudio.playCatMeow) {
+            WonderAudio.playCatMeow();
+          }
+          return;
+        }
+        const clean = String(text || '').replace(/^[“"]|[”"]$/g, '');
+        WonderCharacters.triggerCheshireHelp(`“${clean}”`, duration);
+      }
+
+      function renderGuide() {
+        if (!cipherInfo) return;
+        if (guideCard) guideCard.hidden = false;
+
+        if (guideStepLabel) {
+          guideStepLabel.textContent = `Instruction ${guideStep + 1} of ${cipherInfo.totalSteps}`;
+        }
+
+        if (guideDots) {
+          guideDots.innerHTML = cipherInfo.steps.map((item, index) => {
+            let cls = 'cat-guide-dot';
+            if (index < guideStep) cls += ' done';
+            else if (index === guideStep) cls += ' active';
+            return `<span class="${cls}"></span>`;
+          }).join('');
+        }
+
+        const meta = cipherInfo.steps[guideStep];
+        if (guideInstruction) {
+          guideInstruction.innerHTML = `<strong>${escapeHtml(meta.tool)}:</strong> ${escapeHtml(meta.instruction)}`;
+        }
+        if (catTipTitle) catTipTitle.textContent = `Cheshire's Paw Print ${guideStep + 1}:`;
+        if (catTipText) catTipText.textContent = `“${meta.instruction}”`;
+      }
+
+      async function initCatGuide() {
+        if (!catUnlockedNow()) {
+          if (guideCard) guideCard.hidden = true;
+          return;
+        }
+        if (!hasCheshirePassNow()) {
+          // The cat is awake but the laboratory key has not been paid for.
+          if (guideCard) guideCard.hidden = true;
+          if (catTipTitle) catTipTitle.textContent = 'Cheshire taps his paw:';
+          if (catTipText) catTipText.textContent = '“The laboratory is private, Alice. 200 Sovereigns, and the key is yours.”';
+          return;
+        }
+        if (typeof WonderCheshire === 'undefined') return;
+
+        const info = await WonderCheshire.load();
+        if (!info.ok) {
+          if (guideCard) guideCard.hidden = true;
+          return;
+        }
+
+        cipherInfo = info;
+        guideStep = 0;
+        renderGuide();
+      }
+
+      if (guideNextBtn) {
+        guideNextBtn.addEventListener('click', () => {
+          if (!cipherInfo) return;
+          guideStep = (guideStep + 1) % cipherInfo.totalSteps;
+          renderGuide();
+          catSay(cipherInfo.steps[guideStep].instruction, 9000);
+          if (typeof WonderAudio !== 'undefined') WonderAudio.playChime();
+        });
+      }
+
+      if (guideResetBtn) {
+        guideResetBtn.addEventListener('click', () => {
+          if (!cipherInfo) return;
+          guideStep = 0;
+          renderGuide();
+          catSay(cipherInfo.steps[0].instruction, 9000);
+          if (typeof WonderUI !== 'undefined') WonderUI.showToast('The paw prints are fresh again. Start with Base64 Decode.', 'gold');
+        });
+      }
+
       function runDecoding() {
         const input = decoderInput.value.trim();
         if (!input) {
@@ -199,8 +342,12 @@
         });
       });
 
-      // Cheshire Cat sprite: clickable only in Easy after every hint is bought,
-      // but a click only ever earns a meow — the cat does not help.
+      // Cheshire Cat speech tip on the Easy chamber.
+      if (activeDiff === 'easy' && catTipText) {
+        catTipText.textContent = '“Bring me a cipher, Alice, and I shall tell you which tool to try. The reading is yours to do.”';
+      }
+
+      // Cheshire Cat sprite: clickable only in Easy after every hint is bought.
       const cheshireSprite = document.getElementById('cheshire-sprite');
       function refreshCatLock() {
         if (!cheshireSprite) return false;
@@ -213,14 +360,14 @@
         } else if (!hasPass) {
           cheshireSprite.title = 'Click the Cheshire Cat to pay 200 Sovereigns for the Cipher Lab';
         } else {
-          cheshireSprite.title = 'Click the Cheshire Cat';
+          cheshireSprite.title = 'Click the Cheshire Cat for the next decryption instruction';
         }
         cheshireSprite.setAttribute('aria-disabled', unlocked ? 'false' : 'true');
         cheshireSprite.setAttribute(
           'aria-label',
           unlocked
             ? (hasPass
-              ? 'The Cheshire Cat.'
+              ? 'The Cheshire Cat guide. Activate for the next decryption instruction.'
               : 'The Cheshire Cat. Activate to purchase the Cipher Lab pass.')
             : 'The Cheshire Cat is asleep until every Easy hint is purchased.'
         );
@@ -267,12 +414,14 @@
             }
             if (!paid) return;
             refreshCatLock();
+            await initCatGuide();
             return;
           }
 
-          // Every click earns a meow. The cat never helps with the decoding.
-          if (typeof WonderAudio !== 'undefined' && WonderAudio.playCatMeow) {
-            WonderAudio.playCatMeow();
+          if (cipherInfo) {
+            catSay(cipherInfo.steps[guideStep].instruction, 10000);
+          } else {
+            catSay('Bring me a cipher, Alice, and I shall tell you which tool to try. The reading is yours to do.', 9000);
           }
         });
 
@@ -295,15 +444,18 @@
       refreshCatLock();
 
       // The session may still be booting in main.js; wait for the authoritative
-      // hint list before deciding whether the cat is awake.
+      // hint list before deciding whether the cat (and its guide) is awake.
       if (typeof WonderSession !== 'undefined' && typeof WonderSession.boot === 'function') {
         try { await WonderSession.boot(); } catch (error) {}
       }
+      refreshCatLock();
+      await initCatGuide();
       refreshCatLock();
 
       if (typeof WonderState !== 'undefined' && typeof WonderState.subscribe === 'function') {
         WonderState.subscribe(() => {
           refreshCatLock();
+          if (catAccessGranted() && !cipherInfo) initCatGuide();
         });
       }
     });

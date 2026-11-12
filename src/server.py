@@ -16,6 +16,7 @@ Endpoints:
   POST /api/reset      → wipe the current player's progression
   GET  /api/leaderboard→ players ranked by saved coins (Court Administrator only)
   GET  /api/queen/answers → every riddle and its accepted answers (Queen only)
+  GET  /api/cheshire    → cat's Easy-only decoding instructions (no cipher values)
   POST /api/cheshire/unlock  → buy the Cheshire Cat's 200-coin Cipher Lab pass
   GET  /api/db-status  → small health check (no credentials exposed)
 """
@@ -153,7 +154,8 @@ HINT_CATALOGUE = {
                 'text': (
                     'Run isSolved() in the console while you are inside the Easy '
                     'Chamber. It returns the flag sealed behind two layers — take '
-                    'that cipher to the Cipher Lab and peel them off yourself.'
+                    'that cipher to the Cipher Lab and let the Cheshire Cat guide '
+                    'your paws through the decoders.'
                 ),
             },
         ],
@@ -322,10 +324,10 @@ def _record_audit(conn, admin, action, target_user=None, detail=''):
 # ── Cheshire Cat's Easy cipher trail ────────────────────────────────────────
 # isSolved() returns the Easy flag *sealed* behind the same two operations the
 # Cipher Lab offers (Base64 Decode → ROT13). The player takes that sealed value
-# to the Cipher Lab and peels the layers off alone — the Cheshire Cat no longer
-# walks anyone through the order. The plaintext flag never appears in public/;
-# it is produced at runtime by the Cipher Lab decoders (and, for the Queen only,
-# by her answer scroll).
+# to the Cipher Lab, where the Cheshire Cat guides the Easy chamber through the
+# layers; a lab opened from Medium or Hard gets no instructions at all. The
+# plaintext flag never appears in public/; it is produced at runtime by the
+# Cipher Lab decoders (and, for the Queen only, by her answer scroll).
 EASY_CIPHER_PLAINTEXT = DIFFICULTY_FLAGS['easy']
 
 # The Cheshire Cat demands every Mad Hatter hint before he will even discuss
@@ -339,6 +341,27 @@ EASY_HINT_IDS = (
 )
 CHESHIRE_PASS_ID = 'cheshire-cat-pass'
 CHESHIRE_PASS_COST = 200
+
+# The cat teaches the two-step operation order — but only to the Easy chamber.
+# A player who opens the lab from Medium or Hard gets no instructions at all.
+CHESHIRE_STEPS = [
+    {
+        'operation': 'base64-decode',
+        'tool': 'Base64 Decode',
+        'instruction': (
+            'Paste the sealed flag you carried out of the Easy Chamber into the '
+            'Cipher Input and choose Base64 Decode, meow!'
+        ),
+    },
+    {
+        'operation': 'rot13',
+        'tool': 'ROT13',
+        'instruction': (
+            'Purr-fect! Copy the output, paste it back into the Cipher Input, '
+            'and spin it through ROT13. The plaintext flag is yours to read.'
+        ),
+    },
+]
 
 
 def easy_cipher_stages():
@@ -1090,6 +1113,8 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
             self._handle_queen_answers()
         elif path == '/api/queen/flag':
             self._handle_queen_flag()
+        elif path == '/api/cheshire':
+            self._handle_cheshire()
         elif path == '/api/hints':
             self._handle_hints()
         elif path == '/api/admin/players':
@@ -1180,6 +1205,66 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
             'success': True,
             'difficulty': active_difficulty,
             'flag': flag_for_difficulty(active_difficulty),
+        })
+
+    def _lab_chamber(self, query=None):
+        """
+        Which chamber is the Cipher Lab serving right now?
+
+        The lab page is reached as ``challenge.html?from=<chamber>``. A chamber
+        page Referer wins; otherwise the lab page's own ``from``/``difficulty``
+        parameter decides, then the API request's own query. Returns the chamber
+        or None when it cannot be told.
+        """
+        chamber = self._chamber_from_referer()
+        if chamber in ('easy', 'medium', 'hard'):
+            return chamber
+        referer = self.headers.get('Referer') or ''
+        parsed = urllib.parse.urlparse(referer)
+        if parsed.path.lower().endswith('/challenge.html'):
+            wanted = urllib.parse.parse_qs(parsed.query)
+            wanted = (wanted.get('from') or wanted.get('difficulty') or [''])[0]
+            wanted = wanted.strip().lower()
+            if wanted in ('easy', 'medium', 'hard'):
+                return wanted
+        if query:
+            wanted = (query.get('from') or query.get('difficulty') or [''])[0]
+            wanted = wanted.strip().lower()
+            return wanted if wanted in ('easy', 'medium', 'hard') else None
+        return None
+
+    def _handle_cheshire(self):
+        """
+        The Cheshire Cat's decoding instructions — Easy chamber only.
+
+        The cat helps the Easy chamber peel the two layers off the sealed
+        flag. A lab opened from Medium or Hard gets no instructions: the cat
+        does not help there. The server never returns the plaintext flag or
+        any intermediate result.
+        """
+        query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        chamber = self._lab_chamber(query)
+
+        if chamber != 'easy':
+            self._send_json({
+                'success': False,
+                'immune': chamber in ('medium', 'hard'),
+                'chamber': chamber,
+                'error': (
+                    'The Cheshire Cat only helps the Easy chamber. This lab '
+                    'gets no instructions.'
+                ),
+            }, 403)
+            return
+
+        self._send_json({
+            'success': True,
+            'difficulty': 'easy',
+            'totalSteps': len(CHESHIRE_STEPS),
+            'steps': [
+                {'step': index, **meta}
+                for index, meta in enumerate(CHESHIRE_STEPS)
+            ],
         })
 
     def _handle_cheshire_unlock(self):
@@ -2267,9 +2352,8 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
 
         Calling ``isSolved()`` from the Easy Chamber is therefore enough to make
         the server return the *sealed* Easy flag. The player then takes that
-        cipher to the Cipher Lab and peels the two layers off alone — the
-        Cheshire Cat does not help with the decoding. No coin balance is
-        changed here.
+        cipher to the Cipher Lab, where the Cheshire Cat guides the Easy chamber
+        through the two decoding layers. No coin balance is changed here.
         """
         chamber = self._chamber_from_referer()
 
@@ -2343,13 +2427,14 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         elif final_trial:
             # The Easy gateway is the only chamber allowed through the Referer
             # gate above, so this is always the Easy flag. Return it *sealed*
-            # with the same two layers the Cipher Lab can undo; the player must
-            # take it to the lab and work the decoders out alone.
+            # with the same two layers the Cipher Lab can undo; the player takes
+            # it to the lab, where the cat helps in Easy only.
             result['flag'] = easy_cipher_stages()[0]
             result['sealed'] = True
             result['message'] = (
                 "The final trial is complete. The Queen's flag is sealed — "
-                'take this cipher to the Cipher Lab and unseal it yourself.'
+                'take this cipher to the Cipher Lab and let the Cheshire Cat '
+                'help you unseal it.'
             )
         else:
             result['message'] = f'Prize awarded: {prize} Gold Sovereigns.'
