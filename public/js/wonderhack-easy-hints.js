@@ -1,7 +1,7 @@
 /**
  * WONDERHACK — Easy Chamber Hint Data & Character Dialogues
  * Source of truth for Easy Chamber hints, point costs, learning goals,
- * Cheshire Cat extra hint, and educational success feedback.
+ * and educational success feedback.
  */
 
 const WonderEasyHints = {
@@ -52,11 +52,6 @@ const WonderEasyHints = {
         "Guide players the Console to the Cipher Lab decoding chain.",
     },
   ],
-  cheshireHint: {
-    title: "Cheshire Cat — Free Extra Hint",
-    cost: 100,
-    text: "Easy trusts the browser; Medium and Hard do not. isSolved() hands you a sealed flag — bring it to my Cipher Lab, and buy the 200-Sovereign key so I can guide you through the layers.",
-  },
   successMessage:
     "The flag was returned sealed because the backend trusted a boolean supplied by the browser. Decode it in the Cipher Lab — client-side claims are never proof.",
 };

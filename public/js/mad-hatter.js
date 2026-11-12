@@ -1,8 +1,7 @@
 /**
  * WONDERHACK — Mad Hatter's Tea Room Controller
  * Manages hint progression, purchases, wallet updates, and character interactions.
- * In Easy Chamber, Mad Hatter offers 5 progressive hints (Hint 1 is free, Hints 2–5 cost points),
- * and Cheshire Cat provides a free extra hint.
+ * In Easy Chamber, Mad Hatter offers 5 progressive hints (Hint 1 is free, Hints 2–5 cost points).
  * In Medium and Hard Chambers, the shop remains empty.
  */
 
@@ -378,18 +377,7 @@ const WonderHatterShop = (() => {
         hatterBubbleText.textContent = WonderEasyHints.openingDialogue;
       }
 
-      // Update Cheshire Cat speech bubble and assist box to the free extra hint
-      if (typeof WonderEasyHints !== 'undefined') {
-        const cheshireBubbleText = document.querySelector('#cheshire-bubble .dialogue-bubble-text');
-        if (cheshireBubbleText) {
-          cheshireBubbleText.textContent = `“${WonderEasyHints.cheshireHint.text}”`;
-        }
-        const cheshireHintText = document.getElementById('cheshire-hint-text');
-        if (cheshireHintText) {
-          cheshireHintText.textContent = `“${WonderEasyHints.cheshireHint.text}”`;
-        }
-      }
-
+      // The cat no longer offers a free extra hint in the hint area.
       renderHints();
     } else {
       // Medium / Hard: preserve empty tea table
