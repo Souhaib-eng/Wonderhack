@@ -94,6 +94,20 @@ def init_db():
     except sqlite3.IntegrityError:
         print('Warning: duplicate usernames found; case-insensitive index skipped.')
 
+    # ------------------------------------------------------- flag submissions
+    # Every flag attempt from the first page is logged here and tied to the
+    # submitting account, so the court can audit who captured which chamber.
+    c.execute('''CREATE TABLE IF NOT EXISTS flag_submissions (
+        id              INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        difficulty      TEXT NOT NULL,
+        submitted_flag  TEXT NOT NULL DEFAULT '',
+        correct         INTEGER NOT NULL DEFAULT 0,
+        created_at      TEXT NOT NULL DEFAULT ''
+    )''')
+    c.execute('''CREATE INDEX IF NOT EXISTS idx_flag_submissions_user
+                 ON flag_submissions(user_id, difficulty)''')
+
     # An external identity provider maps one subject to one account. Local
     # accounts keep an empty subject, so the partial index ignores them.
     try:

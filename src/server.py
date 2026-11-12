@@ -153,9 +153,9 @@ HINT_CATALOGUE = {
                 'cost': 40,
                 'text': (
                     'Run isSolved() in the console while you are inside the Easy '
-                    'Chamber. It returns the flag sealed behind two layers — take '
-                    'that cipher to the Cipher Lab and let the Cheshire Cat guide '
-                    'your paws through the decoders.'
+                    'Chamber. It returns the flag sealed behind four layers — take '
+                    'that cipher to the Cheshire Cat\'s Cipher Lab and let him '
+                    'guide your paws through the decoders.'
                 ),
             },
         ],
@@ -322,11 +322,11 @@ def _record_audit(conn, admin, action, target_user=None, detail=''):
 
 
 # ── Cheshire Cat's Easy cipher trail ────────────────────────────────────────
-# isSolved() returns the Easy flag *sealed* behind the same two operations the
-# Cipher Lab offers (Base64 Decode → ROT13). The player takes that sealed value
-# to the Cipher Lab, where the Cheshire Cat guides the Easy chamber through the
-# layers; a lab opened from Medium or Hard gets no instructions at all. The
-# plaintext flag never appears in public/; it is produced at runtime by the
+# isSolved() returns the Easy flag *sealed* behind the same four operations the
+# Cipher Lab offers (Base64 Decode → Reverse Hex → ROT13 → URL Decode). The
+# player takes that sealed value to the Cipher Lab, where the Cheshire Cat
+# guides the Easy chamber through the layers to recover the plaintext flag.
+# The plaintext flag never appears in public/; it is produced at runtime by the
 # Cipher Lab decoders (and, for the Queen only, by her answer scroll).
 EASY_CIPHER_PLAINTEXT = DIFFICULTY_FLAGS['easy']
 
@@ -342,7 +342,7 @@ EASY_HINT_IDS = (
 CHESHIRE_PASS_ID = 'cheshire-cat-pass'
 CHESHIRE_PASS_COST = 200
 
-# The cat teaches the two-step operation order — but only to the Easy chamber.
+# The cat teaches the four-step operation order — but only to the Easy chamber.
 # A player who opens the lab from Medium or Hard gets no instructions at all.
 CHESHIRE_STEPS = [
     {
@@ -354,11 +354,26 @@ CHESHIRE_STEPS = [
         ),
     },
     {
+        'operation': 'reverse-hex',
+        'tool': 'Reverse Hex',
+        'instruction': (
+            'Purr-fect! Copy the output, paste it back into the Cipher Input, '
+            'and apply Reverse Hex.'
+        ),
+    },
+    {
         'operation': 'rot13',
         'tool': 'ROT13',
         'instruction': (
-            'Purr-fect! Copy the output, paste it back into the Cipher Input, '
-            'and spin it through ROT13. The plaintext flag is yours to read.'
+            'Wonderful! Copy that result and spin it through ROT13, little Alice.'
+        ),
+    },
+    {
+        'operation': 'url-decode',
+        'tool': 'URL Decode',
+        'instruction': (
+            'Last paw! Copy it once more and apply URL Decode. The plaintext '
+            'flag will appear in your Decoded Output — read it yourself.'
         ),
     },
 ]
@@ -366,14 +381,41 @@ CHESHIRE_STEPS = [
 
 def easy_cipher_stages():
     """
-    Build the cipher layers from the Easy flag.
+    Build the four cipher layers from the Easy flag.
 
-    stages[0] is the sealed value isSolved() returns to the player: the flag
-    rotated through ROT13 and then Base64-encoded. stages[1] is the ROT13
-    intermediate. To recover the plaintext the player decodes Base64, then
-    applies ROT13, using the Cipher Lab's own tools.
+    stages[0] is the sealed value isSolved() returns to the player.
+    stages[1..3] are the intermediate results, and stages[4] is the plaintext
+    flag. The player peels the layers back in the Cipher Lab; the Cheshire Cat
+    guides the Easy chamber through the operation order.
     """
     message = EASY_CIPHER_PLAINTEXT
+    url_encoded = urllib.parse.quote(message, safe='')
+    rot13_value = codecs.encode(url_encoded, 'rot_13')
+    hex_value = rot13_value.encode('utf-8').hex()
+    reversed_hex = ''.join(
+        reversed([hex_value[i:i + 2] for i in range(0, len(hex_value), 2)])
+    )
+    sealed = base64.b64encode(reversed_hex.encode('utf-8')).decode('ascii')
+    return [sealed, reversed_hex, rot13_value, url_encoded, message]
+
+
+def seal_flag_for_difficulty(difficulty):
+    """
+    Seal a chamber's flag the way the players must undo it.
+
+    Easy keeps its four-layer trail (Base64 → Reverse Hex → ROT13 → URL
+    Decode) that the Cheshire Cat guides. Medium and Hard are sealed with just
+    two layers — Base64 then ROT13 — that the player must peel off alone.
+
+    Returns [sealed, ...intermediates..., plaintext], or None for an unknown
+    chamber.
+    """
+    key = (difficulty or '').strip().lower()
+    if key not in DIFFICULTY_FLAGS:
+        return None
+    if key == 'easy':
+        return easy_cipher_stages()
+    message = DIFFICULTY_FLAGS[key]
     rot13_value = codecs.encode(message, 'rot_13')
     sealed = base64.b64encode(rot13_value.encode('utf-8')).decode('ascii')
     return [sealed, rot13_value, message]
@@ -1184,7 +1226,11 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         ]
         self._send_json({
             'success': True,
-            'flag': flag_for_difficulty(active_difficulty),
+            # The scroll never shows a plaintext flag: every chamber's flag is
+            # sealed and must be decoded in the Cipher Lab (Easy with the cat's
+            # guidance; Medium and Hard alone).
+            'flag': seal_flag_for_difficulty(active_difficulty)[0],
+            'sealed': True,
             'difficulty': active_difficulty,
             'puzzles': answers,
         })
@@ -1204,7 +1250,8 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         self._send_json({
             'success': True,
             'difficulty': active_difficulty,
-            'flag': flag_for_difficulty(active_difficulty),
+            'flag': seal_flag_for_difficulty(active_difficulty)[0],
+            'sealed': True,
         })
 
     def _lab_chamber(self, query=None):
@@ -1237,7 +1284,7 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         """
         The Cheshire Cat's decoding instructions — Easy chamber only.
 
-        The cat helps the Easy chamber peel the two layers off the sealed
+        The cat helps the Easy chamber peel the four layers off the sealed
         flag. A lab opened from Medium or Hard gets no instructions: the cat
         does not help there. The server never returns the plaintext flag or
         any intermediate result.
@@ -1406,6 +1453,96 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
             'openingDialogue': entry.get('openingDialogue', ''),
             'hints': entry.get('hints', []),
         })
+
+    def _handle_submit_flag(self):
+        """
+        Public flag submission from the first page.
+
+        The form asks for an account username, the chamber the flag belongs to,
+        and the decoded flag itself. The server compares the submission with
+        the real flag for that chamber (never shipped to the browser), logs the
+        attempt in the flag_submissions table, and associates every correct
+        capture with the user's account. No session is required: the username
+        names the account that claims the capture.
+        """
+        data = self._get_body()
+        username = _clean_username(data.get('username') or '')
+        difficulty = (data.get('difficulty') or '').strip().lower()
+        submitted = (data.get('flag') or '').strip()
+
+        if not username:
+            self._send_json({'success': False,
+                             'error': 'Tell the court whose flag this is.'}, 400)
+            return
+        if difficulty not in DIFFICULTY_FLAGS:
+            self._send_json({'success': False,
+                             'error': 'Choose a chamber: easy, medium or hard.'}, 400)
+            return
+        if not submitted:
+            self._send_json({'success': False,
+                             'error': 'Paste the decoded flag before submitting.'}, 400)
+            return
+
+        expected = DIFFICULTY_FLAGS[difficulty]
+        correct = hmac.compare_digest(submitted, expected)
+        now = _now_iso()
+
+        with db_conn() as conn:
+            conn.execute('BEGIN IMMEDIATE')
+            row = conn.execute(
+                'SELECT * FROM users WHERE LOWER(username) = ?',
+                (username.lower(),)
+            ).fetchone()
+            if not row:
+                row = conn.execute(
+                    'SELECT * FROM users WHERE LOWER(display_name) = ?',
+                    (username.lower(),)
+                ).fetchone()
+            if not row:
+                self._send_json({
+                    'success': False,
+                    'error': f'No account named "{username}" exists in the royal registry.',
+                }, 404)
+                return
+
+            already = False
+            if correct:
+                prior = conn.execute(
+                    '''SELECT id FROM flag_submissions
+                       WHERE user_id = ? AND difficulty = ? AND correct = 1''',
+                    (row['id'], difficulty)
+                ).fetchone()
+                already = prior is not None
+
+            conn.execute(
+                '''INSERT INTO flag_submissions
+                       (user_id, difficulty, submitted_flag, correct, created_at)
+                   VALUES (?, ?, ?, ?, ?)''',
+                (row['id'], difficulty, submitted[:200], 1 if correct else 0, now)
+            )
+
+            if not correct:
+                self._send_json({
+                    'success': False,
+                    'error': f'That is not the flag of the {difficulty.title()} chamber.',
+                    'correct': False,
+                }, 400)
+                return
+
+            public = user_to_public(row, conn)
+            self._send_json({
+                'success': True,
+                'alreadyCaptured': already,
+                'difficulty': difficulty,
+                'accountUsername': public['username'],
+                'displayName': public['displayName'],
+                'message': (
+                    f'The {difficulty.title()} flag is already sealed to '
+                    f'"{public["displayName"]}".' if already else
+                    f'Flag captured! The {difficulty.title()} flag now belongs to '
+                    f'"{public["displayName"]}".'
+                ),
+            })
 
     def _handle_difficulty(self):
         """
@@ -1883,6 +2020,7 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
             '/api/progress': self._handle_progress,
             '/api/reset': self._handle_reset,
             '/api/difficulty': self._handle_difficulty,
+            '/api/submit-flag': self._handle_submit_flag,
             '/api/cheshire/unlock': self._handle_cheshire_unlock,
             '/api/check-is-solved': self._handle_check_is_solved,
             '/api/is-solved': self._handle_check_is_solved,
@@ -2427,7 +2565,7 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         elif final_trial:
             # The Easy gateway is the only chamber allowed through the Referer
             # gate above, so this is always the Easy flag. Return it *sealed*
-            # with the same two layers the Cipher Lab can undo; the player takes
+            # with the same four layers the Cipher Lab can undo; the player takes
             # it to the lab, where the cat helps in Easy only.
             result['flag'] = easy_cipher_stages()[0]
             result['sealed'] = True

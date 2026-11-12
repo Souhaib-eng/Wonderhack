@@ -53,6 +53,90 @@
       font-size: 1.35rem;
       color: var(--color-gold-bright);
     }
+
+    /* ── Flag submission card ──────────────────────────────────────────── */
+    .flag-submit-card {
+      margin: 2.5rem auto 0;
+      max-width: 560px;
+      padding: 1.6rem 1.8rem;
+      border: 1px solid rgba(212, 175, 55, 0.45);
+      border-radius: 12px;
+      background: rgba(20, 12, 24, 0.55);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+      text-align: left;
+    }
+
+    .flag-submit-title {
+      font-family: var(--font-display);
+      color: var(--color-gold-bright);
+      font-size: 1.5rem;
+      letter-spacing: 1px;
+      margin: 0 0 0.4rem;
+    }
+
+    .flag-submit-lead {
+      font-family: var(--font-story);
+      font-size: 0.98rem;
+      line-height: 1.6;
+      color: #d8c7a8;
+      margin: 0 0 1.2rem;
+    }
+
+    .flag-submit-row {
+      margin-bottom: 0.95rem;
+    }
+
+    .flag-submit-row label {
+      display: block;
+      font-family: var(--font-story);
+      font-weight: bold;
+      font-size: 0.95rem;
+      margin-bottom: 0.3rem;
+      color: #e8d9b8;
+    }
+
+    .flag-submit-row input,
+    .flag-submit-row select {
+      width: 100%;
+      padding: 0.65rem 0.8rem;
+      border-radius: 8px;
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      background: rgba(8, 5, 10, 0.7);
+      color: #f3e9d2;
+      font-family: var(--font-story);
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    .flag-submit-row input.flag-submit-input-mono {
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.5px;
+    }
+
+    .flag-submit-row input:focus,
+    .flag-submit-row select:focus {
+      outline: none;
+      border-color: var(--color-gold-bright);
+    }
+
+    .flag-submit-feedback {
+      font-family: var(--font-story);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      min-height: 1.4em;
+      margin: 0.2rem 0 0.9rem;
+      display: none;
+    }
+
+    .flag-submit-feedback.ok {
+      display: block;
+      color: #8fe0a0;
+    }
+
+    .flag-submit-feedback.err {
+      display: block;
+      color: #ff9aa8;
+    }
   </style>
 </head>
 <body class="menu-body">
@@ -131,6 +215,45 @@
         </div>
       </div>
 
+      <!-- Flag Submission — decoded flags are claimed here -->
+      <section class="flag-submit-card" id="flag-submit-card" aria-label="Submit a captured flag">
+        <h2 class="flag-submit-title">⚑ Submit a Captured Flag</h2>
+        <p class="flag-submit-lead">
+          Decoded a flag in the Cipher Lab? Name the account that captured it,
+          choose its chamber, and seal your victory in the royal registry.
+        </p>
+
+        <form id="flag-submit-form" autocomplete="off">
+          <div class="flag-submit-row">
+            <label for="flag-submit-username">Account username</label>
+            <input type="text" id="flag-submit-username" name="username"
+                   placeholder="e.g. alice" maxlength="32" required>
+          </div>
+
+          <div class="flag-submit-row">
+            <label for="flag-submit-difficulty">Chamber</label>
+            <select id="flag-submit-difficulty" name="difficulty" required>
+              <option value="easy">Easy Chamber</option>
+              <option value="medium">Medium Chamber</option>
+              <option value="hard">Hard Chamber</option>
+            </select>
+          </div>
+
+          <div class="flag-submit-row">
+            <label for="flag-submit-value">Decoded flag</label>
+            <input type="text" id="flag-submit-value" name="flag"
+                   class="flag-submit-input-mono"
+                   placeholder="CIC{...}" maxlength="120" required>
+          </div>
+
+          <div class="flag-submit-feedback" id="flag-submit-feedback" role="status" aria-live="polite"></div>
+
+          <button type="submit" class="btn-victorian btn-gold" id="flag-submit-btn">
+            Submit the Flag 🏴
+          </button>
+        </form>
+      </section>
+
     </article>
 
   </main>
@@ -142,6 +265,59 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       WonderUI.initHeader('', null, { hideAccount: true });
+
+      // ── Flag submission (first page) ──────────────────────────────────
+      const submitForm = document.getElementById('flag-submit-form');
+      const submitFeedback = document.getElementById('flag-submit-feedback');
+      const submitBtn = document.getElementById('flag-submit-btn');
+
+      const showFeedback = (message, ok) => {
+        if (!submitFeedback) return;
+        submitFeedback.textContent = message;
+        submitFeedback.className = `flag-submit-feedback ${ok ? 'ok' : 'err'}`;
+      };
+
+      if (submitForm) {
+        submitForm.addEventListener('submit', async (event) => {
+          event.preventDefault();
+
+          const username = document.getElementById('flag-submit-username').value.trim();
+          const difficulty = document.getElementById('flag-submit-difficulty').value;
+          const flag = document.getElementById('flag-submit-value').value.trim();
+
+          if (!username || !flag) {
+            showFeedback('Fill in the username and the decoded flag.', false);
+            return;
+          }
+
+          submitBtn.disabled = true;
+          showFeedback('Sealing the capture in the royal registry…', true);
+
+          try {
+            const response = await fetch('/api/submit-flag', {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+              },
+              body: JSON.stringify({ username, difficulty, flag }),
+            });
+            const data = await response.json().catch(() => ({}));
+
+            if (response.ok && data.success) {
+              showFeedback(data.message || 'Flag captured!', true);
+              submitForm.reset();
+            } else {
+              showFeedback(data.error || 'The royal registry refused the submission.', false);
+            }
+          } catch (error) {
+            showFeedback('The royal registry is unreachable. Try again shortly.', false);
+          } finally {
+            submitBtn.disabled = false;
+          }
+        });
+      }
     });
   </script>
 </body>

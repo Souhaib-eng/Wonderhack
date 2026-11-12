@@ -121,6 +121,17 @@ def _answer_for(puzzle_id):
     return answer
 
 
+def _unseal(sealed, difficulty):
+    """Undo the chamber's seal exactly as the Cipher Lab tools would."""
+    if difficulty == 'easy':
+        value = base64.b64decode(sealed).decode('ascii')
+        pairs = [value[i:i + 2] for i in range(len(value) - 2, -1, -2)]
+        value = ''.join(chr(int(pair, 16)) for pair in pairs)
+        value = codecs.encode(value, 'rot_13')
+        return urllib.parse.unquote(value)
+    return codecs.encode(base64.b64decode(sealed).decode('ascii'), 'rot_13')
+
+
 def test_public_assets_have_no_flags():
     print('\n[1] Public assets never contain a plaintext flag')
     offenders = []
@@ -277,8 +288,8 @@ def test_easy_exploit(base_url):
     check(status == 200 and cipher_lab.get('success') is True,
           'the cat helps the Easy chamber with decoding instructions')
     operations = [entry['operation'] for entry in cipher_lab.get('steps', [])]
-    check(operations == ['base64-decode', 'rot13'],
-          'the cat teaches Base64 Decode then ROT13')
+    check(operations == ['base64-decode', 'reverse-hex', 'rot13', 'url-decode'],
+          'the cat guides Base64 → Reverse Hex → ROT13 → URL Decode')
     check('encoded' not in cipher_lab,
           'the cat never hands out the sealed cipher value')
     check(EASY_FLAG not in json.dumps(cipher_lab),
@@ -333,11 +344,15 @@ def test_easy_exploit(base_url):
     })
     check(status == 404, 'the automatic cipher-advance endpoint is gone')
 
-    # The player performs the two operations themselves, exactly as the lab
+    # The player performs the four operations themselves, exactly as the lab
     # buttons do. The server never returns the plaintext or intermediate values.
-    current = codecs.encode(base64.b64decode(sealed).decode('ascii'), 'rot_13')
+    current = base64.b64decode(sealed).decode('ascii')
+    pairs = [current[i:i + 2] for i in range(len(current) - 2, -1, -2)]
+    current = ''.join(chr(int(pair, 16)) for pair in pairs)
+    current = codecs.encode(current, 'rot_13')
+    current = urllib.parse.unquote(current)
     check(current == EASY_FLAG,
-          'Base64 Decode then ROT13 recovers the plaintext easy flag')
+          'the player can recover the plaintext easy flag with the lab tools')
 
     status, _, data = client.request('POST', '/api/flag', {'flag': EASY_FLAG})
     check(status == 404, 'the legacy /api/flag endpoint is gone')
@@ -362,8 +377,11 @@ def test_medium_flow(base_url):
           'the injection resolves to the Queen account only')
 
     status, _, answers = client.request('GET', '/api/queen/answers')
-    check(status == 200 and answers.get('flag') == MEDIUM_FLAG,
-          'the injected Queen session reveals the Medium flag')
+    check(status == 200 and answers.get('sealed') is True
+          and MEDIUM_FLAG not in json.dumps(answers),
+          'the injected Queen session receives the Medium flag sealed')
+    check(_unseal(answers.get('flag'), 'medium') == MEDIUM_FLAG,
+          'Base64 then ROT13 unseals the Medium flag for the injected Queen')
 
     # The very same payload is inert in Easy and Hard: the form there is not the
     # Medium login page, so the concatenated lookup is never reached.
@@ -479,6 +497,60 @@ def test_medium_flow(base_url):
     Client(base_url).request('POST', '/api/difficulty', {'difficulty': 'easy'})
 
 
+def test_flag_submissions(base_url):
+    print('\n[6b] Flag submission from the first page claims flags per account')
+    client = Client(base_url)
+
+    status, _, data = client.request('POST', '/api/register', {
+        'username': 'verify_flagman',
+        'password': 'VerifyFlag2026!',
+        'displayName': 'Verify Flagman',
+    })
+    check(status == 201, 'the flag submitter registers')
+
+    status, _, data = client.request('POST', '/api/submit-flag', {
+        'username': 'verify_flagman', 'difficulty': 'easy', 'flag': '',
+    })
+    check(status == 400, 'an empty flag is refused')
+
+    status, _, data = client.request('POST', '/api/submit-flag', {
+        'username': 'verify_flagman', 'difficulty': 'medium',
+        'flag': 'CIC{not_the_real_flag}',
+    })
+    check(status == 400 and data.get('correct') is False,
+          'a wrong flag is refused and logged as incorrect')
+
+    status, _, data = client.request('POST', '/api/submit-flag', {
+        'username': 'ghost_account', 'difficulty': 'easy', 'flag': EASY_FLAG,
+    })
+    check(status == 404, 'a submission for an unknown account is refused')
+
+    status, _, data = client.request('POST', '/api/submit-flag', {
+        'username': 'verify_flagman', 'difficulty': 'medium', 'flag': MEDIUM_FLAG,
+    })
+    check(status == 200 and data.get('success') is True
+          and data.get('alreadyCaptured') is False,
+          'the Medium flag is claimed by the account')
+
+    status, _, data = client.request('POST', '/api/submit-flag', {
+        'username': 'Verify Flagman', 'difficulty': 'medium', 'flag': MEDIUM_FLAG,
+    })
+    check(status == 200 and data.get('alreadyCaptured') is True,
+          'a repeat capture by display name is idempotent')
+
+    status, _, data = client.request('POST', '/api/submit-flag', {
+        'username': 'verify_flagman', 'difficulty': 'hard', 'flag': HARD_FLAG,
+    })
+    check(status == 200 and data.get('success') is True,
+          'the Hard flag is claimed by the account')
+
+    status, _, data = client.request('POST', '/api/submit-flag', {
+        'username': 'verify_flagman', 'difficulty': 'easy', 'flag': EASY_FLAG,
+    })
+    check(status == 200 and data.get('success') is True,
+          'the Easy flag is claimed by the account')
+
+
 def test_admin_and_seasons(base_url):
     print('\n[5] Administrator monitoring, audit trail and season rollover')
     admin = Client(base_url)
@@ -566,22 +638,27 @@ def test_queen_flow(base_url):
           'the public difficulty endpoint never returns a flag')
 
     status, _, answers = queen.request('GET', '/api/queen/answers')
-    check(status == 200 and answers.get('flag') == MEDIUM_FLAG,
-          "the Queen's scroll shows the active chamber flag")
+    check(status == 200 and answers.get('sealed') is True
+          and MEDIUM_FLAG not in json.dumps(answers)
+          and _unseal(answers.get('flag'), 'medium') == MEDIUM_FLAG,
+          "the Queen's scroll shows the sealed active-chamber flag")
     check(len(answers.get('puzzles', [])) == len(PUZZLES),
           "the Queen's scroll contains every accepted answer")
 
     status, _, flag = queen.request('GET', '/api/queen/flag')
-    check(status == 200 and flag.get('flag') == MEDIUM_FLAG,
+    check(status == 200 and flag.get('sealed') is True
+          and _unseal(flag.get('flag'), 'medium') == MEDIUM_FLAG,
           'the lightweight Queen flag endpoint follows the active chamber')
 
     queen.request('POST', '/api/difficulty', {'difficulty': 'hard'})
     status, _, flag = queen.request('GET', '/api/queen/flag')
-    check(flag.get('flag') == HARD_FLAG, 'switching to Hard updates the royal flag')
+    check(_unseal(flag.get('flag'), 'hard') == HARD_FLAG,
+          'switching to Hard updates the royal flag')
 
     queen.request('POST', '/api/difficulty', {'difficulty': 'easy'})
     status, _, flag = queen.request('GET', '/api/queen/flag')
-    check(flag.get('flag') == EASY_FLAG, 'switching back to Easy restores the Easy flag')
+    check(_unseal(flag.get('flag'), 'easy') == EASY_FLAG,
+          'switching back to Easy restores the Easy flag')
 
 
 def test_oauth_disabled(base_url):
@@ -625,6 +702,7 @@ def main():
         test_cheshire_unlock(base_url)
         test_easy_exploit(base_url)
         test_medium_flow(base_url)
+        test_flag_submissions(base_url)
         test_admin_and_seasons(base_url)
         test_queen_flow(base_url)
         test_oauth_disabled(base_url)
