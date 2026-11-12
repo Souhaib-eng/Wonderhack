@@ -6,40 +6,35 @@
       "number": 1,
       "title": "The First Page",
       "cost": 0,
-      "text": "Stay inside the Easy Chamber. Its page loads a small helper the Queen forgot to guard. Inspect the page source and find the script she trusts.",
-      "learningGoal": "Encourage players to inspect the Easy Chamber page."
+      "text": "Stay inside the Easy Chamber. Its page loads a small helper the Queen forgot to guard. Inspect the page source and find the script she trusts."
     },
     {
       "id": "easy-hint-2",
       "number": 2,
       "title": "Open the Looking Glass",
       "cost": 10,
-      "text": "Open the browser's Developer Tools and inspect the scripts loaded by the Easy Chamber. One of them defines isSolved().",
-      "learningGoal": "Encourage players to inspect the page's JavaScript."
+      "text": "Open the browser's Developer Tools and inspect the scripts loaded by the Easy Chamber. One of them defines isSolved()."
     },
     {
       "id": "easy-hint-3",
       "number": 3,
       "title": "No Arguments Needed",
       "cost": 20,
-      "text": "isSolved() takes no arguments. Ask yourself who checks the claim the browser sends — and which chamber the Queen still trusts.",
-      "learningGoal": "Help players understand the helper's signature and the trust boundary."
+      "text": "isSolved() takes no arguments. Ask yourself who checks the claim the browser sends — and which chamber the Queen still trusts."
     },
     {
       "id": "easy-hint-4",
       "number": 4,
       "title": "A Rule Written in Sand",
       "cost": 30,
-      "text": "The backend trusts the solved claim only for Easy. Medium and Hard are immune, so you do not need to solve the riddles to test the rule.",
-      "learningGoal": "Help players identify the client-side trust flaw and its chamber scope."
+      "text": "The backend trusts the solved claim only for Easy. Medium and Hard are immune, so you do not need to solve the riddles to test the rule."
     },
     {
       "id": "easy-hint-5",
       "number": 5,
       "title": "The Sealed Flag",
       "cost": 40,
-      "text": "Run isSolved() in the console while you are inside the Easy Chamber. It returns the flag sealed behind four layers — take that cipher to the Cheshire Cat's Cipher Lab and let him guide your paws through the decoders.",
-      "learningGoal": "Guide players from isSolved() to the Cipher Lab decoding chain."
+      "text": "Run isSolved() in the console while you are inside the Easy Chamber. It returns the flag sealed behind four layers — take that cipher to the Cheshire Cat's Cipher Lab and let him guide your paws through the decoders."
     }
   ],
   "successMessage": "The flag was returned sealed because the backend trusted a boolean supplied by the browser. Decode it in the Cipher Lab — client-side claims are never proof."

@@ -1,6 +1,6 @@
 /**
  * WONDERHACK — Easy Chamber Hint Data & Character Dialogues
- * Source of truth for Easy Chamber hints, point costs, learning goals,
+ * Source of truth for Easy Chamber hints, point costs,
  * and educational success feedback.
  */
 
@@ -14,7 +14,6 @@ const WonderEasyHints = {
       title: "The First Page",
       cost: 0,
       text: "Stay inside the Easy Chamber. Its page loads a small helper the Queen forgot to guard. Inspect the page source and find the script she trusts.",
-      learningGoal: "Encourage players to inspect the Easy Chamber page.",
     },
     {
       id: "easy-hint-2",
@@ -22,7 +21,6 @@ const WonderEasyHints = {
       title: "Open the Looking Glass",
       cost: 10,
       text: "Open the browser's Developer Tools and inspect the scripts loaded by the Easy Chamber. Find where the queen checks if we solved the puzzle or not",
-      learningGoal: "Encourage players to inspect the page's JavaScript.",
     },
     {
       id: "easy-hint-3",
@@ -30,8 +28,6 @@ const WonderEasyHints = {
       title: "No Arguments Needed",
       cost: 20,
       text: "have you ever tried the web console? I heard it's pretty fun! ;)",
-      learningGoal:
-        "Help players understand the helper's signature and the trust boundary.",
     },
     {
       id: "easy-hint-4",
@@ -39,8 +35,6 @@ const WonderEasyHints = {
       title: "A Rule Written in Sand",
       cost: 30,
       text: "The queen trusts her functions, sometimes she doesn't even use arguments!",
-      learningGoal:
-        "Help players identify the client-side trust flaw and its chamber scope.",
     },
     {
       id: "easy-hint-5",
@@ -48,8 +42,6 @@ const WonderEasyHints = {
       title: "The Sealed Flag",
       cost: 40,
       text: "Run isSolved() in the console while you are inside the Easy Chamber. It returns the flag sealed behind four layers — take that cipher to the Cheshire Cat's Cipher Lab and let him guide your paws through the decoders.",
-      learningGoal:
-        "Guide players the Console to the Cipher Lab decoding chain.",
     },
   ],
   successMessage:

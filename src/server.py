@@ -114,7 +114,6 @@ HINT_CATALOGUE = {
                     'the Queen forgot to guard. Inspect the page source and find '
                     'the script she trusts.'
                 ),
-                'learningGoal': 'Encourage players to inspect the Easy Chamber page.',
             },
             {
                 'id': 'easy-hint-2',
@@ -126,7 +125,6 @@ HINT_CATALOGUE = {
                     'loaded by the Easy Chamber. Find where the queen checks if we '
                     'solved the puzzle or not'
                 ),
-                'learningGoal': 'Encourage players to inspect the page\'s JavaScript.',
             },
             {
                 'id': 'easy-hint-3',
@@ -137,10 +135,6 @@ HINT_CATALOGUE = {
                     'have you ever tried the web console? I heard it\'s pretty '
                     'fun! ;)'
                 ),
-                'learningGoal': (
-                    'Help players understand the helper\'s signature and the '
-                    'trust boundary.'
-                ),
             },
             {
                 'id': 'easy-hint-4',
@@ -150,10 +144,6 @@ HINT_CATALOGUE = {
                 'text': (
                     'The queen trusts her functions, sometimes she doesn\'t even '
                     'use arguments!'
-                ),
-                'learningGoal': (
-                    'Help players identify the client-side trust flaw and its '
-                    'chamber scope.'
                 ),
             },
             {
@@ -166,9 +156,6 @@ HINT_CATALOGUE = {
                     'Chamber. It returns the flag sealed behind four layers — take '
                     'that cipher to the Cheshire Cat\'s Cipher Lab and let him '
                     'guide your paws through the decoders.'
-                ),
-                'learningGoal': (
-                    'Guide players the Console to the Cipher Lab decoding chain.'
                 ),
             },
         ],
@@ -188,9 +175,6 @@ HINT_CATALOGUE = {
                     'I heard from the Cheshire Cat that the flag is in the '
                     'queen\'s account.'
                 ),
-                'learningGoal': (
-                    'Point the player toward the Queen of Hearts’ account.'
-                ),
             },
             {
                 'id': 'medium-hint-2',
@@ -201,7 +185,6 @@ HINT_CATALOGUE = {
                     'I really like the cold Soft Quiet nights, the moon and its '
                     'Light really helps me relax!'
                 ),
-                'learningGoal': 'Read the capital letters: S, Q, L — SQL.',
             },
             {
                 'id': 'medium-hint-3',
@@ -209,9 +192,6 @@ HINT_CATALOGUE = {
                 'title': "The Queen's Username",
                 'cost': 0,
                 'text': "The Queen's username is 'hearts_queen'.",
-                'learningGoal': (
-                    'Supply the account name the injection should target.'
-                ),
             },
         ],
     },

@@ -24,7 +24,6 @@ const WonderHatterShop = (() => {
         title: "The Queen's Account",
         cost: 200,
         text: "I heard from the Cheshire Cat that the flag is in the queen's account.",
-        learningGoal: 'Point the player toward the Queen of Hearts’ account.',
       },
       {
         id: 'medium-hint-2',
@@ -32,7 +31,6 @@ const WonderHatterShop = (() => {
         title: 'Cold Soft Quiet Nights',
         cost: 300,
         text: 'I really like the cold Soft Quiet nights, the moon and its Light really helps me relax!',
-        learningGoal: 'Read the capital letters: S, Q, L — SQL.',
       },
       {
         id: 'medium-hint-3',
@@ -40,7 +38,6 @@ const WonderHatterShop = (() => {
         title: "The Queen's Username",
         cost: 0,
         text: "The Queen's username is 'hearts_queen'.",
-        learningGoal: 'Supply the account name the injection should target.',
       },
     ],
   };
@@ -190,9 +187,6 @@ const WonderHatterShop = (() => {
         bodyHtml = `
           <div class="hint-card-body">
             <div class="hint-unlocked-content">“${hint.text}”</div>
-            <p style="margin: 0.65rem 0 0 0; font-family: var(--font-story); font-size: 0.95rem; color: #6a4835; font-style: italic;">
-              <strong>Learning Goal:</strong> ${hint.learningGoal}
-            </p>
           </div>
         `;
       } else {
@@ -200,9 +194,6 @@ const WonderHatterShop = (() => {
           <div class="hint-card-body locked">
             <p style="margin: 0 0 0.5rem 0;">
               🔒 <em>A secret kept beneath the Mad Hatter's tea cozy. Purchase to reveal this clue.</em>
-            </p>
-            <p style="margin: 0; font-family: var(--font-story); font-size: 0.95rem; color: #7d6b5e;">
-              <strong>Learning Goal:</strong> ${hint.learningGoal}
             </p>
           </div>
         `;
