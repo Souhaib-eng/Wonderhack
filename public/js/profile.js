@@ -191,33 +191,43 @@ const WonderProfile = (() => {
       });
     }
 
-    // Reset progress button — clears server coins, solves and hints.
+    // Reset progress button — a Court Administrator power only. Everyone else
+    // never sees it, and the backend refuses non-admin calls anyway.
     const resetBtn = document.getElementById('reset-progress-btn');
     if (resetBtn) {
-      resetBtn.addEventListener('click', async () => {
-        if (!confirm('Are you certain? This erases your saved coins, solved enigmas and hints from the server.')) {
-          return;
-        }
-        resetBtn.disabled = true;
+      const resetWrap = document.getElementById('reset-progress-wrap');
+      const adminUser = typeof WonderSession !== 'undefined'
+        && WonderSession.isAuthenticated()
+        && WonderSession.isAdmin();
+      if (resetWrap) resetWrap.style.display = adminUser ? '' : 'none';
+      if (!adminUser) resetBtn.style.display = 'none';
 
-        const onlineAccount = typeof WonderSession !== 'undefined'
-          && WonderSession.isAuthenticated();
-
-        if (onlineAccount) {
-          const result = await WonderSession.resetProgress();
-          if (!result.success) {
-            WonderUI.showToast(result.error || 'Could not reset server progress.', 'crimson');
-            resetBtn.disabled = false;
+      if (adminUser) {
+        resetBtn.addEventListener('click', async () => {
+          if (!confirm('Are you certain? This erases this account\'s saved coins, solved enigmas and hints from the server.')) {
             return;
           }
-          WonderUI.showToast('Your progression has been wiped clean.', 'gold');
-          setTimeout(() => window.location.reload(), 700);
-          return;
-        }
+          resetBtn.disabled = true;
 
-        // No server account: wipe the local game state.
-        WonderState.resetProgress();
-      });
+          const onlineAccount = typeof WonderSession !== 'undefined'
+            && WonderSession.isAuthenticated();
+
+          if (onlineAccount) {
+            const result = await WonderSession.resetProgress();
+            if (!result.success) {
+              WonderUI.showToast(result.error || 'Could not reset server progress.', 'crimson');
+              resetBtn.disabled = false;
+              return;
+            }
+            WonderUI.showToast('Your progression has been wiped clean.', 'gold');
+            setTimeout(() => window.location.reload(), 700);
+            return;
+          }
+
+          // No server account: wipe the local game state.
+          WonderState.resetProgress();
+        });
+      }
     }
   }
 

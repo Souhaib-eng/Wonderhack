@@ -588,6 +588,21 @@ def test_admin_and_seasons(base_url):
     player_entry = players['players'][0]
     check(player_entry['solvedCount'] == 1, 'admin registry shows the solved count')
 
+    # Resetting game progress is an administrator-only power: a regular player
+    # is refused, while the administrator can reset their own progression.
+    player = Client(base_url)
+    player.request('POST', '/api/login', {
+        'username': 'verify_player',
+        'password': 'VerifyPass2026!',
+    })
+    status, _, data = player.request('POST', '/api/reset', {'confirm': 'RESET'})
+    check(status == 403 and data.get('success') is False,
+          'a regular player cannot reset game progress')
+
+    status, _, data = admin.request('POST', '/api/reset', {'confirm': 'RESET'})
+    check(status == 200 and data.get('success') is True,
+          'the administrator can reset game progress')
+
     status, _, solves = admin.request('GET', '/api/admin/solves')
     check(status == 200 and solves.get('total') >= 1, 'admin solve feed lists recorded solves')
 

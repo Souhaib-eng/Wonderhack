@@ -2609,6 +2609,13 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         user = self._require_session()
         if not user:
             return
+        # Resetting game progress is a Court Administrator power. Regular
+        # players keep their progression; the admin console manages resets.
+        if not is_admin_user(user):
+            self._send_json({'success': False,
+                             'error': 'Only the Court Administrator may reset game progress.'},
+                            403)
+            return
         if self._get_body().get('confirm') != 'RESET':
             self._send_json({'success': False,
                              'error': 'Confirmation required.'}, 400)
