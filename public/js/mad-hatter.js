@@ -8,6 +8,61 @@
 const WonderHatterShop = (() => {
   let activeDifficulty = 'easy';
 
+  // Medium Chamber hint catalogue. Prices are paid from the Medium coin purse.
+  const MEDIUM_HINTS = {
+    openingDialogue:
+      "“Ah, the Royal Court! The Queen's secrets are steeped stronger than my tea, Alice.”",
+    hints: [
+      {
+        id: 'medium-hint-1',
+        number: 1,
+        title: "The Queen's Account",
+        cost: 200,
+        text: "I heard from the Cheshire Cat that the flag is in the queen's account.",
+        learningGoal: 'Point the player toward the Queen of Hearts’ account.',
+      },
+      {
+        id: 'medium-hint-2',
+        number: 2,
+        title: 'Cold Soft Quiet Nights',
+        cost: 300,
+        text: 'I really like the cold Soft Quiet nights, the moon and its Light really helps me relax!',
+        learningGoal: 'Read the capital letters: S, Q, L — SQL.',
+      },
+      {
+        id: 'medium-hint-3',
+        number: 3,
+        title: "The Queen's Username",
+        cost: 0,
+        text: "The Queen's username is 'hearts_queen'.",
+        learningGoal: 'Supply the account name the injection should target.',
+      },
+    ],
+  };
+
+  const DIFFICULTY_LABELS = {
+    easy: 'Easy Chamber',
+    medium: 'Medium Chamber',
+    hard: 'Hard Chamber',
+  };
+
+  function hintCatalog() {
+    if (activeDifficulty === 'medium') return MEDIUM_HINTS;
+    if (activeDifficulty === 'easy' && typeof WonderEasyHints !== 'undefined') {
+      return WonderEasyHints;
+    }
+    return null;
+  }
+
+  function chamberPoints() {
+    if (typeof WonderState === 'undefined') return 0;
+    if (typeof WonderState.getPoints === 'function') {
+      return WonderState.getPoints(activeDifficulty) || 0;
+    }
+    const state = WonderState.getState();
+    return (state.pointsByDifficulty && state.pointsByDifficulty[activeDifficulty]) || 0;
+  }
+
   function getChamberDifficulty() {
     const urlParams = new URLSearchParams(window.location.search);
     const fromParam = urlParams.get('from') || urlParams.get('difficulty');
@@ -44,22 +99,21 @@ const WonderHatterShop = (() => {
   function updateWalletDisplay() {
     const walletElem = document.getElementById('shop-wallet-pts');
     if (!walletElem) return;
-    const pts = (typeof WonderState !== 'undefined') ? (WonderState.getState().points || 0) : 0;
-    walletElem.textContent = pts;
+    walletElem.textContent = chamberPoints();
   }
 
   function renderHints() {
     const grid = document.getElementById('hints-grid');
     if (!grid) return;
 
-    const data = (typeof WonderEasyHints !== 'undefined') ? WonderEasyHints : null;
+    const data = hintCatalog();
     if (!data || !Array.isArray(data.hints)) {
       grid.innerHTML = '<p style="font-family: var(--font-story); color:#7a1223;">Hints are currently brewing…</p>';
       return;
     }
 
-    const state = (typeof WonderState !== 'undefined') ? WonderState.getState() : { points: 0, purchasedHints: [] };
-    const walletPts = state.points || 0;
+    const state = (typeof WonderState !== 'undefined') ? WonderState.getState() : { purchasedHints: [] };
+    const walletPts = chamberPoints();
     const purchased = state.purchasedHints || [];
 
     grid.innerHTML = data.hints.map((hint, idx) => {
@@ -141,7 +195,7 @@ const WonderHatterShop = (() => {
         <article class="${cardClass}" id="card-${hint.id}">
           <header class="hint-card-header">
             <div>
-              <span class="hint-card-badge">Easy Chamber · Clue ${hint.number}</span>
+              <span class="hint-card-badge">${DIFFICULTY_LABELS[activeDifficulty] || 'Royal'} · Clue ${hint.number}</span>
               <h2 class="hint-card-title">${hint.title}</h2>
             </div>
             ${costPillHtml}
@@ -172,8 +226,7 @@ const WonderHatterShop = (() => {
       return;
     }
 
-    const state = WonderState.getState();
-    const currentPts = state.points || 0;
+    const currentPts = chamberPoints();
 
     if (cost > 0 && currentPts < cost) {
       if (typeof WonderAudio !== 'undefined') WonderAudio.playGong();
@@ -202,7 +255,7 @@ const WonderHatterShop = (() => {
 
     // Local state fallback / synchronization
     if (!serverSuccess) {
-      const ok = WonderState.purchaseHint(hintId, cost, 'easy');
+      const ok = WonderState.purchaseHint(hintId, cost, activeDifficulty);
       if (!ok) return;
     } else {
       if (typeof WonderAudio !== 'undefined') WonderAudio.playCoin();
@@ -365,23 +418,24 @@ const WonderHatterShop = (() => {
     updateWalletDisplay();
 
     const emptySection = document.getElementById('shop-empty');
-    const easyContainer = document.getElementById('easy-hints-container');
+    const hintsContainer = document.getElementById('hints-container');
+    const catalog = hintCatalog();
 
-    if (activeDifficulty === 'easy') {
+    if (catalog && Array.isArray(catalog.hints)) {
       if (emptySection) emptySection.style.display = 'none';
-      if (easyContainer) easyContainer.style.display = 'block';
+      if (hintsContainer) hintsContainer.style.display = 'block';
 
-      // Update Mad Hatter speech bubble to Easy opening dialogue
+      // Update Mad Hatter speech bubble to the chamber's opening dialogue
       const hatterBubbleText = document.querySelector('#hatter-bubble .dialogue-bubble-text');
-      if (hatterBubbleText && typeof WonderEasyHints !== 'undefined') {
-        hatterBubbleText.textContent = WonderEasyHints.openingDialogue;
+      if (hatterBubbleText && catalog.openingDialogue) {
+        hatterBubbleText.textContent = catalog.openingDialogue;
       }
 
       // The cat no longer offers a free extra hint in the hint area.
       renderHints();
     } else {
-      // Medium / Hard: preserve empty tea table
-      if (easyContainer) easyContainer.style.display = 'none';
+      // Hard: preserve the empty tea table
+      if (hintsContainer) hintsContainer.style.display = 'none';
       if (emptySection) emptySection.style.display = 'block';
     }
 

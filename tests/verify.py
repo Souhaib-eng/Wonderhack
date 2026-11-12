@@ -315,6 +315,85 @@ def test_easy_exploit(base_url):
     check(status == 404, 'the legacy /api/flag endpoint is gone')
 
 
+def test_medium_flow(base_url):
+    print('\n[4b] Medium SQL-injection login, Queen flag and hint shop')
+    # The chamber selector is global; put the realm in Medium first.
+    Client(base_url).request('POST', '/api/difficulty', {'difficulty': 'medium'})
+
+    # The classic payload authenticates as the Queen without her password.
+    client = Client(base_url)
+    status, _, data = client.request('POST', '/api/login', {
+        'username': "' OR 1=1;",
+        'password': 'not-the-queens-password',
+    })
+    check(status == 200 and data.get('success') is True,
+          "Medium login is vulnerable to ' OR 1=1;")
+    check(data['user']['username'] == 'hearts_queen' and data['user'].get('isQueen') is True,
+          'the injection resolves to the Queen account only')
+
+    status, _, answers = client.request('GET', '/api/queen/answers')
+    check(status == 200 and answers.get('flag') == MEDIUM_FLAG,
+          'the injected Queen session reveals the Medium flag')
+
+    # The very same payload is inert in Easy and Hard.
+    for difficulty in ('easy', 'hard'):
+        Client(base_url).request('POST', '/api/difficulty', {'difficulty': difficulty})
+        probe = Client(base_url)
+        status, _, data = probe.request('POST', '/api/login', {
+            'username': "' OR 1=1;",
+            'password': 'still-not-the-queens-password',
+        })
+        check(status == 401 and data.get('success') is False,
+              f'the SQL injection is rejected in the {difficulty.title()} chamber')
+
+    # Medium hints cost 200 / 300 / 0 Medium Sovereigns.
+    Client(base_url).request('POST', '/api/difficulty', {'difficulty': 'medium'})
+    shop = Client(base_url)
+    status, _, _ = shop.request('POST', '/api/register', {
+        'username': 'verify_medium_shop',
+        'password': 'VerifyMedium2026!',
+        'displayName': 'Verify Medium Shop',
+    })
+    check(status == 201, 'Medium hint shopper registers')
+
+    status, _, data = shop.request('POST', '/api/hint', {'hintId': 'medium-hint-1'})
+    check(status == 400 and data.get('needed') == 200,
+          'medium-hint-1 refuses a purse below 200 Medium Sovereigns')
+
+    for puzzle_id in (101, 102):
+        shop.request('POST', '/api/solve', {
+            'puzzleId': puzzle_id,
+            'answer': _answer_for(puzzle_id),
+        })
+
+    status, _, data = shop.request('POST', '/api/hint', {'hintId': 'medium-hint-1'})
+    check(status == 200 and data.get('success') is True and data.get('cost') == 200,
+          'medium-hint-1 costs exactly 200 Medium Sovereigns')
+    check(data.get('points_medium') == 0, 'the purchase leaves the Medium purse empty')
+    check(data.get('points_easy') == 0, 'the Medium purchase never touches Easy coins')
+
+    status, _, data = shop.request('POST', '/api/hint', {'hintId': 'medium-hint-2'})
+    check(status == 400 and data.get('needed') == 300,
+          'medium-hint-2 requires 300 Medium Sovereigns')
+
+    for puzzle_id in (103, 104, 105):
+        shop.request('POST', '/api/solve', {
+            'puzzleId': puzzle_id,
+            'answer': _answer_for(puzzle_id),
+        })
+
+    status, _, data = shop.request('POST', '/api/hint', {'hintId': 'medium-hint-2'})
+    check(status == 200 and data.get('cost') == 300,
+          'medium-hint-2 costs exactly 300 Medium Sovereigns')
+
+    status, _, data = shop.request('POST', '/api/hint', {'hintId': 'medium-hint-3'})
+    check(status == 200 and data.get('cost') == 0,
+          'medium-hint-3 is free once the earlier clues are bought')
+
+    # Restore a neutral chamber for the next suite.
+    Client(base_url).request('POST', '/api/difficulty', {'difficulty': 'easy'})
+
+
 def test_admin_and_seasons(base_url):
     print('\n[5] Administrator monitoring, audit trail and season rollover')
     admin = Client(base_url)
@@ -459,6 +538,7 @@ def main():
         test_player_flow(base_url)
         test_cheshire_unlock(base_url)
         test_easy_exploit(base_url)
+        test_medium_flow(base_url)
         test_admin_and_seasons(base_url)
         test_queen_flow(base_url)
         test_oauth_disabled(base_url)

@@ -82,6 +82,16 @@ EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 ADMIN_USERNAME = 'admin'
 QUEEN_USERNAME = 'hearts_queen'
 
+# The Medium chamber's login form is intentionally vulnerable. The Queen's
+# username field is concatenated into the lookup query on that chamber, so the
+# classic payload below turns the WHERE clause into a tautology and logs the
+# player into the Queen's account without knowing her password. The payload is
+# recognised here (never executed) so the rest of the registry stays safely
+# parameterised and Easy/Hard remain immune.
+MEDIUM_SQLI_PAYLOAD = re.compile(
+    r"^\s*'\s*or\s+1\s*=\s*1\s*;?\s*(?:--.*)?$", re.IGNORECASE
+)
+
 # One flag per difficulty. The Easy flag is the one returned by the intentional
 # isSolved() trust flaw; the Queen's answer scroll displays the flag for the
 # chamber the players have most recently chosen.
@@ -383,6 +393,44 @@ def user_to_public(user, conn=None, solved=None):
     )
     public['season'] = get_current_season()
     return public
+
+
+def medium_sqli_queen_login(username_input):
+    """
+    Intentionally vulnerable login for the Medium chamber only.
+
+    In Medium, the Queen's login query is built by string concatenation:
+
+        SELECT * FROM users WHERE username = '<input>'
+
+    Submitting ``' OR 1=1;`` makes the condition true for every row. The
+    application keeps the first/last matching row, which is the Queen, and the
+    password comparison is bypassed. We reproduce that outcome explicitly and
+    restrict it to ``hearts_queen`` so no other account can be reached.
+
+    Returns the Queen's user row, or None when the payload is not used or the
+    active chamber is not Medium. Easy and Hard never take this path.
+    """
+    if get_active_difficulty() != 'medium':
+        return None
+
+    payload = _clean_username(username_input)
+    if not MEDIUM_SQLI_PAYLOAD.match(payload):
+        return None
+
+    with db_conn() as conn:
+        row = conn.execute(
+            'SELECT * FROM users WHERE LOWER(username) = ?',
+            (QUEEN_USERNAME,)
+        ).fetchone()
+        if not row:
+            return None
+        now = _now_iso()
+        conn.execute(
+            'UPDATE users SET last_login_at = ?, updated_at = ? WHERE id = ?',
+            (now, now, row['id'])
+        )
+        return dict(row)
 
 
 def find_user_by_credentials(username_input, password_input):
@@ -1698,7 +1746,11 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         username = data.get('username') or ''
         password = data.get('password') or ''
 
-        user = find_user_by_credentials(username, password)
+        # Medium-only, Queen-only SQL injection. The password is deliberately
+        # ignored for this payload; the tautology is the credential.
+        user = medium_sqli_queen_login(username)
+        if user is None:
+            user = find_user_by_credentials(username, password)
         if not user:
             self._send_json({
                 'success': False,
@@ -1898,20 +1950,24 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json({'success': False, 'error': 'Missing hintId.'}, 400)
             return
 
-        # Easy Chamber hints catalogue prices
-        EASY_HINT_PRICES = {
-            'easy-hint-1': 0,
-            'easy-hint-2': 10,
-            'easy-hint-3': 20,
-            'easy-hint-4': 30,
-            'easy-hint-5': 40,
+        # Hint catalogue prices, with the chamber whose coin purse pays for it.
+        HINT_PRICES = {
+            'easy-hint-1': (0, 'easy'),
+            'easy-hint-2': (10, 'easy'),
+            'easy-hint-3': (20, 'easy'),
+            'easy-hint-4': (30, 'easy'),
+            'easy-hint-5': (40, 'easy'),
+            'medium-hint-1': (200, 'medium'),
+            'medium-hint-2': (300, 'medium'),
+            'medium-hint-3': (0, 'medium'),
         }
 
-        if hint_id not in EASY_HINT_PRICES:
-            self._send_json({'success': False, 'error': 'Unknown hint for Easy Chamber.'}, 404)
+        if hint_id not in HINT_PRICES:
+            self._send_json({'success': False, 'error': 'Unknown hint for this chamber.'}, 404)
             return
 
-        cost = EASY_HINT_PRICES[hint_id]
+        cost, hint_difficulty = HINT_PRICES[hint_id]
+        points_column = f'points_{hint_difficulty}'
         now = _now_iso()
 
         with db_conn() as conn:
@@ -1931,6 +1987,8 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
                     'user': public,
                     'points': public['points'],
                     'points_easy': public['points_easy'],
+                    'points_medium': public['points_medium'],
+                    'points_hard': public['points_hard'],
                     'pointsByDifficulty': public['pointsByDifficulty'],
                     'totalPoints': public['points'],
                     'purchasedHints': public['purchasedHints'],
@@ -1938,27 +1996,27 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
                 return
 
             user_points = int(row['points'] or 0)
-            user_points_easy = int(row['points_easy'] or 0)
+            user_chamber_points = int(row[points_column] or 0)
 
-            # Player must be able to afford the hint
-            if user_points < cost or user_points_easy < cost:
+            # Player must be able to afford the hint from that chamber's purse.
+            if user_points < cost or user_chamber_points < cost:
                 self._send_json({
                     'success': False,
                     'error': f'Not enough Gold Sovereigns! Hint costs {cost} coins.',
                     'needed': cost,
-                    'available': user_points_easy
+                    'available': user_chamber_points
                 }, 400)
                 return
 
             new_points = user_points - cost
-            new_points_easy = user_points_easy - cost
+            new_chamber_points = user_chamber_points - cost
             purchased.append(hint_id)
 
             conn.execute(
-                '''UPDATE users
-                   SET points = ?, points_easy = ?, purchased_hints = ?, updated_at = ?
-                   WHERE id = ?''',
-                (new_points, new_points_easy, json.dumps(purchased), now, user['id'])
+                f'''UPDATE users
+                    SET points = ?, {points_column} = ?, purchased_hints = ?, updated_at = ?
+                    WHERE id = ?''',
+                (new_points, new_chamber_points, json.dumps(purchased), now, user['id'])
             )
             fresh = conn.execute('SELECT * FROM users WHERE id = ?', (user['id'],)).fetchone()
             public = user_to_public(fresh, conn)
@@ -1970,6 +2028,8 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
             'user': public,
             'points': public['points'],
             'points_easy': public['points_easy'],
+            'points_medium': public['points_medium'],
+            'points_hard': public['points_hard'],
             'pointsByDifficulty': public['pointsByDifficulty'],
             'totalPoints': public['points'],
             'purchasedHints': public['purchasedHints'],
