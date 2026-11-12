@@ -365,16 +365,32 @@ def test_medium_flow(base_url):
 
     medium_referer = {'Referer': base_url + '/challenges/medium/index.html'}
 
-    # The classic payload authenticates as the Queen without her password.
+    # The classic payload, typed as the password for the Queen's username,
+    # authenticates as the Queen without her real passphrase.
     client = Client(base_url)
     status, _, data = client.request('POST', '/api/login', {
-        'username': "' OR 1=1;",
-        'password': 'not-the-queens-password',
+        'username': 'hearts_queen',
+        'password': "' OR 1=1;",
     }, headers=medium_referer)
     check(status == 200 and data.get('success') is True,
-          "Medium login is vulnerable to ' OR 1=1;")
+          "Medium login is vulnerable to ' OR 1=1; in the password field")
     check(data['user']['username'] == 'hearts_queen' and data['user'].get('isQueen') is True,
           'the injection resolves to the Queen account only')
+
+    # The payload only works against the Queen's account: the same payload
+    # typed into the username field, or a wrong password without it, fails.
+    status, _, data = client.request('POST', '/api/login', {
+        'username': "' OR 1=1;",
+        'password': 'still-not-the-queens-password',
+    }, headers=medium_referer)
+    check(status == 401 and data.get('success') is False,
+          'a payload in the username field is rejected in Medium')
+    status, _, data = client.request('POST', '/api/login', {
+        'username': 'hearts_queen',
+        'password': 'still-not-the-queens-password',
+    }, headers=medium_referer)
+    check(status == 401 and data.get('success') is False,
+          'the Queen login without the payload is rejected in Medium')
 
     status, _, answers = client.request('GET', '/api/queen/answers')
     check(status == 200 and answers.get('sealed') is True
@@ -383,8 +399,8 @@ def test_medium_flow(base_url):
     check(_unseal(answers.get('flag'), 'medium') == MEDIUM_FLAG,
           'Base64 then ROT13 unseals the Medium flag for the injected Queen')
 
-    # The very same payload is inert in Easy and Hard: the form there is not the
-    # Medium login page, so the concatenated lookup is never reached.
+    # The very same exploit is inert in Easy and Hard: the form there is not
+    # the Medium login page, so the concatenated lookup is never reached.
     for referer_path, label in (
         ('/challenges/easy/index.html', 'Easy'),
         ('/challenges/hard/index.html', 'Hard'),
@@ -392,8 +408,8 @@ def test_medium_flow(base_url):
         Client(base_url).request('POST', '/api/difficulty', {'difficulty': label.lower()})
         probe = Client(base_url)
         status, _, data = probe.request('POST', '/api/login', {
-            'username': "' OR 1=1;",
-            'password': 'still-not-the-queens-password',
+            'username': 'hearts_queen',
+            'password': "' OR 1=1;",
         }, headers={'Referer': base_url + referer_path})
         check(status == 401 and data.get('success') is False,
               f'the SQL injection is rejected in the {label} chamber')
@@ -401,8 +417,8 @@ def test_medium_flow(base_url):
     # The live Medium form is served by login.html?difficulty=medium, so the
     # payload must work from that page too.
     status, _, data = Client(base_url).request('POST', '/api/login', {
-        'username': "' OR 1=1;",
-        'password': 'still-not-the-queens-password',
+        'username': 'hearts_queen',
+        'password': "' OR 1=1;",
     }, headers={'Referer': base_url + '/login.html?difficulty=medium'})
     check(status == 200 and data.get('user', {}).get('username') == 'hearts_queen',
           'the Medium login page resolves the injection to the Queen')
@@ -410,16 +426,16 @@ def test_medium_flow(base_url):
     # The same login page opened for Easy or Hard stays immune.
     for label in ('easy', 'hard'):
         status, _, data = Client(base_url).request('POST', '/api/login', {
-            'username': "' OR 1=1;",
-            'password': 'still-not-the-queens-password',
+            'username': 'hearts_queen',
+            'password': "' OR 1=1;",
         }, headers={'Referer': base_url + f'/login.html?difficulty={label}'})
         check(status == 401 and data.get('success') is False,
               f'the {label.title()} login page rejects the injection')
 
     # Even without any chamber context the payload cannot be used.
     status, _, data = Client(base_url).request('POST', '/api/login', {
-        'username': "' OR 1=1;",
-        'password': 'still-not-the-queens-password',
+        'username': 'hearts_queen',
+        'password': "' OR 1=1;",
     })
     check(status == 401 and data.get('success') is False,
           'the SQL injection is rejected without a chamber referer')

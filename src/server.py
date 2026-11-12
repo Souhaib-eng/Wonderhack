@@ -82,12 +82,13 @@ EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 ADMIN_USERNAME = 'admin'
 QUEEN_USERNAME = 'hearts_queen'
 
-# The Medium chamber's login form is intentionally vulnerable. The Queen's
-# username field is concatenated into the lookup query on that chamber, so the
-# classic payload below turns the WHERE clause into a tautology and logs the
-# player into the Queen's account without knowing her password. Only the Medium
-# login path reaches ``build_queen_lookup``; every other query in the registry
-# stays parameterised, so Easy and Hard are immune.
+# The Medium chamber's login form is intentionally vulnerable. The password
+# field is concatenated into the lookup query on that chamber, so the classic
+# payload below (typed as the password) turns the WHERE clause into a tautology
+# and logs the player into the Queen's account without knowing her password —
+# but only when the username names the Queen. Only the Medium login path reaches
+# ``build_queen_lookup``; every other query in the registry stays parameterised,
+# so Easy and Hard are immune.
 MEDIUM_SQLI_PAYLOAD = re.compile(
     r"^\s*'\s*or\s+1\s*=\s*1\s*;?\s*(?:--.*)?$", re.IGNORECASE
 )
@@ -533,55 +534,79 @@ def user_to_public(user, conn=None, solved=None):
     return public
 
 
-def medium_sqli_queen_login(username_input):
+def medium_sqli_queen_login(username_input, password_input):
     """
     Intentionally vulnerable login for the Medium chamber only.
 
     In Medium, the Queen's login query is built by string concatenation:
 
-        SELECT * FROM users WHERE username = '<input>'
+        SELECT * FROM users WHERE username = '<username>' AND password = '<password>'
 
-    Submitting ``' OR 1=1;`` makes the condition true for every row, so the
-    lookup returns the Queen's account and the password comparison that follows
-    in the original code never runs. ``build_queen_lookup`` executes that
-    concatenated query; the first row is the account the login resolves to.
+    The player types the Queen's username, ``hearts_queen``, and puts the
+    payload ``' OR 1=1;`` in the password field. The payload closes the password
+    literal and turns the rest of the WHERE clause into a tautology, so the
+    password comparison is bypassed and the Queen's account is matched without
+    knowing her real passphrase.
 
-    Returns the resolved user row, or None when no payload was used. The caller
-    (``_handle_login``) only calls this for requests that came from the Medium
-    chamber, so Easy and Hard never reach it.
+    The injection is only reached from ``_handle_login`` when the request came
+    from the Medium chamber, and it only resolves to the Queen: any other
+    username falls back to the safe parameterised lookup, and Easy and Hard
+    never execute this path at all.
+
+    Returns the Queen's user row, or None when the payload was not used or the
+    username is not the Queen's.
     """
-    return build_queen_lookup(username_input)
+    return build_queen_lookup(username_input, password_input)
 
 
-def build_queen_lookup(username_input):
+def build_queen_lookup(username_input, password_input):
     """
     Execute the Medium chamber's concatenated lookup.
 
-    This is the literal query the vulnerable login builds:
+    This is the literal query the vulnerable login builds when the player
+    enters ``hearts_queen`` / ``' OR 1=1;``:
 
-        SELECT * FROM users WHERE username = '<input>'
+        SELECT * FROM users WHERE username = 'hearts_queen' AND password = '' OR 1=1
 
-    The payload is supplied by the player and the rows it returns decide which
-    account the login resolves to. The injection is only reached from
-    ``_handle_login`` when the request came from the Medium chamber, so Easy and
-    Hard never execute this path.
+    The payload is supplied by the player in the password field and the rows it
+    returns decide which account the login resolves to. The injection is only
+    reached from ``_handle_login`` when the request came from the Medium chamber
+    AND the username names the Queen, so no other account and no other chamber
+    can be reached.
 
     A read-only connection is used so the injection cannot mutate the registry.
     """
-    payload = _clean_username(username_input)
+    payload = _clean_username(password_input)
     if not MEDIUM_SQLI_PAYLOAD.match(payload):
         return None
 
-    # The Queen's lookup query, built exactly as the vulnerable chamber does.
+    # The Queen's account is the only one the injection works against. Any
+    # other username never reaches the concatenated query.
+    if _clean_username(username_input).lower() != QUEEN_USERNAME:
+        return None
+
     # The payload already closes the string literal, so it is concatenated as
-    # the username value; a trailing ``;`` / ``--`` terminator is removed because
-    # the login's query runner only executes the first complete statement.
+    # the password value; a trailing ``;`` / ``--`` terminator is removed
+    # because the login's query runner only executes the first complete
+    # statement.
     tail = payload.strip()
-    for terminator in (';', '--'):
-        if tail.endswith(terminator):
-            tail = tail[:-len(terminator)].rstrip()
+    while True:
+        stripped = tail.rstrip()
+        if stripped.endswith(';'):
+            tail = stripped[:-1].rstrip()
+        elif stripped.endswith('--'):
+            tail = stripped[:-2].rstrip()
+        else:
+            tail = stripped
             break
-    query = "SELECT * FROM users WHERE username = '" + tail
+
+    # The Queen's lookup query, built exactly as the vulnerable chamber does.
+    # The username value is the validated Queen's name; the password value is
+    # the raw payload.
+    query = (
+        "SELECT * FROM users WHERE username = '" + QUEEN_USERNAME
+        + "' AND password = '" + tail
+    )
 
     uri_path = f'file:{DB_PATH}?mode=ro'
     conn = sqlite3.connect(uri_path, uri=True, timeout=10)
@@ -591,8 +616,8 @@ def build_queen_lookup(username_input):
     finally:
         conn.close()
 
-    # The first row the tautology matches is the Queen's account; the password
-    # check that follows in the original code is bypassed.
+    # The tautology matches every row; the login resolves to the Queen's
+    # account, whose password comparison is bypassed.
     for row in rows:
         if (row.get('username') or '').strip().lower() == QUEEN_USERNAME:
             return row
@@ -2134,16 +2159,17 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         username = data.get('username') or ''
         password = data.get('password') or ''
 
-        # Medium-only, Queen-only SQL injection. The payload is concatenated
-        # into the Queen's lookup query on the Medium chamber page, so the
-        # tautology is the credential and the password is ignored.
+        # Medium-only, Queen-only SQL injection. The player types the Queen's
+        # username (hearts_queen) and puts the payload in the password field;
+        # on the Medium chamber page the concatenated lookup turns the payload
+        # into a tautology, so the Queen's password check is bypassed.
         #
         # The chamber comes from the login page the player submitted, so a
-        # Medium form only works from Medium. Easy and Hard never reach the
-        # concatenation below.
+        # Medium form only works from Medium, and only the Queen's account can
+        # be reached. Easy and Hard never reach the concatenation below.
         injected = False
         if self._login_chamber(data) == 'medium':
-            user = medium_sqli_queen_login(username)
+            user = medium_sqli_queen_login(username, password)
             injected = user is not None
         else:
             user = None
