@@ -16,7 +16,6 @@ Endpoints:
   POST /api/reset      → wipe the current player's progression
   GET  /api/leaderboard→ players ranked by saved coins (Court Administrator only)
   GET  /api/queen/answers → every riddle and its accepted answers (Queen only)
-  GET  /api/cheshire    → cat's Easy decoding instructions (no cipher values)
   POST /api/cheshire/unlock  → buy the Cheshire Cat's 200-coin Cipher Lab pass
   GET  /api/db-status  → small health check (no credentials exposed)
 """
@@ -153,9 +152,8 @@ HINT_CATALOGUE = {
                 'cost': 40,
                 'text': (
                     'Run isSolved() in the console while you are inside the Easy '
-                    'Chamber. It returns the flag sealed behind four layers — take '
-                    'that cipher to the Cheshire Cat\'s Cipher Lab and let him '
-                    'guide your paws through the decoders.'
+                    'Chamber. It returns the flag sealed behind two layers — take '
+                    'that cipher to the Cipher Lab and peel them off yourself.'
                 ),
             },
         ],
@@ -322,12 +320,12 @@ def _record_audit(conn, admin, action, target_user=None, detail=''):
 
 
 # ── Cheshire Cat's Easy cipher trail ────────────────────────────────────────
-# isSolved() returns the Easy flag *sealed* behind the same four operations the
-# Cipher Lab offers (Base64 Decode → Reverse Hex → ROT13 → URL Decode). The
-# player takes that sealed value to the Cipher Lab, where the Cheshire Cat
-# guides the Easy chamber through the layers to recover the plaintext flag.
-# The plaintext flag never appears in public/; it is produced at runtime by the
-# Cipher Lab decoders (and, for the Queen only, by her answer scroll).
+# isSolved() returns the Easy flag *sealed* behind the same two operations the
+# Cipher Lab offers (Base64 Decode → ROT13). The player takes that sealed value
+# to the Cipher Lab and peels the layers off alone — the Cheshire Cat no longer
+# walks anyone through the order. The plaintext flag never appears in public/;
+# it is produced at runtime by the Cipher Lab decoders (and, for the Queen only,
+# by her answer scroll).
 EASY_CIPHER_PLAINTEXT = DIFFICULTY_FLAGS['easy']
 
 # The Cheshire Cat demands every Mad Hatter hint before he will even discuss
@@ -342,59 +340,20 @@ EASY_HINT_IDS = (
 CHESHIRE_PASS_ID = 'cheshire-cat-pass'
 CHESHIRE_PASS_COST = 200
 
-CHESHIRE_STEPS = [
-    {
-        'operation': 'base64-decode',
-        'tool': 'Base64 Decode',
-        'instruction': (
-            'Paste the sealed flag you carried out of the Easy Chamber into the '
-            'Cipher Input and choose Base64 Decode, meow!'
-        ),
-    },
-    {
-        'operation': 'reverse-hex',
-        'tool': 'Reverse Hex',
-        'instruction': (
-            'Purr-fect! Copy the output, paste it back into the Cipher Input, '
-            'and apply Reverse Hex.'
-        ),
-    },
-    {
-        'operation': 'rot13',
-        'tool': 'ROT13',
-        'instruction': (
-            'Wonderful! Copy that result and spin it through ROT13, little Alice.'
-        ),
-    },
-    {
-        'operation': 'url-decode',
-        'tool': 'URL Decode',
-        'instruction': (
-            'Last paw! Copy it once more and apply URL Decode. The plaintext '
-            'flag will appear in your Decoded Output — read it yourself.'
-        ),
-    },
-]
-
 
 def easy_cipher_stages():
     """
-    Build the four cipher layers from the Easy flag.
+    Build the cipher layers from the Easy flag.
 
-    stages[0] is the sealed value isSolved() returns to the player.
-    stages[1..3] are the intermediate results, and stages[4] is the plaintext
-    flag. The player peels the layers back in the Cipher Lab; the Cheshire Cat
-    only guides the Easy chamber through the operation order.
+    stages[0] is the sealed value isSolved() returns to the player: the flag
+    rotated through ROT13 and then Base64-encoded. stages[1] is the ROT13
+    intermediate. To recover the plaintext the player decodes Base64, then
+    applies ROT13, using the Cipher Lab's own tools.
     """
     message = EASY_CIPHER_PLAINTEXT
-    url_encoded = urllib.parse.quote(message, safe='')
-    rot13_value = codecs.encode(url_encoded, 'rot_13')
-    hex_value = rot13_value.encode('utf-8').hex()
-    reversed_hex = ''.join(
-        reversed([hex_value[i:i + 2] for i in range(0, len(hex_value), 2)])
-    )
-    sealed = base64.b64encode(reversed_hex.encode('utf-8')).decode('ascii')
-    return [sealed, reversed_hex, rot13_value, url_encoded, message]
+    rot13_value = codecs.encode(message, 'rot_13')
+    sealed = base64.b64encode(rot13_value.encode('utf-8')).decode('ascii')
+    return [sealed, rot13_value, message]
 
 
 def is_admin_user(user):
@@ -1131,8 +1090,6 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
             self._handle_queen_answers()
         elif path == '/api/queen/flag':
             self._handle_queen_flag()
-        elif path == '/api/cheshire':
-            self._handle_cheshire()
         elif path == '/api/hints':
             self._handle_hints()
         elif path == '/api/admin/players':
@@ -1223,24 +1180,6 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
             'success': True,
             'difficulty': active_difficulty,
             'flag': flag_for_difficulty(active_difficulty),
-        })
-
-    def _handle_cheshire(self):
-        """
-        Public instructions for the Cheshire Cat's Easy decoding trail.
-
-        The cat only teaches the operation order. The sealed value comes from
-        isSolved(), and the player performs each layer in the Cipher Lab. The
-        server never returns the plaintext flag or any intermediate result here.
-        """
-        self._send_json({
-            'success': True,
-            'difficulty': 'easy',
-            'totalSteps': len(CHESHIRE_STEPS),
-            'steps': [
-                {'step': index, **meta}
-                for index, meta in enumerate(CHESHIRE_STEPS)
-            ],
         })
 
     def _handle_cheshire_unlock(self):
@@ -2328,8 +2267,9 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
 
         Calling ``isSolved()`` from the Easy Chamber is therefore enough to make
         the server return the *sealed* Easy flag. The player then takes that
-        cipher to the Cipher Lab, where the Cheshire Cat guides the Easy chamber
-        through the decoding layers. No coin balance is changed here.
+        cipher to the Cipher Lab and peels the two layers off alone — the
+        Cheshire Cat does not help with the decoding. No coin balance is
+        changed here.
         """
         chamber = self._chamber_from_referer()
 
@@ -2403,14 +2343,13 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         elif final_trial:
             # The Easy gateway is the only chamber allowed through the Referer
             # gate above, so this is always the Easy flag. Return it *sealed*
-            # with the same four layers the Cipher Lab can undo; the player must
-            # take it to the lab (where the cat helps in Easy only) to read it.
+            # with the same two layers the Cipher Lab can undo; the player must
+            # take it to the lab and work the decoders out alone.
             result['flag'] = easy_cipher_stages()[0]
             result['sealed'] = True
             result['message'] = (
                 "The final trial is complete. The Queen's flag is sealed — "
-                'take this cipher to the Cipher Lab and let the Cheshire Cat '
-                'help you unseal it.'
+                'take this cipher to the Cipher Lab and unseal it yourself.'
             )
         else:
             result['message'] = f'Prize awarded: {prize} Gold Sovereigns.'

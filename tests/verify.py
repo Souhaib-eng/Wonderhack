@@ -271,16 +271,8 @@ def test_easy_exploit(base_url):
     easy_referer = {'Referer': base_url + '/challenges/easy/index.html'}
 
     status, _, cipher_lab = client.request('GET', '/api/cheshire')
-    check(status == 200 and cipher_lab.get('success') is True,
-          'Cipher Lab publishes decoding instructions')
-    operations = [entry['operation'] for entry in cipher_lab.get('steps', [])]
-    check(len(operations) == 4, 'Cipher Lab publishes four instruction steps')
-    check(operations == ['base64-decode', 'reverse-hex', 'rot13', 'url-decode'],
-          'Cipher Lab order is Base64 → Reverse Hex → ROT13 → URL Decode')
-    check('encoded' not in cipher_lab,
-          'Cipher Lab never hands out the sealed cipher value')
-    check(EASY_FLAG not in json.dumps(cipher_lab),
-          'Cipher Lab instructions never contain the plaintext flag')
+    check(status == 404,
+          'the cat publishes no decoding instructions — it does not help')
 
     status, _, data = client.request('POST', '/api/check-is-solved', {
         'puzzle': 30,
@@ -318,15 +310,11 @@ def test_easy_exploit(base_url):
     })
     check(status == 404, 'the automatic cipher-advance endpoint is gone')
 
-    # The player performs the four operations themselves, exactly as the lab
+    # The player performs the two operations themselves, exactly as the lab
     # buttons do. The server never returns the plaintext or intermediate values.
-    current = base64.b64decode(sealed).decode('ascii')
-    pairs = [current[i:i + 2] for i in range(len(current) - 2, -1, -2)]
-    current = ''.join(chr(int(pair, 16)) for pair in pairs)
-    current = codecs.encode(current, 'rot_13')
-    current = urllib.parse.unquote(current)
+    current = codecs.encode(base64.b64decode(sealed).decode('ascii'), 'rot_13')
     check(current == EASY_FLAG,
-          'the player can recover the plaintext easy flag with the lab tools')
+          'Base64 Decode then ROT13 recovers the plaintext easy flag')
 
     status, _, data = client.request('POST', '/api/flag', {'flag': EASY_FLAG})
     check(status == 404, 'the legacy /api/flag endpoint is gone')
