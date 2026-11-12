@@ -153,6 +153,10 @@ const WonderPuzzleEngine = (() => {
           </div>
           <span class="queen-corrupted-question" data-glitch="${corruptedText}">${corruptedText}</span>
         `;
+        // The corruption arrives with its own screech.
+        if (typeof WonderAudio !== 'undefined' && WonderAudio.playQueenGlitch) {
+          WonderAudio.playQueenGlitch();
+        }
       } else {
         qEl.textContent = p.question;
       }

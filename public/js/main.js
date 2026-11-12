@@ -376,6 +376,47 @@ const WonderAudio = (() => {
     return WonderState.isAudioEnabled();
   }
 
+  // Recorded sound effects (public/assets/sounds). Cached per name so a
+  // repeat click never re-downloads; cloned for playback so two quick pokes
+  // of the cat can overlap instead of cutting each other off.
+  const SOUND_FILES = {
+    catMeow: 'assets/sounds/meowingcat.mp3',
+    hatterLaugh: 'assets/sounds/MadHatterLaughter.mp3',
+    queenGlitch: 'assets/sounds/glitching.mp3',
+    flagSuccess: 'assets/sounds/correctflag.wav',
+  };
+  const soundFileCache = {};
+
+  function soundUrl(name) {
+    const relative = SOUND_FILES[name];
+    if (!relative) return null;
+    const base = document.body.dataset.basePath || '';
+    return `${base}${relative}`;
+  }
+
+  function playSoundFile(name) {
+    if (!shouldPlay()) return false;
+    try {
+      const url = soundUrl(name);
+      if (!url) return false;
+      if (!soundFileCache[name]) {
+        soundFileCache[name] = new Audio(url);
+        soundFileCache[name].preload = 'auto';
+      }
+      const clip = soundFileCache[name].cloneNode();
+      clip.volume = 0.9;
+      const played = clip.play();
+      if (played && typeof played.catch === 'function') {
+        // Autoplay policies reject playbacks before the first interaction;
+        // a silent failure is kinder than a console error.
+        played.catch(() => {});
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   return {
     playClick: () => {
       if (!shouldPlay()) return;
@@ -504,9 +545,11 @@ const WonderAudio = (() => {
       } catch (e) {}
     },
 
-    // The Cheshire Cat: a curious little meow that rises, wavers, then falls.
+    // The Cheshire Cat: the recorded meow, with the synthesized meow as a
+    // fallback when the recording cannot load.
     playCatMeow: () => {
       if (!shouldPlay()) return;
+      if (playSoundFile('catMeow')) return;
       try {
         const c = getAudioContext();
         if (!c) return;
@@ -540,9 +583,11 @@ const WonderAudio = (() => {
       } catch (e) {}
     },
 
-    // The Mad Hatter: three wheezing, tea-soaked "ha!" notes.
+    // The Mad Hatter: the recorded laughter, with the synthesized tea-soaked
+    // "ha!" notes as a fallback when the recording cannot load.
     playHatterLaugh: () => {
       if (!shouldPlay()) return;
+      if (playSoundFile('hatterLaugh')) return;
       try {
         const c = getAudioContext();
         if (!c) return;
@@ -561,6 +606,67 @@ const WonderAudio = (() => {
           gain.connect(c.destination);
           osc.start(start);
           osc.stop(start + 0.13);
+        });
+      } catch (e) {}
+    },
+
+    // The Queen's corruption: the recorded glitch screech that plays whenever
+    // a sealed final trial rears its corrupted head. A detuned square-wave
+    // splutter stands in if the recording cannot load.
+    playQueenGlitch: () => {
+      if (!shouldPlay()) return;
+      if (playSoundFile('queenGlitch')) return;
+      try {
+        const c = getAudioContext();
+        if (!c) return;
+        const now = c.currentTime;
+        const gain = c.createGain();
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(0.18, now + 0.03);
+        gain.gain.setValueAtTime(0.18, now + 0.5);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.72);
+        gain.connect(c.destination);
+        const stutter = c.createOscillator();
+        stutter.type = 'square';
+        [220, 185, 240, 160, 205].forEach((freq, idx) => {
+          const start = now + idx * 0.12;
+          stutter.frequency.setValueAtTime(freq, start);
+        });
+        const lfo = c.createOscillator();
+        lfo.type = 'sine';
+        lfo.frequency.value = 33;
+        const lfoGain = c.createGain();
+        lfoGain.gain.value = 60;
+        lfo.connect(lfoGain);
+        lfoGain.connect(stutter.frequency);
+        stutter.connect(gain);
+        stutter.start(now);
+        lfo.start(now);
+        stutter.stop(now + 0.75);
+        lfo.stop(now + 0.75);
+      } catch (e) {}
+    },
+
+    // A captured flag: the recorded royal fanfare. The synthesized chime
+    // stands in if the recording cannot load.
+    playFlagSuccess: () => {
+      if (!shouldPlay()) return;
+      if (playSoundFile('flagSuccess')) return;
+      try {
+        const c = getAudioContext();
+        if (!c) return;
+        [659.25, 830.61, 987.77, 1318.51].forEach((freq, idx) => {
+          const start = c.currentTime + idx * 0.08;
+          const osc = c.createOscillator();
+          const gain = c.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, start);
+          gain.gain.setValueAtTime(0.18, start);
+          gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.9);
+          osc.connect(gain);
+          gain.connect(c.destination);
+          osc.start(start);
+          osc.stop(start + 0.95);
         });
       } catch (e) {}
     }

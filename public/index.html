@@ -137,6 +137,39 @@
       display: block;
       color: #ff9aa8;
     }
+
+    /* A captured flag paints the whole card green — and it stays green until
+       the player switches chambers in the difficulty menu. */
+    .flag-submit-card.captured {
+      border-color: rgba(80, 220, 120, 0.65);
+      box-shadow:
+        0 8px 28px rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(80, 220, 120, 0.35),
+        0 0 24px rgba(80, 220, 120, 0.28);
+      background: rgba(14, 32, 20, 0.6);
+    }
+
+    .flag-submit-card.captured .flag-submit-title {
+      color: #8fe0a0;
+    }
+
+    .flag-submit-card.captured .flag-submit-badge {
+      display: inline-block;
+    }
+
+    .flag-submit-badge {
+      display: none;
+      font-family: var(--font-story);
+      font-size: 0.82rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      color: #0e2014;
+      background: #8fe0a0;
+      border-radius: 999px;
+      padding: 0.2rem 0.75rem;
+      margin-left: 0.6rem;
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body class="menu-body">
@@ -217,7 +250,7 @@
 
       <!-- Flag Submission — decoded flags are claimed here -->
       <section class="flag-submit-card" id="flag-submit-card" aria-label="Submit a captured flag">
-        <h2 class="flag-submit-title">⚑ Submit a Captured Flag</h2>
+        <h2 class="flag-submit-title">⚑ Submit a Captured Flag<span class="flag-submit-badge">CAPTURED ✓</span></h2>
         <p class="flag-submit-lead">
           Decoded a flag in the Cipher Lab? Name the account that captured it,
           choose its chamber, and seal your victory in the royal registry.
@@ -259,7 +292,7 @@
   </main>
 
   <!-- Core Scripts -->
-  <script src="js/main.js?v=23"></script>
+  <script src="js/main.js?v=24"></script>
   <script src="js/session.js?v=11"></script>
   <script src="js/check-is-solved.js?v=5"></script>
   <script>
@@ -270,11 +303,33 @@
       const submitForm = document.getElementById('flag-submit-form');
       const submitFeedback = document.getElementById('flag-submit-feedback');
       const submitBtn = document.getElementById('flag-submit-btn');
+      const submitCard = document.getElementById('flag-submit-card');
+      const difficultySelect = document.getElementById('flag-submit-difficulty');
+
+      const CAPTURED_STORAGE_KEY = 'wonderhack_flag_captured';
 
       const showFeedback = (message, ok) => {
         if (!submitFeedback) return;
         submitFeedback.textContent = message;
         submitFeedback.className = `flag-submit-feedback ${ok ? 'ok' : 'err'}`;
+      };
+
+      // A captured flag paints the card green; the green endures (across
+      // reloads too) until the player changes the chamber in the menu.
+      const setCaptured = (captured) => {
+        if (submitCard) submitCard.classList.toggle('captured', !!captured);
+        try {
+          if (captured) sessionStorage.setItem(CAPTURED_STORAGE_KEY, '1');
+          else sessionStorage.removeItem(CAPTURED_STORAGE_KEY);
+        } catch (e) { /* storage may be unavailable */ }
+      };
+
+      const isCaptured = () => {
+        try {
+          return sessionStorage.getItem(CAPTURED_STORAGE_KEY) === '1';
+        } catch (e) {
+          return false;
+        }
       };
 
       if (submitForm) {
@@ -307,6 +362,10 @@
 
             if (response.ok && data.success) {
               showFeedback(data.message || 'Flag captured!', true);
+              setCaptured(true);
+              if (typeof WonderAudio !== 'undefined' && WonderAudio.playFlagSuccess) {
+                WonderAudio.playFlagSuccess();
+              }
               submitForm.reset();
             } else {
               showFeedback(data.error || 'The royal registry refused the submission.', false);
@@ -317,6 +376,22 @@
             submitBtn.disabled = false;
           }
         });
+
+        // A previous capture in this browser session re-opens green.
+        if (isCaptured()) setCaptured(true);
+
+        // Changing the chamber in the menu washes the green away.
+        if (difficultySelect) {
+          difficultySelect.addEventListener('change', () => {
+            setCaptured(false);
+            if (submitFeedback) {
+              submitFeedback.textContent = '';
+              submitFeedback.className = 'flag-submit-feedback';
+              // Drop any inline display override so the class rules apply again.
+              submitFeedback.style.removeProperty('display');
+            }
+          });
+        }
       }
     });
   </script>
