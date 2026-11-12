@@ -67,7 +67,7 @@
           <h1 class="tea-menu-title">The Mad Hatter's Tea Table</h1>
         </header>
 
-        <!-- The shop is intentionally empty for Medium / Hard. -->
+        <!-- The shop is intentionally empty for Hard. -->
         <section class="shop-empty" id="shop-empty" aria-label="Empty hint shop" style="display:none;">
           <div class="shop-empty-icon" aria-hidden="true">🫖</div>
           <h2 class="shop-empty-title">The Tea Table Is Empty</h2>
@@ -83,7 +83,7 @@
           <div class="hatter-intro-banner" id="hatter-intro-banner">
             <span class="hatter-quote-icon">🎩</span>
             <blockquote class="hatter-intro-text" id="hatter-intro-text">
-              “You say the Queen forbids you? How terribly impolite of her! But tell me, Alice… does a locked door remain locked simply because a sign says so?”
+              “You say the Queen forbids you? How terribly impolite of her! But tell me, Alice… who checks the claim when the browser makes it?”
             </blockquote>
           </div>
 
@@ -101,14 +101,17 @@
   <!-- Core Scripts -->
   <script src="js/main.js?v=23"></script>
   <script src="js/characters.js?v=23"></script>
-  <script src="js/session.js?v=10"></script>
+  <script src="js/session.js?v=11"></script>
   <script src="js/wonderhack-easy-hints.js?v=3"></script>
-  <script src="js/mad-hatter.js?v=28"></script>
+  <script src="js/mad-hatter.js?v=30"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       WonderUI.initHeader('mad-hatter');
+      // The shop renders immediately from the chamber in the URL; the session
+      // boot then re-reads the catalogue so the wallet and purchases are
+      // authoritative once the API answers.
       await WonderSession.boot();
-      WonderHatterShop.init();
+      await WonderHatterShop.init();
     });
   </script>
 </body>

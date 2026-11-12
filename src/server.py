@@ -85,12 +85,146 @@ QUEEN_USERNAME = 'hearts_queen'
 # The Medium chamber's login form is intentionally vulnerable. The Queen's
 # username field is concatenated into the lookup query on that chamber, so the
 # classic payload below turns the WHERE clause into a tautology and logs the
-# player into the Queen's account without knowing her password. The payload is
-# recognised here (never executed) so the rest of the registry stays safely
-# parameterised and Easy/Hard remain immune.
+# player into the Queen's account without knowing her password. Only the Medium
+# login path reaches ``build_queen_lookup``; every other query in the registry
+# stays parameterised, so Easy and Hard are immune.
 MEDIUM_SQLI_PAYLOAD = re.compile(
     r"^\s*'\s*or\s+1\s*=\s*1\s*;?\s*(?:--.*)?$", re.IGNORECASE
 )
+
+
+# ── Hint catalogue (server-authoritative) ──────────────────────────────────
+# The Mad Hatter's shop asks for the hints of the chamber the *request* came
+# from (the browser's Referer), so a page can never display another chamber's
+# clues. Prices are paid from that chamber's coin purse by /api/hint.
+HINT_CATALOGUE = {
+    'easy': {
+        'openingDialogue': (
+            'You say the Queen forbids you? How terribly impolite of her! '
+            'But tell me, Alice… who checks the claim when the browser makes it?'
+        ),
+        'hints': [
+            {
+                'id': 'easy-hint-1',
+                'number': 1,
+                'title': 'The First Page',
+                'cost': 0,
+                'text': (
+                    'Stay inside the Easy Chamber. Its page loads a small helper '
+                    'the Queen forgot to guard. Inspect the page source and find '
+                    'the script she trusts.'
+                ),
+                'learningGoal': 'Encourage players to inspect the Easy Chamber page.',
+            },
+            {
+                'id': 'easy-hint-2',
+                'number': 2,
+                'title': 'Open the Looking Glass',
+                'cost': 10,
+                'text': (
+                    'Open the browser\'s Developer Tools and inspect the scripts '
+                    'loaded by the Easy Chamber. Find where the queen checks if we '
+                    'solved the puzzle or not'
+                ),
+                'learningGoal': 'Encourage players to inspect the page\'s JavaScript.',
+            },
+            {
+                'id': 'easy-hint-3',
+                'number': 3,
+                'title': 'No Arguments Needed',
+                'cost': 20,
+                'text': (
+                    'have you ever tried the web console? I heard it\'s pretty '
+                    'fun! ;)'
+                ),
+                'learningGoal': (
+                    'Help players understand the helper\'s signature and the '
+                    'trust boundary.'
+                ),
+            },
+            {
+                'id': 'easy-hint-4',
+                'number': 4,
+                'title': 'A Rule Written in Sand',
+                'cost': 30,
+                'text': (
+                    'The queen trusts her functions, sometimes she doesn\'t even '
+                    'use arguments!'
+                ),
+                'learningGoal': (
+                    'Help players identify the client-side trust flaw and its '
+                    'chamber scope.'
+                ),
+            },
+            {
+                'id': 'easy-hint-5',
+                'number': 5,
+                'title': 'The Sealed Flag',
+                'cost': 40,
+                'text': (
+                    'Run isSolved() in the console while you are inside the Easy '
+                    'Chamber. It returns the flag sealed behind four layers — take '
+                    'that cipher to the Cheshire Cat\'s Cipher Lab and let him '
+                    'guide your paws through the decoders.'
+                ),
+                'learningGoal': (
+                    'Guide players the Console to the Cipher Lab decoding chain.'
+                ),
+            },
+        ],
+    },
+    'medium': {
+        'openingDialogue': (
+            '“Ah, the Royal Court! The Queen\'s secrets are steeped stronger '
+            'than my tea, Alice.”'
+        ),
+        'hints': [
+            {
+                'id': 'medium-hint-1',
+                'number': 1,
+                'title': "The Queen's Account",
+                'cost': 200,
+                'text': (
+                    'I heard from the Cheshire Cat that the flag is in the '
+                    'queen\'s account.'
+                ),
+                'learningGoal': (
+                    'Point the player toward the Queen of Hearts’ account.'
+                ),
+            },
+            {
+                'id': 'medium-hint-2',
+                'number': 2,
+                'title': 'Cold Soft Quiet Nights',
+                'cost': 300,
+                'text': (
+                    'I really like the cold Soft Quiet nights, the moon and its '
+                    'Light really helps me relax!'
+                ),
+                'learningGoal': 'Read the capital letters: S, Q, L — SQL.',
+            },
+            {
+                'id': 'medium-hint-3',
+                'number': 3,
+                'title': "The Queen's Username",
+                'cost': 0,
+                'text': "The Queen's username is 'hearts_queen'.",
+                'learningGoal': (
+                    'Supply the account name the injection should target.'
+                ),
+            },
+        ],
+    },
+    'hard': {
+        'openingDialogue': '',
+        'hints': [],
+    },
+}
+
+# The chamber a shop / login request came from. ``easy`` is returned for the
+# landing page because that is the Easy gateway; the Medium and Hard chambers
+# are only recognised through their own page path.
+CHAMBER_REFERER_RE = re.compile(r'/challenges/(easy|medium|hard)(?:/|$)', re.IGNORECASE)
 
 # One flag per difficulty. The Easy flag is the one returned by the intentional
 # isSolved() trust flaw; the Queen's answer scroll displays the flag for the
@@ -403,34 +537,72 @@ def medium_sqli_queen_login(username_input):
 
         SELECT * FROM users WHERE username = '<input>'
 
-    Submitting ``' OR 1=1;`` makes the condition true for every row. The
-    application keeps the first/last matching row, which is the Queen, and the
-    password comparison is bypassed. We reproduce that outcome explicitly and
-    restrict it to ``hearts_queen`` so no other account can be reached.
+    Submitting ``' OR 1=1;`` makes the condition true for every row, so the
+    lookup returns the Queen's account and the password comparison that follows
+    in the original code never runs. ``build_queen_lookup`` executes that
+    concatenated query; the first row is the account the login resolves to.
 
-    Returns the Queen's user row, or None when the payload is not used or the
-    active chamber is not Medium. Easy and Hard never take this path.
+    Returns the resolved user row, or None when no payload was used. The caller
+    (``_handle_login``) only calls this for requests that came from the Medium
+    chamber, so Easy and Hard never reach it.
     """
-    if get_active_difficulty() != 'medium':
-        return None
+    return build_queen_lookup(username_input)
 
+
+def build_queen_lookup(username_input):
+    """
+    Execute the Medium chamber's concatenated lookup.
+
+    This is the literal query the vulnerable login builds:
+
+        SELECT * FROM users WHERE username = '<input>'
+
+    The payload is supplied by the player and the rows it returns decide which
+    account the login resolves to. The injection is only reached from
+    ``_handle_login`` when the request came from the Medium chamber, so Easy and
+    Hard never execute this path.
+
+    A read-only connection is used so the injection cannot mutate the registry.
+    """
     payload = _clean_username(username_input)
     if not MEDIUM_SQLI_PAYLOAD.match(payload):
         return None
 
+    # The Queen's lookup query, built exactly as the vulnerable chamber does.
+    # The payload already closes the string literal, so it is concatenated as
+    # the username value; a trailing ``;`` / ``--`` terminator is removed because
+    # the login's query runner only executes the first complete statement.
+    tail = payload.strip()
+    for terminator in (';', '--'):
+        if tail.endswith(terminator):
+            tail = tail[:-len(terminator)].rstrip()
+            break
+    query = "SELECT * FROM users WHERE username = '" + tail
+
+    uri_path = f'file:{DB_PATH}?mode=ro'
+    conn = sqlite3.connect(uri_path, uri=True, timeout=10)
+    try:
+        conn.row_factory = sqlite3.Row
+        rows = [dict(row) for row in conn.execute(query).fetchall()]
+    finally:
+        conn.close()
+
+    # The first row the tautology matches is the Queen's account; the password
+    # check that follows in the original code is bypassed.
+    for row in rows:
+        if (row.get('username') or '').strip().lower() == QUEEN_USERNAME:
+            return row
+    return rows[0] if rows else None
+
+
+def record_queen_login(user_id):
+    """Update the Queen's login timestamp after a successful injection."""
+    now = _now_iso()
     with db_conn() as conn:
-        row = conn.execute(
-            'SELECT * FROM users WHERE LOWER(username) = ?',
-            (QUEEN_USERNAME,)
-        ).fetchone()
-        if not row:
-            return None
-        now = _now_iso()
         conn.execute(
             'UPDATE users SET last_login_at = ?, updated_at = ? WHERE id = ?',
-            (now, now, row['id'])
+            (now, now, user_id)
         )
-        return dict(row)
 
 
 def find_user_by_credentials(username_input, password_input):
@@ -605,9 +777,9 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         if not referer:
             return None
         path = urllib.parse.urlparse(referer).path.lower()
-        match = re.search(r'/challenges/(easy|medium|hard)(?:/|$)', path)
+        match = CHAMBER_REFERER_RE.search(path)
         if match:
-            return match.group(1)
+            return match.group(1).lower()
         if path in ('', '/', '/index.html'):
             return 'easy'
         return None
@@ -981,6 +1153,8 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
             self._handle_queen_flag()
         elif path == '/api/cheshire':
             self._handle_cheshire()
+        elif path == '/api/hints':
+            self._handle_hints()
         elif path == '/api/admin/players':
             self._handle_admin_players()
         elif path == '/api/admin/solves':
@@ -1177,6 +1351,56 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
             'points_easy': public['points_easy'],
             'pointsByDifficulty': public['pointsByDifficulty'],
             'purchasedHints': public['purchasedHints'],
+        })
+
+    def _shop_chamber(self, query=None):
+        """
+        Which chamber's shop is this request for?
+
+        The Mad Hatter page is reached from a chamber page (``?from=<chamber>``)
+        or opened directly. A chamber page Referer wins; otherwise the shop
+        page's own ``from`` parameter decides. ``query`` is the parsed query
+        string of the API request itself, which is where the shop page passes
+        the chamber it was opened for.
+        """
+        chamber = self._chamber_from_referer()
+        if chamber in HINT_CATALOGUE:
+            return chamber
+        referer = self.headers.get('Referer') or ''
+        parsed = urllib.parse.urlparse(referer)
+        if parsed.path.lower().endswith('/mad-hatter.html'):
+            wanted = (urllib.parse.parse_qs(parsed.query).get('from') or [''])[0]
+            wanted = wanted.strip().lower()
+            if wanted in HINT_CATALOGUE:
+                return wanted
+        if query:
+            wanted = (query.get('from') or [''])[0].strip().lower()
+            return wanted if wanted in HINT_CATALOGUE else None
+        return None
+
+    def _handle_hints(self):
+        """
+        Mad Hatter shop catalogue for the chamber the shop page belongs to.
+
+        The chamber comes from the page the browser is on (a chamber page, or
+        the shop page's ``from`` parameter), so the shop cannot be coaxed into
+        showing another chamber's clues. Prices match ``POST /api/hint``.
+        """
+        query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        chamber = self._shop_chamber(query)
+        if chamber not in HINT_CATALOGUE:
+            self._send_json({
+                'success': False,
+                'error': 'The Mad Hatter could not tell which chamber you are in.',
+            }, 403)
+            return
+
+        entry = HINT_CATALOGUE[chamber]
+        self._send_json({
+            'success': True,
+            'difficulty': chamber,
+            'openingDialogue': entry.get('openingDialogue', ''),
+            'hints': entry.get('hints', []),
         })
 
     def _handle_difficulty(self):
@@ -1741,14 +1965,46 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         self._send_json({'success': True, 'user': public}, 201,
                         self._set_cookie_headers(token))
 
+    def _login_chamber(self, body):
+        """
+        Which chamber is the login form for?
+
+        The form is served by ``login.html?difficulty=<chamber>``, so the
+        Referer path is the login page and the chamber travels in its query.
+        A request from a chamber page (or any other trusted page) wins, which
+        keeps the rule "the chamber is decided by the page, not the payload".
+        """
+        chamber = self._chamber_from_referer()
+        if chamber in HINT_CATALOGUE:
+            return chamber
+        try:
+            referer = urllib.parse.urlparse(self.headers.get('Referer') or '')
+        except ValueError:
+            return None
+        if referer.path.lower().endswith('/login.html'):
+            query = urllib.parse.parse_qs(referer.query)
+            wanted = (query.get('difficulty') or [''])[0].strip().lower()
+            return wanted if wanted in HINT_CATALOGUE else None
+        return None
+
     def _handle_login(self):
         data = self._get_body()
         username = data.get('username') or ''
         password = data.get('password') or ''
 
-        # Medium-only, Queen-only SQL injection. The password is deliberately
-        # ignored for this payload; the tautology is the credential.
-        user = medium_sqli_queen_login(username)
+        # Medium-only, Queen-only SQL injection. The payload is concatenated
+        # into the Queen's lookup query on the Medium chamber page, so the
+        # tautology is the credential and the password is ignored.
+        #
+        # The chamber comes from the login page the player submitted, so a
+        # Medium form only works from Medium. Easy and Hard never reach the
+        # concatenation below.
+        injected = False
+        if self._login_chamber(data) == 'medium':
+            user = medium_sqli_queen_login(username)
+            injected = user is not None
+        else:
+            user = None
         if user is None:
             user = find_user_by_credentials(username, password)
         if not user:
@@ -1757,6 +2013,9 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
                 'error': f'Invalid credentials for "{username}".'
             }, 401)
             return
+
+        if injected:
+            record_queen_login(user['id'])
 
         with db_conn() as conn:
             fresh = conn.execute('SELECT * FROM users WHERE id = ?',
@@ -1951,19 +2210,27 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
             return
 
         # Hint catalogue prices, with the chamber whose coin purse pays for it.
+        # Kept in sync with the server-side HINT_CATALOGUE above.
         HINT_PRICES = {
-            'easy-hint-1': (0, 'easy'),
-            'easy-hint-2': (10, 'easy'),
-            'easy-hint-3': (20, 'easy'),
-            'easy-hint-4': (30, 'easy'),
-            'easy-hint-5': (40, 'easy'),
-            'medium-hint-1': (200, 'medium'),
-            'medium-hint-2': (300, 'medium'),
-            'medium-hint-3': (0, 'medium'),
+            hint['id']: (int(hint['cost']), difficulty)
+            for difficulty, entry in HINT_CATALOGUE.items()
+            for hint in entry['hints']
         }
 
         if hint_id not in HINT_PRICES:
-            self._send_json({'success': False, 'error': 'Unknown hint for this chamber.'}, 404)
+            known = sorted(
+                hid for hid, (_cost, diff) in HINT_PRICES.items()
+                if diff == self._shop_chamber()
+            )
+            self._send_json({
+                'success': False,
+                'error': (
+                    f'Unknown hint "{hint_id}" for this chamber.'
+                    + (f' Expected one of: {", ".join(known)}.' if known else '')
+                ),
+                'unknownHint': hint_id,
+                'expected': known,
+            }, 404)
             return
 
         cost, hint_difficulty = HINT_PRICES[hint_id]

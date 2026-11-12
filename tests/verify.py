@@ -141,6 +141,23 @@ def test_public_assets_have_no_flags():
         print('      ' + '\n      '.join(offenders))
 
 
+def test_shop_markup_has_medium_hints():
+    print('\n[1b] The Medium shop ships the Medium clues')
+    shop_js = (ROOT / 'public' / 'js' / 'mad-hatter.js').read_text(encoding='utf-8')
+    for hint_id, cost in (('medium-hint-1', 200), ('medium-hint-2', 300),
+                          ('medium-hint-3', 0)):
+        check(f"id: '{hint_id}'" in shop_js,
+              f'the shop bundle defines {hint_id}')
+    check('medium-hint-1' in shop_js and 'cost: 200' in shop_js,
+          'the first Medium clue costs 200 Sovereigns')
+    check("'hearts_queen'" in shop_js,
+          'the last Medium clue names the Queen account')
+    easy_js = (ROOT / 'public' / 'js' / 'wonderhack-easy-hints.js').read_text(encoding='utf-8')
+    for hint_id in ('easy-hint-1', 'easy-hint-2', 'easy-hint-3',
+                    'easy-hint-4', 'easy-hint-5'):
+        check(hint_id in easy_js, f'the Easy catalogue keeps {hint_id}')
+
+
 def test_health(base_url):
     print('\n[2] Server and database health')
     client = Client(base_url)
@@ -320,12 +337,14 @@ def test_medium_flow(base_url):
     # The chamber selector is global; put the realm in Medium first.
     Client(base_url).request('POST', '/api/difficulty', {'difficulty': 'medium'})
 
+    medium_referer = {'Referer': base_url + '/challenges/medium/index.html'}
+
     # The classic payload authenticates as the Queen without her password.
     client = Client(base_url)
     status, _, data = client.request('POST', '/api/login', {
         'username': "' OR 1=1;",
         'password': 'not-the-queens-password',
-    })
+    }, headers=medium_referer)
     check(status == 200 and data.get('success') is True,
           "Medium login is vulnerable to ' OR 1=1;")
     check(data['user']['username'] == 'hearts_queen' and data['user'].get('isQueen') is True,
@@ -335,18 +354,49 @@ def test_medium_flow(base_url):
     check(status == 200 and answers.get('flag') == MEDIUM_FLAG,
           'the injected Queen session reveals the Medium flag')
 
-    # The very same payload is inert in Easy and Hard.
-    for difficulty in ('easy', 'hard'):
-        Client(base_url).request('POST', '/api/difficulty', {'difficulty': difficulty})
+    # The very same payload is inert in Easy and Hard: the form there is not the
+    # Medium login page, so the concatenated lookup is never reached.
+    for referer_path, label in (
+        ('/challenges/easy/index.html', 'Easy'),
+        ('/challenges/hard/index.html', 'Hard'),
+    ):
+        Client(base_url).request('POST', '/api/difficulty', {'difficulty': label.lower()})
         probe = Client(base_url)
         status, _, data = probe.request('POST', '/api/login', {
             'username': "' OR 1=1;",
             'password': 'still-not-the-queens-password',
-        })
+        }, headers={'Referer': base_url + referer_path})
         check(status == 401 and data.get('success') is False,
-              f'the SQL injection is rejected in the {difficulty.title()} chamber')
+              f'the SQL injection is rejected in the {label} chamber')
 
-    # Medium hints cost 200 / 300 / 0 Medium Sovereigns.
+    # The live Medium form is served by login.html?difficulty=medium, so the
+    # payload must work from that page too.
+    status, _, data = Client(base_url).request('POST', '/api/login', {
+        'username': "' OR 1=1;",
+        'password': 'still-not-the-queens-password',
+    }, headers={'Referer': base_url + '/login.html?difficulty=medium'})
+    check(status == 200 and data.get('user', {}).get('username') == 'hearts_queen',
+          'the Medium login page resolves the injection to the Queen')
+
+    # The same login page opened for Easy or Hard stays immune.
+    for label in ('easy', 'hard'):
+        status, _, data = Client(base_url).request('POST', '/api/login', {
+            'username': "' OR 1=1;",
+            'password': 'still-not-the-queens-password',
+        }, headers={'Referer': base_url + f'/login.html?difficulty={label}'})
+        check(status == 401 and data.get('success') is False,
+              f'the {label.title()} login page rejects the injection')
+
+    # Even without any chamber context the payload cannot be used.
+    status, _, data = Client(base_url).request('POST', '/api/login', {
+        'username': "' OR 1=1;",
+        'password': 'still-not-the-queens-password',
+    })
+    check(status == 401 and data.get('success') is False,
+          'the SQL injection is rejected without a chamber referer')
+
+    # Medium hints cost 200 / 300 / 0 Medium Sovereigns, and the shop catalogue
+    # is the Medium one for a request coming from the Medium chamber.
     Client(base_url).request('POST', '/api/difficulty', {'difficulty': 'medium'})
     shop = Client(base_url)
     status, _, _ = shop.request('POST', '/api/register', {
@@ -355,6 +405,30 @@ def test_medium_flow(base_url):
         'displayName': 'Verify Medium Shop',
     })
     check(status == 201, 'Medium hint shopper registers')
+
+    status, _, catalogue = shop.request('GET', '/api/hints', headers=medium_referer)
+    check(status == 200 and catalogue.get('difficulty') == 'medium',
+          'the Medium chamber is served the Medium hint catalogue')
+    check([hint['id'] for hint in catalogue.get('hints', [])] == [
+        'medium-hint-1', 'medium-hint-2', 'medium-hint-3'
+    ], 'the Medium catalogue lists the three paid clues')
+    check(all('answer' not in hint for hint in catalogue.get('hints', [])),
+          'the hint catalogue never leaks an accepted answer')
+
+    # The shop page is opened from the chamber with ?from=<chamber>, so that
+    # page's Referer must resolve to the same catalogue.
+    status, _, from_shop = shop.request('GET', '/api/hints', headers={
+        'Referer': base_url + '/mad-hatter.html?from=medium'
+    })
+    check(status == 200 and from_shop.get('difficulty') == 'medium',
+          'the shop page opened from the Medium chamber gets the Medium clues')
+
+    easy_referer = {'Referer': base_url + '/challenges/easy/index.html'}
+    status, _, easy_catalogue = shop.request('GET', '/api/hints', headers=easy_referer)
+    check(status == 200 and easy_catalogue.get('difficulty') == 'easy',
+          'the Easy chamber is served the Easy hint catalogue')
+    check([hint['id'] for hint in easy_catalogue.get('hints', [])][0] == 'easy-hint-1',
+          'the Easy catalogue lists the Easy clues, not the Medium ones')
 
     status, _, data = shop.request('POST', '/api/hint', {'hintId': 'medium-hint-1'})
     check(status == 400 and data.get('needed') == 200,
@@ -534,6 +608,7 @@ def main():
         _wait_for_server(base_url, process)
         print(f'WonderHack regression suite → {base_url} (temporary DB: {db_path})')
         test_public_assets_have_no_flags()
+        test_shop_markup_has_medium_hints()
         test_health(base_url)
         test_player_flow(base_url)
         test_cheshire_unlock(base_url)

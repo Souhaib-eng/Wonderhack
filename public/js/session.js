@@ -53,6 +53,13 @@ const WonderSession = (() => {
         headers: HEADERS,
         cache: 'no-store',
       };
+      // Some endpoints (hint catalogue, hint purchase) resolve the chamber from
+      // the page the request came from. The browser sets Referer for
+      // same-origin navigations, but fetch() does not always forward it, so the
+      // current page is sent explicitly.
+      try {
+        opts.referrer = window.location.href;
+      } catch (e) { /* non-browser runtime */ }
       if (body !== undefined) opts.body = JSON.stringify(body);
 
       const res = await fetch(BASE + path, opts);

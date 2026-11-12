@@ -20,7 +20,7 @@ const WonderEasyHints = {
       id: "easy-hint-2",
       number: 2,
       title: "Open the Looking Glass",
-      cost: 100,
+      cost: 10,
       text: "Open the browser's Developer Tools and inspect the scripts loaded by the Easy Chamber. Find where the queen checks if we solved the puzzle or not",
       learningGoal: "Encourage players to inspect the page's JavaScript.",
     },
@@ -28,7 +28,7 @@ const WonderEasyHints = {
       id: "easy-hint-3",
       number: 3,
       title: "No Arguments Needed",
-      cost: 100,
+      cost: 20,
       text: "have you ever tried the web console? I heard it's pretty fun! ;)",
       learningGoal:
         "Help players understand the helper's signature and the trust boundary.",
@@ -37,7 +37,7 @@ const WonderEasyHints = {
       id: "easy-hint-4",
       number: 4,
       title: "A Rule Written in Sand",
-      cost: 100,
+      cost: 30,
       text: "The queen trusts her functions, sometimes she doesn't even use arguments!",
       learningGoal:
         "Help players identify the client-side trust flaw and its chamber scope.",
@@ -46,7 +46,7 @@ const WonderEasyHints = {
       id: "easy-hint-5",
       number: 5,
       title: "The Sealed Flag",
-      cost: 100,
+      cost: 40,
       text: "Run isSolved() in the console while you are inside the Easy Chamber. It returns the flag sealed behind four layers — take that cipher to the Cheshire Cat's Cipher Lab and let him guide your paws through the decoders.",
       learningGoal:
         "Guide players the Console to the Cipher Lab decoding chain.",

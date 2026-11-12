@@ -1,14 +1,19 @@
 /**
  * WONDERHACK — Mad Hatter's Tea Room Controller
  * Manages hint progression, purchases, wallet updates, and character interactions.
- * In Easy Chamber, Mad Hatter offers 5 progressive hints (Hint 1 is free, Hints 2–5 cost points).
- * In Medium and Hard Chambers, the shop remains empty.
+ *
+ * The chamber the player came from is read from the request's Referer (the page
+ * they clicked "Visit Shop" on), so the shop always shows that chamber's own
+ * clues. Easy offers 5 progressive hints; Medium offers the three paid clues the
+ * Queen's court keeps. Hard has nothing for sale.
  */
 
 const WonderHatterShop = (() => {
   let activeDifficulty = 'easy';
 
   // Medium Chamber hint catalogue. Prices are paid from the Medium coin purse.
+  // This is the offline fallback: when the game is served by server.py the shop
+  // fetches /api/hints, which is authoritative for the chamber and prices.
   const MEDIUM_HINTS = {
     openingDialogue:
       "“Ah, the Royal Court! The Queen's secrets are steeped stronger than my tea, Alice.”",
@@ -52,6 +57,46 @@ const WonderHatterShop = (() => {
       return WonderEasyHints;
     }
     return null;
+  }
+
+  /**
+   * Ask the backend for the hint catalogue of the active chamber.
+   *
+   * The Mad Hatter page can be opened directly (or after a stale reload), so
+   * `?from=` and the saved difficulty in localStorage are not enough to trust:
+   * the referer of the *page* is the chamber the player came from, and the
+   * server answers only with that chamber's hints. This is what stops the shop
+   * from showing the Easy clues while the player stands in the Medium chamber
+   * (the "Unknown hints for this chamber" dead end).
+   *
+   * Falls back to the local catalogue when the API is not reachable.
+   */
+  async function loadCatalog() {
+    const local = hintCatalog();
+    if (typeof WonderSession === 'undefined') return local;
+    try {
+      const res = await fetch('/api/hints', {
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+        cache: 'no-store',
+      });
+      if (!res.ok) return local;
+      const data = await res.json();
+      if (!data || data.success !== true || !Array.isArray(data.hints)) {
+        return local;
+      }
+      const diff = String(data.difficulty || '').toLowerCase();
+      if (!['easy', 'medium', 'hard'].includes(diff)) return local;
+      // The server is authoritative for the chamber the request came from.
+      activeDifficulty = diff;
+      return {
+        difficulty: diff,
+        openingDialogue: data.openingDialogue || '',
+        hints: data.hints,
+      };
+    } catch (err) {
+      return local;
+    }
   }
 
   function chamberPoints() {
@@ -102,11 +147,16 @@ const WonderHatterShop = (() => {
     walletElem.textContent = chamberPoints();
   }
 
+  // The hint catalogue can arrive from the backend (authoritative) or from the
+  // local fallback files. The last loaded value is remembered so a later
+  // purchase re-render does not need another round trip.
+  let loadedCatalog = null;
+
   function renderHints() {
     const grid = document.getElementById('hints-grid');
     if (!grid) return;
 
-    const data = hintCatalog();
+    const data = loadedCatalog || hintCatalog();
     if (!data || !Array.isArray(data.hints)) {
       grid.innerHTML = '<p style="font-family: var(--font-story); color:#7a1223;">Hints are currently brewing…</p>';
       return;
@@ -411,17 +461,24 @@ const WonderHatterShop = (() => {
     }
   }
 
-  function init() {
+  async function init() {
     activeDifficulty = getChamberDifficulty();
+
+    // Ask the server first (the request's Referer identifies the chamber), then
+    // render with the local catalogue if the API is unavailable. The backend is
+    // authoritative for which chamber the shop is showing, so the back button
+    // and wallet are set up only after it answers.
+    const catalog = await loadCatalog();
+    loadedCatalog = catalog;
+
     setupBackButton();
     bindInteractions();
     updateWalletDisplay();
 
     const emptySection = document.getElementById('shop-empty');
     const hintsContainer = document.getElementById('hints-container');
-    const catalog = hintCatalog();
 
-    if (catalog && Array.isArray(catalog.hints)) {
+    if (catalog && Array.isArray(catalog.hints) && catalog.hints.length) {
       if (emptySection) emptySection.style.display = 'none';
       if (hintsContainer) hintsContainer.style.display = 'block';
 
@@ -429,6 +486,10 @@ const WonderHatterShop = (() => {
       const hatterBubbleText = document.querySelector('#hatter-bubble .dialogue-bubble-text');
       if (hatterBubbleText && catalog.openingDialogue) {
         hatterBubbleText.textContent = catalog.openingDialogue;
+      }
+      const introText = document.getElementById('hatter-intro-text');
+      if (introText && catalog.openingDialogue) {
+        introText.textContent = catalog.openingDialogue;
       }
 
       // The cat no longer offers a free extra hint in the hint area.
