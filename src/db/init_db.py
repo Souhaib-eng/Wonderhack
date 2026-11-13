@@ -134,6 +134,8 @@ def init_db():
         ip_address    TEXT NOT NULL DEFAULT '',
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )''')
+    if 'hard_queen_access' not in _columns(c, 'sessions'):
+        c.execute('ALTER TABLE sessions ADD COLUMN hard_queen_access INTEGER NOT NULL DEFAULT 0')
 
     # ------------------------------------------------------------------ solves
     c.execute('''CREATE TABLE IF NOT EXISTS solves (

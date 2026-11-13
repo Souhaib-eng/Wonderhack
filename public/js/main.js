@@ -120,6 +120,7 @@ const WonderState = (() => {
     login: (user) => {
       state.isLoggedIn = true;
       state.player = {
+        courtId: user.courtId,
         username: user.displayName || user.username,
         displayName: user.displayName || user.username,
         character: user.character || 'alice',
@@ -840,7 +841,7 @@ const WonderUI = (() => {
 
       userWidgetHtml = `
         <div style="display:flex; align-items:center; gap: 0.6rem;">
-          <a href="${basePath}profile.html" class="nav-profile ${activePage === 'profile' ? 'active' : ''}" title="Player Dossier (${safeName}) — Inspect royal achievements">
+          <a href="${basePath}profile.html${chamberDiff === 'hard' ? `?from=hard&id=${Number(player.courtId) || 0}` : ''}" class="nav-profile ${activePage === 'profile' ? 'active' : ''}" title="Player Dossier (${safeName}) — Inspect royal achievements">
             <div class="nav-avatar-cameo">
               <img id="nav-avatar-img" src="${avatarSrc}" alt="${safeName} Dossier Portrait">
             </div>

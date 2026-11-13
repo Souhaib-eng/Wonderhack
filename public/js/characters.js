@@ -68,6 +68,11 @@ const WonderCharacters = (() => {
   const bubbleTimers = {};
 
   function showBubble(bubbleId, text, autoHideMs = 4000, voice = 'click') {
+    if (bubbleId === 'queen-bubble' && /\/challenges\/hard\//i.test(window.location.pathname)
+        && document.body.classList.contains('queen-system-broken')) {
+      document.dispatchEvent(new CustomEvent('wonderhack:queen-provoked'));
+      return;
+    }
     const bubble = document.getElementById(bubbleId);
     if (!bubble) return;
 

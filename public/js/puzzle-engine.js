@@ -130,6 +130,8 @@ const WonderPuzzleEngine = (() => {
     // A sealed final trial always renders as corrupted, even if an older
     // account somehow recorded a solve for it before the seal was added.
     const isSolved = !p.queenCorrupted && WonderState.isSolved(p.id);
+    const hasHardFinale = cfg.difficulty.toLowerCase() === 'hard'
+      && document.getElementById('queen-takeover');
 
     // --- Parchment header ---
     _setText('puzzle-number-badge', p.number);
@@ -154,7 +156,7 @@ const WonderPuzzleEngine = (() => {
           <span class="queen-corrupted-question" data-glitch="${corruptedText}">${corruptedText}</span>
         `;
         // The corruption arrives with its own screech.
-        if (typeof WonderAudio !== 'undefined' && WonderAudio.playQueenGlitch) {
+        if (!hasHardFinale && typeof WonderAudio !== 'undefined' && WonderAudio.playQueenGlitch) {
           WonderAudio.playQueenGlitch();
         }
       } else {
@@ -192,9 +194,10 @@ const WonderPuzzleEngine = (() => {
 
     // Random queen taunt on load (unsolved puzzles only)
     // For corrupted puzzles: auto-trigger the rabbit warning instead
-    if (!isSolved) {
+    if (!isSolved && !(p.queenCorrupted && hasHardFinale)) {
       if (p.queenCorrupted) {
         setTimeout(() => {
+          if (_current() !== p) return;
           if (typeof WonderCharacters !== 'undefined' && WonderCharacters.triggerRabbitHint) {
             WonderCharacters.triggerRabbitHint(
               '"Oh dear, oh dear! The Queen has corrupted the final trial — ' +
@@ -204,6 +207,7 @@ const WonderPuzzleEngine = (() => {
         }, 700);
         // Also trigger the queen gloating
         setTimeout(() => {
+          if (_current() !== p) return;
           if (typeof WonderCharacters !== 'undefined' && WonderCharacters.triggerQueenTaunt) {
             WonderCharacters.triggerQueenTaunt(
               '\u201cMUAHAHA! The final trial is MINE now! My corruption is permanent — ' +
@@ -213,12 +217,16 @@ const WonderPuzzleEngine = (() => {
         }, 3500);
       } else if (Math.random() > 0.4) {
         setTimeout(() => {
+          if (_current() !== p) return;
           if (typeof WonderCharacters !== 'undefined' && WonderCharacters.triggerQueenTaunt) {
             WonderCharacters.triggerQueenTaunt(p.queenTaunt);
           }
         }, 900);
       }
     }
+    document.dispatchEvent(new CustomEvent('wonderhack:puzzle-loaded', {
+      detail: { difficulty: cfg.difficulty.toLowerCase(), puzzle: p },
+    }));
   }
 
   /* -----------------------------------------------------------------------

@@ -144,7 +144,7 @@ const WonderPuzzles = (() => {
       }
     ];
 
-    container.innerHTML = chambers.map(c => {
+    container.innerHTML = chambers.map((c, index) => {
       const puzzles = getPuzzlesByDifficulty(c.diff);
       const localSolved = puzzles.filter(p => typeof WonderState !== 'undefined' && WonderState.isSolved(p.id)).length;
       let solvedCount = localSolved;
@@ -169,15 +169,16 @@ const WonderPuzzles = (() => {
 
       return `
       <article class="chamber-card ${c.cssClass}">
+        <div class="chamber-classification"><span>Chapter 0${index + 1}</span><span>${['Observe', 'Investigate', 'Outwit'][index]}</span></div>
         <div class="chamber-header">
           <span class="chamber-icon">${c.icon}</span>
           <span class="chamber-badge ${c.badgeClass}">${c.diff.toUpperCase()}</span>
         </div>
         <h2 class="chamber-title">${c.title}</h2>
 
-        <div style="margin: 1rem 0; background: rgba(212, 175, 55, 0.07); border: 1px solid rgba(197,155,39,0.3); border-radius: 6px; padding: 0.9rem 1rem;">
-          <p style="font-family: var(--font-story); font-size: 0.95rem; color: #3a2810; margin: 0 0 0.6rem 0; font-weight: 600;">${c.description}</p>
-          <p style="font-family: var(--font-story); font-size: 0.85rem; color: #6a5040; margin: 0; font-style: italic;">${c.flavour}</p>
+        <div class="chamber-summary">
+          <p class="chamber-description">${c.description}</p>
+          <p class="chamber-flavour">${c.flavour}</p>
         </div>
 
         <div class="chamber-progress" role="progressbar" aria-valuemin="0" aria-valuemax="${totalCount}" aria-valuenow="${solvedCount}" aria-label="${c.title} progress">
@@ -196,7 +197,7 @@ const WonderPuzzles = (() => {
         </div>
 
         <a href="${c.url}" class="btn-victorian btn-crimson chamber-action-btn" data-difficulty="${c.diff}">
-          Enter ${c.title} ➔
+          Enter ${c.title} <span aria-hidden="true">→</span>
         </a>
       </article>
     `}).join('');

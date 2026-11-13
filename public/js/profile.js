@@ -4,9 +4,46 @@
  */
 
 const WonderProfile = (() => {
-  function init() {
+  async function init() {
+    const query = new URLSearchParams(window.location.search);
+    if (query.get('from') === 'hard') {
+      await renderCourtDossier(query.get('id'));
+      return;
+    }
     renderProfile();
     bindEvents();
+  }
+
+  async function renderCourtDossier(id) {
+    const container = document.querySelector('.profile-container');
+    container.innerHTML = `<article class="parchment-window" style="padding:2rem">
+      <p>INNER SANCTUM · ROYAL REGISTRY</p><h1 id="court-name">Opening the dossier…</h1>
+      <p id="court-status" role="status" aria-live="polite"></p>
+      <dl id="court-fields"></dl>
+      <a href="challenges/hard/index.html" class="btn-victorian btn-crimson">← Return to the Inner Sanctum</a>
+      </article>`;
+    try {
+      const response = await fetch(`/api/profile?id=${encodeURIComponent(id || '')}`, {
+        credentials: 'same-origin', cache: 'no-store',
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'The royal registry is silent.');
+      document.getElementById('court-name').textContent = data.profile.displayName;
+      document.getElementById('court-status').textContent = 'A dossier is a glimpse, Alice. A crown is something else entirely.';
+      const fields = document.getElementById('court-fields');
+      for (const [label, value] of Object.entries(data.profile)) {
+        const term = document.createElement('dt');
+        term.style.cssText = 'font-weight:bold;margin-top:1rem;color:#7a1223';
+        term.textContent = label;
+        const description = document.createElement('dd');
+        description.style.cssText = 'margin:0.25rem 0 1rem;overflow-wrap:anywhere';
+        description.textContent = value;
+        fields.append(term, description);
+      }
+    } catch (error) {
+      document.getElementById('court-name').textContent = 'Dossier sealed';
+      document.getElementById('court-status').textContent = error.message;
+    }
   }
 
   function renderProfile() {

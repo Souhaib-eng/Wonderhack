@@ -5,7 +5,7 @@
  * The chamber the player came from is read from the request's Referer (the page
  * they clicked "Visit Shop" on), so the shop always shows that chamber's own
  * clues. Easy offers 5 progressive hints; Medium offers the three paid clues the
- * Queen's court keeps. Hard has nothing for sale.
+ * Queen's court keeps. Hard offers three clues to the royal broadcast.
  */
 
 const WonderHatterShop = (() => {
@@ -42,6 +42,18 @@ const WonderHatterShop = (() => {
     ],
   };
 
+  const HARD_HINTS = {
+    openingDialogue: 'The Queen has sewn her lips shut with a silver thread. Perhaps you should listen to the thread, Alice. Tea?',
+    hints: [
+      { id: 'hard-hint-1', number: 1, title: 'Through the Looking Proxy', cost: 300,
+        text: "If I were you, I'd definitely use Burp Suite! What do I know though? I'm just a Mad Hatter!" },
+      { id: 'hard-hint-2', number: 2, title: 'A Different Kind of Whisper', cost: 200,
+        text: 'Have you ever heard of WebSockets?' },
+      { id: 'hard-hint-3', number: 3, title: 'A Very Small Matter', cost: 0,
+        text: 'Who developed the modern atomic theory?' },
+    ],
+  };
+
   const DIFFICULTY_LABELS = {
     easy: 'Easy Chamber',
     medium: 'Medium Chamber',
@@ -50,6 +62,7 @@ const WonderHatterShop = (() => {
 
   function hintCatalog() {
     if (activeDifficulty === 'medium') return MEDIUM_HINTS;
+    if (activeDifficulty === 'hard') return HARD_HINTS;
     if (activeDifficulty === 'easy' && typeof WonderEasyHints !== 'undefined') {
       return WonderEasyHints;
     }
@@ -493,7 +506,7 @@ const WonderHatterShop = (() => {
       // The cat no longer offers a free extra hint in the hint area.
       renderHints();
     } else {
-      // Hard: preserve the empty tea table
+      // Keep the empty tea table when no catalogue is available.
       if (hintsContainer) hintsContainer.style.display = 'none';
       if (emptySection) emptySection.style.display = 'block';
     }

@@ -12,6 +12,8 @@ Endpoints:
   POST /api/solve      → validate an answer and award coins (once per puzzle)
   POST /api/check-is-solved → Easy-only helper that returns the sealed flag cipher
   POST /api/profile    → update display name / email / character
+  GET  /api/profile?id → court dossier (intentional Hard challenge IDOR)
+  GET  /ws/queen       → authenticated Queen dialogue WebSocket (intentional leak)
   POST /api/progress   → sync hint purchases (points are never client-set)
   POST /api/reset      → wipe the current player's progression
   GET  /api/leaderboard→ players ranked by saved coins (Court Administrator only)
@@ -62,6 +64,7 @@ from db.puzzles import (
     puzzle_id_for_ordinal,
 )
 from db.security import hash_password, hash_token, verify_password
+from hard_challenge import serve_royal_socket, verify_royal_password
 
 PORT = int(os.environ.get('PORT', 8080))
 BASE_DIR = _ROOT_DIR
@@ -197,8 +200,19 @@ HINT_CATALOGUE = {
         ],
     },
     'hard': {
-        'openingDialogue': '',
-        'hints': [],
+        'openingDialogue': (
+            'The Queen has sewn her lips shut with a silver thread. '
+            'Perhaps you should listen to the thread, Alice. Tea?'
+        ),
+        'hints': [
+            {'id': 'hard-hint-1', 'number': 1, 'title': 'Through the Looking Proxy',
+             'cost': 300, 'text': "If I were you, I'd definitely use Burp Suite! "
+             "What do I know though? I'm just a Mad Hatter!"},
+            {'id': 'hard-hint-2', 'number': 2, 'title': 'A Different Kind of Whisper',
+             'cost': 200, 'text': 'Have you ever heard of WebSockets?'},
+            {'id': 'hard-hint-3', 'number': 3, 'title': 'A Very Small Matter',
+             'cost': 0, 'text': 'Who developed the modern atomic theory?'},
+        ],
     },
 }
 
@@ -525,6 +539,7 @@ def user_to_public(user, conn=None, solved=None):
     public['displayName'] = public.get('display_name') or public.get('username')
     public['isAdmin'] = is_admin_user(public)
     public['isQueen'] = is_queen_user(public)
+    public['courtId'] = 0 if public['isAdmin'] else (1 if public['isQueen'] else user['id'] + 2)
     public['progressByDifficulty'] = (
         progress_by_difficulty(conn, user['id']) if conn is not None else {
             'easy': {'solved': len([p for p in solved if difficulty_for(p) == 'easy']),
@@ -682,17 +697,17 @@ def find_user_by_credentials(username_input, password_input):
         return user
 
 
-def create_session(user_id, user_agent='', ip_address=''):
+def create_session(user_id, user_agent='', ip_address='', hard_queen_access=False):
     token = secrets.token_urlsafe(32)
     session_hash = hash_token(token)
     with db_conn() as conn:
         conn.execute(
             '''INSERT INTO sessions
                (session_hash, user_id, created_at, expires_at, last_seen_at,
-                user_agent, ip_address)
-               VALUES (?, ?, ?, ?, ?, ?, ?)''',
+                user_agent, ip_address, hard_queen_access)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
             (session_hash, user_id, _now_iso(), _expires_iso(), _now_iso(),
-             (user_agent or '')[:255], (ip_address or '')[:64])
+             (user_agent or '')[:255], (ip_address or '')[:64], int(hard_queen_access))
         )
     return token
 
@@ -703,7 +718,7 @@ def get_session_user(token):
     session_hash = hash_token(token)
     with db_conn() as conn:
         row = conn.execute(
-            '''SELECT u.*, s.expires_at AS _sess_exp
+            '''SELECT u.*, s.expires_at AS _sess_exp, s.hard_queen_access AS _hard_queen_access
                FROM sessions s JOIN users u ON u.id = s.user_id
                WHERE s.session_hash = ?''',
             (session_hash,)
@@ -1175,7 +1190,11 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_GET(self):
         path = urllib.parse.urlparse(self.path).path
-        if path == '/api/me':
+        if path == '/ws/queen':
+            self._handle_royal_socket()
+        elif path == '/api/profile':
+            self._handle_profile_lookup()
+        elif path == '/api/me':
             self._handle_me()
         elif path == '/api/leaderboard':
             self._handle_leaderboard()
@@ -1207,6 +1226,61 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
             self._send_json({'success': False, 'error': 'Unknown endpoint.'}, 404)
         else:
             super().do_GET()
+
+    def _handle_royal_socket(self):
+        user = self._require_session()
+        if not user:
+            return
+        origin = urllib.parse.urlparse(self.headers.get('Origin', ''))
+        if origin.netloc != self.headers.get('Host') or origin.scheme not in ('http', 'https'):
+            self._send_json({'error': 'This looking glass belongs to this court.'}, 403)
+            return
+        serve_royal_socket(self, lambda: get_session_user(self._get_session_id()))
+
+    def _handle_profile_lookup(self):
+        """INTENTIONAL IDOR: public court IDs expose another player's dossier.
+
+        Court IDs reserve 0 for admin and 1 for Queen, independently of legacy
+        SQLite IDs. Only safe dossier fields are returned; no login credentials.
+        """
+        viewer = self._require_session()
+        if not viewer:
+            return
+        query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        raw_id = (query.get('id') or [''])[0]
+        if not re.fullmatch(r'0|[1-9][0-9]{0,9}', raw_id):
+            self._send_json({'error': 'The court requires a numeric dossier ID.'}, 400)
+            return
+        court_id = int(raw_id)
+        if court_id == 0:
+            self._send_json({'error': 'The Court Administrator dossier is sealed.'}, 403)
+            return
+        with db_conn() as conn:
+            if court_id == 1:
+                row = conn.execute('SELECT * FROM users WHERE username = ?', (QUEEN_USERNAME,)).fetchone()
+            else:
+                row = conn.execute('SELECT * FROM users WHERE id = ?', (court_id - 2,)).fetchone()
+            if not row or is_admin_user(dict(row)):
+                self._send_json({'error': 'No such court dossier.'}, 404)
+                return
+            if court_id != 1 and is_queen_user(dict(row)):
+                self._send_json({'error': 'No such court dossier.'}, 404)
+                return
+            self._send_json({'success': True, 'profile': {
+                'id': court_id, 'username': row['username'],
+                'displayName': row['display_name'], 'email': row['email'],
+                'role': row['role'], 'character': row['character'],
+                'motto': 'Every whisper in this court belongs to ME!' if court_id == 1
+                         else 'Curiouser and curiouser.',
+            }})
+
+    def _hard_scroll_allowed(self, user, difficulty):
+        if difficulty != 'hard' or user.get('_hard_queen_access'):
+            return True
+        self._send_json({'success': False, 'error':
+                         'The Inner Sanctum requires the Queen’s own hard-chamber password. '
+                         'Return to the Hard login gate.'}, 403)
+        return False
 
     def _handle_me(self):
         user = self._require_session()
@@ -1242,7 +1316,9 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         if not user:
             return
 
-        active_difficulty = get_active_difficulty()
+        active_difficulty = 'hard' if user.get('_hard_queen_access') else get_active_difficulty()
+        if not self._hard_scroll_allowed(user, active_difficulty):
+            return
         answers = [
             {
                 'id': puzzle_id,
@@ -1276,7 +1352,9 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         if not user:
             return
 
-        active_difficulty = get_active_difficulty()
+        active_difficulty = 'hard' if user.get('_hard_queen_access') else get_active_difficulty()
+        if not self._hard_scroll_allowed(user, active_difficulty):
+            return
         self._send_json({
             'success': True,
             'difficulty': active_difficulty,
@@ -2202,12 +2280,22 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         # Medium form only works from Medium, and only the Queen's account can
         # be reached. Easy and Hard never reach the concatenation below.
         injected = False
-        if self._login_chamber(data) == 'medium':
+        chamber = self._login_chamber(data)
+        hard_access = False
+        if chamber == 'hard' and str(username).strip().lower() == QUEEN_USERNAME:
+            # This fictional credential is independent of the real Queen account.
+            # In particular, neither Medium SQLi nor the normal account password
+            # grants the hard flag capability.
+            with db_conn() as conn:
+                row = conn.execute('SELECT * FROM users WHERE username = ?', (QUEEN_USERNAME,)).fetchone()
+            hard_access = bool(row) and verify_royal_password(password)
+            user = dict(row) if hard_access else None
+        elif chamber == 'medium':
             user = medium_sqli_queen_login(username, password)
             injected = user is not None
         else:
             user = None
-        if user is None:
+        if user is None and not (chamber == 'hard' and str(username).strip().lower() == QUEEN_USERNAME):
             user = find_user_by_credentials(username, password)
         if not user:
             self._send_json({
@@ -2225,7 +2313,8 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
             public = user_to_public(fresh, conn)
 
         token = create_session(
-            user['id'], self.headers.get('User-Agent', ''), self._client_ip()
+            user['id'], self.headers.get('User-Agent', ''), self._client_ip(),
+            hard_queen_access=hard_access
         )
         self._send_json({'success': True, 'user': public},
                         extra_headers=self._set_cookie_headers(token))

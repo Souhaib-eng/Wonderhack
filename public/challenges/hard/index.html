@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="../../css/main.css?v=15">
   <link rel="stylesheet" href="../../css/puzzles.css?v=14">
   <link rel="stylesheet" href="../../css/queen-corruption.css?v=1">
+  <link rel="stylesheet" href="../../css/hard-challenge.css?v=5">
   <link rel="icon" type="image/svg+xml" href="../../assets/images/ui/card-suits.svg">
   <style>
     .puzzle-question-box {
@@ -58,6 +59,8 @@
       color: var(--color-lavender-bright);
     }
   </style>
+  <link rel="stylesheet" href="../../css/polish.css?v=1">
+  <script defer src="../../js/motion.js?v=2"></script>
 </head>
 <body class="puzzle-room-body" data-base-path="../../">
 
@@ -68,7 +71,7 @@
   <div class="floating-card-decor diamond" style="bottom: 18%; left: 24%; transform: rotate(8deg);"><span>Q♦</span><span style="align-self:flex-end;">♦Q</span></div>
   <div class="floating-card-decor club"    style="bottom: 25%; right: 22%; transform: rotate(-15deg);"><span>J♣</span><span style="align-self:flex-end;">♣J</span></div>
 
-  <aside class="queen-character-wrapper character-sprite" id="queen-sprite" title="Click to provoke Her Majesty's royal wrath">
+  <aside class="queen-character-wrapper character-sprite" id="queen-sprite" role="button" tabindex="0" aria-label="Provoke the Queen of Hearts" title="Click to provoke Her Majesty's royal wrath">
     <img src="../../assets/images/characters/queen.png" alt="The Queen of Hearts">
     <div class="character-tag">Her Imperial Majesty</div>
   </aside>
@@ -114,7 +117,7 @@
               <span class="puzzle-number-badge" id="puzzle-number-badge">I</span>
               <span class="puzzle-difficulty-tag" id="puzzle-difficulty-tag">Hard · Riddle</span>
             </div>
-            <h1 class="parchment-title" id="puzzle-title">Loading…</h1>
+            <h1 class="parchment-title" id="puzzle-title" tabindex="-1">Loading…</h1>
           </div>
           <div class="parchment-reward" id="puzzle-reward-pts">+200 Sovereigns</div>
         </header>
@@ -146,6 +149,7 @@
               <a href="../../mad-hatter.html?from=hard" class="hatter-shop-link">🎩 Visit Shop</a>
             </div>
           </form>
+
         </div>
 
         <a href="../../mad-hatter.html?from=hard" class="puzzle-hat-shop-link" title="Visit Mad Hatter's Tea Shop">
@@ -154,15 +158,31 @@
         </a>
 
       </article>
+
     </div>
   </main>
 
-  <script src="../../js/main.js?v=24"></script>
-  <script src="../../js/characters.js?v=25"></script>
+  <dialog id="queen-takeover" class="queen-takeover" aria-labelledby="takeover-title" aria-describedby="takeover-line">
+    <div class="takeover-cracks" aria-hidden="true"></div>
+    <div class="takeover-scene">
+      <p class="takeover-eyebrow">Final trial / Royal override</p>
+      <img src="../../assets/images/characters/queen.png" class="takeover-queen" alt="The Queen of Hearts seizes the final trial">
+      <span class="takeover-seal" aria-hidden="true">♛</span>
+      <h2 id="takeover-title">You were never meant to win.</h2>
+      <p id="takeover-line" role="status">One last question. One furious Queen.</p>
+      <div class="takeover-progress" aria-hidden="true"><span></span></div>
+      <button type="button" id="skip-takeover">Skip transition →</button>
+    </div>
+  </dialog>
+
+  <script src="../../js/main.js?v=25"></script>
+  <script src="../../js/characters.js?v=28"></script>
   <script src="../../js/session.js?v=11"></script>
   <script src="../../js/check-is-solved.js?v=5"></script>
-  <script src="../../js/puzzle-engine.js?v=23"></script>
+  <script src="../../js/puzzle-engine.js?v=25"></script>
   <script src="../../js/chamber.js?v=1"></script>
+  <script src="../../js/hard-challenge.js?v=5"></script>
+  <script src="../../js/queen-finale-video.js?v=1"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       WonderUI.initHeader('puzzles', '../../');

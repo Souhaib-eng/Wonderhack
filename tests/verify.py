@@ -59,6 +59,9 @@ class Client:
             urllib.request.HTTPCookieProcessor(self.jar),
             NoRedirect(),
         )
+        from tests import transport
+        if transport.HANDLER:
+            self.opener = self.no_redirect = transport.MemoryOpener(self.jar)
 
     def request(self, method, path, body=None, headers=None, follow=True):
         data = None
@@ -730,8 +733,8 @@ def test_queen_flow(base_url):
 
     queen.request('POST', '/api/difficulty', {'difficulty': 'hard'})
     status, _, flag = queen.request('GET', '/api/queen/flag')
-    check(_unseal(flag.get('flag'), 'hard') == HARD_FLAG,
-          'switching to Hard updates the royal flag')
+    check(status == 403 and 'flag' not in flag,
+          'a normal Queen session cannot unlock the Hard flag')
 
     queen.request('POST', '/api/difficulty', {'difficulty': 'easy'})
     status, _, flag = queen.request('GET', '/api/queen/flag')
@@ -753,25 +756,33 @@ def test_oauth_disabled(base_url):
 def main():
     temp_dir = Path(tempfile.mkdtemp(prefix='wonderhack-verify-'))
     db_path = temp_dir / 'verify.db'
-    port = _free_port()
-    base_url = f'http://127.0.0.1:{port}'
+    in_process = '--in-process' in sys.argv
+    port = 8080 if in_process else _free_port()
+    base_url = 'http://wonderhack.test' if in_process else f'http://127.0.0.1:{port}'
 
     env = os.environ.copy()
     env['WONDERHACK_DB'] = str(db_path)
     env['PORT'] = str(port)
     env['PYTHONUNBUFFERED'] = '1'
 
-    process = subprocess.Popen(
-        [sys.executable, str(SRC / 'server.py')],
-        cwd=str(ROOT),
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-    )
+    process = None
+    if in_process:
+        from tests import transport
+        import src.server as app
+        os.environ['WONDERHACK_DB'] = str(db_path)
+        app.DB_PATH = str(db_path)
+        app.init_db()
+        transport.HANDLER = app.WonderHackHandler
+    else:
+        process = subprocess.Popen(
+            [sys.executable, str(SRC / 'server.py')],
+            cwd=str(ROOT), env=env, stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT, text=True,
+        )
 
     try:
-        _wait_for_server(base_url, process)
+        if process:
+            _wait_for_server(base_url, process)
         print(f'WonderHack regression suite → {base_url} (temporary DB: {db_path})')
         test_public_assets_have_no_flags()
         test_shop_markup_has_medium_hints()
@@ -783,6 +794,8 @@ def main():
         test_flag_submissions(base_url)
         test_admin_and_seasons(base_url)
         test_queen_flow(base_url)
+        from tests.hard_verify import test_hard_flow
+        test_hard_flow(base_url, Client, check)
         test_oauth_disabled(base_url)
         print(f'\n✅ All {PASSED} checks passed.')
         return 0
@@ -790,11 +803,12 @@ def main():
         print(f'\n❌ Regression suite failed: {exc}', file=sys.stderr)
         return 1
     finally:
-        process.terminate()
-        try:
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            process.kill()
+        if process:
+            process.terminate()
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
