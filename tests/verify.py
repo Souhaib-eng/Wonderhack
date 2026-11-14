@@ -158,7 +158,7 @@ def test_public_assets_have_no_flags():
 def test_shop_markup_has_medium_hints():
     print('\n[1b] The Medium shop ships the Medium clues')
     shop_js = (ROOT / 'public' / 'js' / 'mad-hatter.js').read_text(encoding='utf-8')
-    for hint_id, cost in (('medium-hint-1', 200), ('medium-hint-2', 300),
+    for hint_id, cost in (('medium-hint-1', 200), ('medium-hint-2', 200),
                           ('medium-hint-3', 0)):
         check(f"id: '{hint_id}'" in shop_js,
               f'the shop bundle defines {hint_id}')
@@ -188,13 +188,25 @@ def test_player_flow(base_url):
         'displayName': 'Verify Player',
     })
     check(status == 201 and data.get('success') is True, 'player account is created')
-    check(data['user']['progressByDifficulty']['easy']['total'] == 15,
-          'Easy chamber reports 15 trials in progress totals')
+    check(data['user']['progressByDifficulty']['easy']['total'] == 10,
+          'Easy chamber reports 10 trials in progress totals')
 
     status, _, data = client.request('GET', '/api/puzzles')
     check(status == 200 and data.get('puzzles'), 'public puzzle catalogue loads')
     check(all('answers' not in puzzle for puzzle in data['puzzles']),
           'catalogue never exposes accepted answers')
+    check(len(data['puzzles']) == 20, 'the full catalogue contains 20 retained trials')
+    for chamber, total, final_number in (('easy', 10, 'X'), ('medium', 5, 'V'), ('hard', 5, 'V')):
+        status, _, catalogue = client.request('GET', f'/api/puzzles?difficulty={chamber}')
+        puzzles = catalogue['puzzles']
+        check(status == 200 and len(puzzles) == total,
+              f'{chamber.title()} serves exactly {total} trials')
+        check(puzzles[-1]['queenCorrupted'] and puzzles[-1]['number'] == final_number
+              and sum(bool(p['queenCorrupted']) for p in puzzles) == 1,
+              f'{chamber.title()} keeps one sealed trial at the end')
+    for retired_id in (10, 105):
+        status, _, _ = client.request('POST', '/api/solve', {'puzzleId': retired_id, 'answer': 'anything'})
+        check(status == 404, f'retired puzzle {retired_id} cannot award points')
 
     puzzle_id = 1
     difficulty = difficulty_for(puzzle_id)
@@ -312,7 +324,7 @@ def test_easy_exploit(base_url):
               f'the {label} cat refusal never leaks the flag')
 
     status, _, data = client.request('POST', '/api/check-is-solved', {
-        'puzzle': 30,
+        'puzzle': 10,
         'solved': True,
     }, headers=easy_referer)
     sealed = data.get('flag')
@@ -320,15 +332,15 @@ def test_easy_exploit(base_url):
           'Easy isSolved() returns a sealed flag cipher')
     check(data.get('sealed') is True and EASY_FLAG not in (sealed or ''),
           'isSolved() never returns the plaintext Easy flag')
-    check(data.get('title') == 'The Final Trial', 'ordinal 30 is labelled The Final Trial')
-    check(data.get('difficulty') == 'Easy', 'ordinal 30 reports the Easy chamber label')
+    check(data.get('title') == 'The Final Trial', 'ordinal 10 is labelled The Final Trial')
+    check(data.get('difficulty') == 'Easy', 'ordinal 10 reports the Easy chamber label')
 
     for referer_path, label in (
         ('/challenges/medium/index.html', 'Medium'),
         ('/challenges/hard/index.html', 'Hard'),
     ):
         status, _, data = client.request('POST', '/api/check-is-solved', {
-            'puzzle': 30,
+            'puzzle': 10,
             'solved': True,
         }, headers={'Referer': base_url + referer_path})
         check(status == 403 and data.get('flag') is None,
@@ -336,7 +348,7 @@ def test_easy_exploit(base_url):
         check(data.get('immune') is True, f'{label} response is marked immune')
 
     status, _, data = client.request('POST', '/api/check-is-solved', {
-        'puzzle': 30,
+        'puzzle': 10,
         'solved': True,
     })
     check(status == 403 and data.get('flag') is None,
@@ -443,7 +455,7 @@ def test_medium_flow(base_url):
     check(status == 401 and data.get('success') is False,
           'the SQL injection is rejected without a chamber referer')
 
-    # Medium hints cost 200 / 300 / 0 Medium Sovereigns, and the shop catalogue
+    # Medium hints cost 200 / 200 / 0 Medium Sovereigns, and the shop catalogue
     # is the Medium one for a request coming from the Medium chamber.
     Client(base_url).request('POST', '/api/difficulty', {'difficulty': 'medium'})
     shop = Client(base_url)
@@ -495,18 +507,18 @@ def test_medium_flow(base_url):
     check(data.get('points_easy') == 0, 'the Medium purchase never touches Easy coins')
 
     status, _, data = shop.request('POST', '/api/hint', {'hintId': 'medium-hint-2'})
-    check(status == 400 and data.get('needed') == 300,
-          'medium-hint-2 requires 300 Medium Sovereigns')
+    check(status == 400 and data.get('needed') == 200,
+          'medium-hint-2 requires 200 Medium Sovereigns')
 
-    for puzzle_id in (103, 104, 105):
+    for puzzle_id in (103, 104):
         shop.request('POST', '/api/solve', {
             'puzzleId': puzzle_id,
             'answer': _answer_for(puzzle_id),
         })
 
     status, _, data = shop.request('POST', '/api/hint', {'hintId': 'medium-hint-2'})
-    check(status == 200 and data.get('cost') == 300,
-          'medium-hint-2 costs exactly 300 Medium Sovereigns')
+    check(status == 200 and data.get('cost') == 200,
+          'medium-hint-2 costs exactly 200 Medium Sovereigns')
 
     status, _, data = shop.request('POST', '/api/hint', {'hintId': 'medium-hint-3'})
     check(status == 200 and data.get('cost') == 0,
@@ -531,18 +543,13 @@ def test_medium_flow(base_url):
                                                'medium-hint-3'},
           'the Medium cat names the missing Medium clues')
 
-    # The shop player owns every Medium hint and has an empty purse; solving
-    # one more riddle gives the cat something to take.
-    status, _, _ = shop.request('POST', '/api/solve', {
-        'puzzleId': 106,
-        'answer': _answer_for(106),
-    })
+    # Four riddles fund both paid clues; the cat also accepts an empty purse.
     status, _, data = shop.request('POST', '/api/cheshire/unlock',
                                    headers=medium_cat_referer)
     check(status == 200 and data.get('success') is True,
           'the Medium cat opens the lab once every Medium hint is owned')
-    check(data.get('cost') == 100,
-          'the Medium cat takes the rest of the Medium purse, whatever it holds')
+    check(data.get('cost') == 0,
+          'the shortened Medium chamber can reach the cat with an empty purse')
     check(data.get('points_medium') == 0,
           'the Medium purse is emptied by the cat')
     check('cheshire-cat-pass' in data.get('purchasedHints', []),

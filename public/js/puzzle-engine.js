@@ -130,8 +130,7 @@ const WonderPuzzleEngine = (() => {
     // A sealed final trial always renders as corrupted, even if an older
     // account somehow recorded a solve for it before the seal was added.
     const isSolved = !p.queenCorrupted && WonderState.isSolved(p.id);
-    const hasHardFinale = cfg.difficulty.toLowerCase() === 'hard'
-      && document.getElementById('queen-takeover');
+    const hasFinale = !!window.WonderQueenTakeover;
 
     // --- Parchment header ---
     _setText('puzzle-number-badge', p.number);
@@ -156,7 +155,7 @@ const WonderPuzzleEngine = (() => {
           <span class="queen-corrupted-question" data-glitch="${corruptedText}">${corruptedText}</span>
         `;
         // The corruption arrives with its own screech.
-        if (!hasHardFinale && typeof WonderAudio !== 'undefined' && WonderAudio.playQueenGlitch) {
+        if (!hasFinale && typeof WonderAudio !== 'undefined' && WonderAudio.playQueenGlitch) {
           WonderAudio.playQueenGlitch();
         }
       } else {
@@ -194,7 +193,7 @@ const WonderPuzzleEngine = (() => {
 
     // Random queen taunt on load (unsolved puzzles only)
     // For corrupted puzzles: auto-trigger the rabbit warning instead
-    if (!isSolved && !(p.queenCorrupted && hasHardFinale)) {
+    if (!isSolved && !(p.queenCorrupted && hasFinale)) {
       if (p.queenCorrupted) {
         setTimeout(() => {
           if (_current() !== p) return;
@@ -450,6 +449,9 @@ const WonderPuzzleEngine = (() => {
 
     _renderTabs();
 
+    document.dispatchEvent(new CustomEvent('wonderhack:puzzle-solved', {
+      detail: { difficulty: cfg.difficulty.toLowerCase(), puzzle: p, awardedPoints: awarded },
+    }));
     const nextBtn = document.getElementById('next-puzzle-btn');
     if (nextBtn) {
       nextBtn.onclick = () => _loadPuzzle(currentIdx + 1);

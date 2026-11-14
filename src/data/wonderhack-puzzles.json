@@ -126,76 +126,6 @@
     ]
   },
   {
-    "id": 10,
-    "title": "The Sleeping River",
-    "question": "What has a bed but never sleeps?",
-    "answer": "river",
-    "acceptedAnswers": [
-      "river",
-      "a river"
-    ],
-    "rabbitHints": [
-      "It flows toward the sea.",
-      "Its bed is made of earth, not blankets."
-    ]
-  },
-  {
-    "id": 11,
-    "title": "The Talking Shoe",
-    "question": "What has a tongue but cannot taste?",
-    "answer": "shoe",
-    "acceptedAnswers": [
-      "shoe",
-      "a shoe"
-    ],
-    "rabbitHints": [
-      "You wear it on your foot.",
-      "It has laces and a sole."
-    ]
-  },
-  {
-    "id": 12,
-    "title": "The Piano's Keys",
-    "question": "What has many keys but cannot open a single lock?",
-    "answer": "piano",
-    "acceptedAnswers": [
-      "piano",
-      "a piano"
-    ],
-    "rabbitHints": [
-      "It has black and white keys.",
-      "You press its keys to make music."
-    ]
-  },
-  {
-    "id": 13,
-    "title": "The Toothy Crown",
-    "question": "What has a crown but no king?",
-    "answer": "tooth",
-    "acceptedAnswers": [
-      "tooth",
-      "a tooth"
-    ],
-    "rabbitHints": [
-      "You find it inside a mouth.",
-      "It has a crown and a root."
-    ]
-  },
-  {
-    "id": 14,
-    "title": "The Ship's Deck",
-    "question": "What has a deck but no cards?",
-    "answer": "ship",
-    "acceptedAnswers": [
-      "ship",
-      "a ship"
-    ],
-    "rabbitHints": [
-      "It sails on the sea.",
-      "Its deck is a floor, not a pack of cards."
-    ]
-  },
-  {
     "id": 15,
     "title": "The Kettle's Beak",
     "question": "What has a beak but no bird?",
@@ -207,7 +137,8 @@
     "rabbitHints": [
       "Oh dear! The Queen has corrupted the final trial of the Easy Chamber!",
       "Her seal cannot be broken — no answer will ever be accepted here."
-    ]
+    ],
+    "number": "X"
   },
   {
     "id": 101,
@@ -266,76 +197,6 @@
     ]
   },
   {
-    "id": 105,
-    "title": "The Queen's Feast",
-    "question": "I have many teeth, but I cannot bite. What am I?",
-    "answer": "comb",
-    "acceptedAnswers": [
-      "comb",
-      "a comb"
-    ],
-    "rabbitHints": [
-      "You might use it to tidy your hair.",
-      "Its teeth are close together, but they don’t chew."
-    ]
-  },
-  {
-    "id": 106,
-    "title": "The Miner's Secret",
-    "question": "I am taken from a mine and shut up in a wooden case, from which I am never released, and yet I am used by almost everyone. What am I?",
-    "answer": "pencil lead",
-    "acceptedAnswers": [
-      "pencil lead",
-      "a pencil lead",
-      "lead",
-      "graphite"
-    ],
-    "rabbitHints": [
-      "You write with it.",
-      "It sits inside a wooden case, far from the mine now."
-    ]
-  },
-  {
-    "id": 107,
-    "title": "The Silent Room",
-    "question": "What is so fragile that saying its name breaks it?",
-    "answer": "silence",
-    "acceptedAnswers": [
-      "silence"
-    ],
-    "rabbitHints": [
-      "A whisper can break it.",
-      "It is the absence of sound."
-    ]
-  },
-  {
-    "id": 108,
-    "title": "The Invisible Filler",
-    "question": "What can fill a room but takes up no space?",
-    "answer": "light",
-    "acceptedAnswers": [
-      "light"
-    ],
-    "rabbitHints": [
-      "Flip a switch and it fills the room.",
-      "It casts shadows but occupies no space."
-    ]
-  },
-  {
-    "id": 109,
-    "title": "The Growing Dark",
-    "question": "The more of me there is, the less you see. What am I?",
-    "answer": "darkness",
-    "acceptedAnswers": [
-      "darkness",
-      "dark"
-    ],
-    "rabbitHints": [
-      "It grows when the sun sets.",
-      "It is the absence of light."
-    ]
-  },
-  {
     "id": 110,
     "title": "The Right Elbow",
     "question": "What can you hold in your left hand but not in your right hand?",
@@ -348,7 +209,8 @@
     "rabbitHints": [
       "The Queen has corrupted the final trial of the Medium Chamber!",
       "No answer can undo her seal — this riddle was never meant to be solved."
-    ]
+    ],
+    "number": "V"
   },
   {
     "id": 201,

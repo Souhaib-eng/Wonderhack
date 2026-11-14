@@ -112,13 +112,17 @@ const WonderProfile = (() => {
     if (ptsMedElem) ptsMedElem.textContent = diffPts.medium || 0;
     if (ptsHardElem) ptsHardElem.textContent = diffPts.hard || 0;
     if (ptsElem) ptsElem.textContent = state.points;
-    if (solvedElem) solvedElem.textContent = `${state.solvedPuzzles.length} / 30`;
     if (hintsElem) hintsElem.textContent = state.purchasedHints.length;
 
     // Per-chamber progress (server-authoritative when online).
     const progress = (typeof WonderState.getProgressByDifficulty === 'function')
       ? WonderState.getProgressByDifficulty()
-      : { easy: { solved: 0, total: 15 }, medium: { solved: 0, total: 10 }, hard: { solved: 0, total: 5 } };
+      : { easy: { solved: 0, total: 10 }, medium: { solved: 0, total: 5 }, hard: { solved: 0, total: 5 } };
+    if (solvedElem) {
+      const solved = Object.values(progress).reduce((sum, item) => sum + Math.min(item.solved, item.total), 0);
+      const total = Object.values(progress).reduce((sum, item) => sum + item.total, 0);
+      solvedElem.textContent = `${solved} / ${total}`;
+    }
     ['easy', 'medium', 'hard'].forEach((difficulty) => {
       const item = progress[difficulty] || { solved: 0, total: 0 };
       const value = Math.min(Number(item.solved) || 0, Number(item.total) || 0);

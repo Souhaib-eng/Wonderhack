@@ -4,45 +4,6 @@
    ========================================================================== */
 
 /* Wrapper that holds the corrupted question text */
-.queen-finale-video {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
-  max-width: none;
-  max-height: none;
-  margin: 0;
-  padding: 0;
-  overflow: clip;
-  border: 0;
-  border-radius: 0;
-  background: #100a12;
-  box-shadow: none;
-}
-.queen-finale-video::backdrop { background: #08060beF; }
-.queen-finale-video video {
-  display: block;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
-  object-fit: contain;
-  background: #08060b;
-  object-position: center;
-}
-.queen-finale-video button {
-  position: absolute;
-  right: max(1rem, env(safe-area-inset-right));
-  bottom: max(1rem, env(safe-area-inset-bottom));
-  padding: .55rem 1rem;
-  border: 1px solid #d7ad55;
-  border-radius: 6px;
-  color: #ffe5c0;
-  background: #541426;
-  cursor: pointer;
-  font: inherit;
-}
-
 .queen-corrupted-question {
   position: relative;
   display: block;

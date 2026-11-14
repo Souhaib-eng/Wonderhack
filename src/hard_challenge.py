@@ -14,7 +14,7 @@ from wsproto.events import (
 )
 from wsproto.utilities import RemoteProtocolError
 
-QUEEN_PASSWORD_HASH = hashlib.md5(b'dalton').hexdigest()
+QUEEN_PASSWORD_HASH = '1d4d5f899716fa2dcb55282fa95b9459'
 MAX_MESSAGE_BYTES = 4096
 TAUNTS = {
     1: "MUHAHA! You'll be dead before the last rose loses its petals!",

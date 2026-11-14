@@ -31,7 +31,7 @@ PORT=8090 WONDERHACK_DB=/tmp/wonderhack-dev.db python server.py
 python -m tests.verify
 # For runners that cannot bind local sockets:
 python -m tests.verify --in-process
-# Browser chat behavior (requires Node.js):
+# Queen animation and broadcast behavior (requires Node.js):
 node --test tests/hard_chat_verify.js
 ```
 
@@ -41,6 +41,11 @@ real request handlers with an in-memory transport.
 
 ## The final challenge
 
+Easy contains 10 trials; Medium and Hard contain 5 each, including one sealed
+final trial per chamber. The Queen destroys that trial in a skippable animated
+scene. Reduced-motion settings show a still scene with a Continue button.
+Medium clues cost 200, 200, and 0 coins so four riddles can fund the investigation.
+
 The Inner Sanctum adds Queen dialogue over WebSockets, court dossiers, and three Mad
 Hatter clues costing 300, 200, and 0 Hard Sovereigns. The profile disclosure
 and WebSocket secret leak are deliberate CTF vulnerabilities. The leaked weak
@@ -48,8 +53,7 @@ digest belongs to a fictional, Hard-only credential; normal account passwords
 continue to use salted PBKDF2.
 After the final riddle is destroyed, players investigate the game's HTTP and
 WebSocket traffic using external tools such as Burp Suite. The final trial
-includes a chat where players can type messages to the Queen and see her replies.
-Secret-bearing replies are concealed in the chat but remain in the actual
+uses the Queen’s speech bubble for replies. Secrets remain in the actual
 WebSocket response for investigation.
 
 Organizer notes and the intended solution are in

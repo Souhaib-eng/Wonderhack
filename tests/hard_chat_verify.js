@@ -1,201 +1,202 @@
-/* Exercise the shipped chat controller without a browser or network dependency. */
+/* Exercise animation timing, reduced motion and the Hard broadcast without a network. */
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-class Element {
-  constructor() {
-    this.listeners = {};
-    this.children = [];
-    this.value = '';
-    this.hidden = true;
-    this.disabled = true;
-    this.open = false;
-    this.dataset = {};
-    const classes = new Set();
-    this.classList = {
-      add: (...names) => names.forEach(name => classes.add(name)),
-      remove: (...names) => names.forEach(name => classes.delete(name)),
-      contains: name => classes.has(name),
-    };
-  }
-  addEventListener(name, callback) {
-    (this.listeners[name] ||= []).push(callback);
-  }
-  async emit(name, event = {}) {
-    event.preventDefault ||= () => {};
-    for (const callback of this.listeners[name] || []) await callback(event);
-  }
-  append(...children) {
-    for (const child of children) {
-      if (typeof child !== 'string') child.parent = this;
-      this.children.push(child);
-    }
-  }
-  replaceChildren(...children) { this.children = []; this.append(...children); }
-  remove() { this.parent.children.splice(this.parent.children.indexOf(this), 1); }
-  get textContent() {
-    return this.children.map(child => typeof child === 'string' ? child : child.textContent).join('');
-  }
-  set textContent(text) { this.children = [text]; }
-  get childNodes() { return this.children; }
-  get childElementCount() { return this.children.filter(child => typeof child !== 'string').length; }
-  get firstElementChild() { return this.children.find(child => typeof child !== 'string'); }
-  querySelector() { return this.textElement ||= new Element(); }
-  focus() { this.focused = true; }
-  scrollIntoView() {}
-  close() { this.open = false; }
-  showModal() { this.open = true; }
-}
-
-async function setup({ final = true, reducedMotion = true } = {}) {
+async function setup({ reducedMotion = false, storage = new Map(), courtId = 5 } = {}) {
   const elements = new Map();
+  class Element {
+    constructor() {
+      this.listeners = {};
+      this.dataset = {};
+      this.children = [];
+      this.textContent = '';
+      const classes = new Set();
+      this.classList = {
+        add: (...names) => names.forEach(name => classes.add(name)),
+        remove: (...names) => names.forEach(name => classes.delete(name)),
+        contains: name => classes.has(name),
+      };
+      this.style = {};
+    }
+    set id(value) { this._id = value; elements.set(value, this); }
+    get id() { return this._id; }
+    set innerHTML(value) {
+      for (const match of value.matchAll(/id="([^"]+)"/g)) {
+        const node = new Element();
+        node.id = match[1];
+      }
+      this.paper = [new Element(), new Element()];
+    }
+    setAttribute(key, value) { this[key] = value; }
+    addEventListener(name, callback) { (this.listeners[name] ||= []).push(callback); }
+    dispatchEvent(event) {
+      for (const callback of this.listeners[event.type] || []) callback(event);
+      return true;
+    }
+    emit(type, event = {}) { return this.dispatchEvent({ type, preventDefault() {}, ...event }); }
+    append(node) { this.children.push(node); }
+    querySelectorAll() { return this.paper || []; }
+    querySelector() { return this.bubbleText ||= new Element(); }
+    showModal() { this.open = true; }
+    close() { this.open = false; }
+    focus() { this.focused = true; }
+    click() { this.emit('click'); }
+  }
   const document = new Element();
   document.body = new Element();
-  document.getElementById = id => {
-    if (!elements.has(id)) elements.set(id, new Element());
-    return elements.get(id);
-  };
+  document.body.dataset.basePath = '../../';
+  document.getElementById = id => elements.get(id) || null;
   document.createElement = () => new Element();
+  for (const id of ['queen-sprite', 'queen-bubble', 'puzzle-title', 'puzzle-feedback']) {
+    new Element().id = id;
+  }
   const window = new Element();
+  const preference = new Element();
+  preference.matches = reducedMotion;
   const timers = new Map();
+  let now = 0;
   let timerId = 0;
   const sockets = [];
   class WebSocket extends Element {
     static OPEN = 1;
     static CLOSING = 2;
-    constructor(url) {
-      super();
-      this.url = url;
-      this.readyState = 0;
-      this.sent = [];
-      sockets.push(this);
-    }
-    send(raw) {
-      if (this.readyState !== WebSocket.OPEN) throw new Error('Socket is closed');
-      this.sent.push(JSON.parse(raw));
-    }
-    async openConnection() { this.readyState = WebSocket.OPEN; await this.emit('open'); }
-    async disconnect(code = 1001) { this.readyState = 3; await this.emit('close', { code }); }
+    constructor() { super(); this.readyState = 0; this.sent = []; sockets.push(this); }
+    send(raw) { this.sent.push(JSON.parse(raw)); }
+    openConnection() { this.readyState = 1; this.emit('open'); }
     close() { this.readyState = 3; }
-    reply(packet) { return this.emit('message', { data: JSON.stringify(packet) }); }
+    disconnect(code = 1001) { this.readyState = 3; this.emit('close', { code }); }
+    reply(packet) { this.emit('message', { data: JSON.stringify(packet) }); }
   }
   const context = vm.createContext({
     document, window, WebSocket,
+    CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options.detail; } },
     location: { protocol: 'https:', host: 'wonderhack.test' },
-    matchMedia: () => ({ matches: reducedMotion }),
-    sessionStorage: { getItem: () => null, setItem: () => {} },
-    setTimeout: (callback, delay) => { const id = ++timerId; timers.set(id, { callback, delay }); return id; },
+    matchMedia: () => preference,
+    sessionStorage: { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, value) },
+    setTimeout: (callback, delay) => { const id = ++timerId; timers.set(id, { callback, due: now + delay }); return id; },
     clearTimeout: id => timers.delete(id),
-    WonderSession: { boot: async () => {}, isAuthenticated: () => true },
-    WonderState: { getPlayer: () => ({ courtId: 5 }) },
-    WonderPuzzleEngine: { getCurrentPuzzle: () => ({ queenCorrupted: final }) },
-    WonderCharacters: { hideBubble: () => {} },
+    WonderState: { getPlayer: () => ({ courtId }) },
+    WonderSession: { isAuthenticated: () => true },
+    WonderCharacters: { hideBubble() {} },
   });
-  const source = fs.readFileSync(path.join(__dirname, '../public/js/hard-challenge.js'), 'utf8');
-  vm.runInContext(source, context);
-  await document.emit('DOMContentLoaded');
+  for (const filename of ['hard-challenge.js', 'queen-takeover.js']) {
+    vm.runInContext(fs.readFileSync(path.join(__dirname, '../public/js', filename), 'utf8'), context);
+  }
+  document.emit('DOMContentLoaded');
   return {
-    get: document.getElementById, document, window, sockets, timers,
-    puzzle: queenCorrupted => document.emit('wonderhack:puzzle-loaded', {
-      detail: { difficulty: 'hard', puzzle: { queenCorrupted } },
-    }),
-    async draft(text) {
-      document.getElementById('queen-chat-input').value = text;
-      await document.getElementById('queen-chat-input').emit('input');
+    get: document.getElementById, document, window, sockets, timers, storage, preference,
+    puzzle(difficulty = 'hard', queenCorrupted = true) {
+      document.emit('wonderhack:puzzle-loaded', {
+        detail: { difficulty, puzzle: { queenCorrupted, question: 'The final question' } },
+      });
     },
-    submit: () => document.getElementById('queen-chat-form').emit('submit'),
+    advance(ms) {
+      const until = now + ms;
+      while (true) {
+        const next = [...timers.entries()].filter(([, timer]) => timer.due <= until).sort((a, b) => a[1].due - b[1].due)[0];
+        if (!next) break;
+        now = next[1].due;
+        timers.delete(next[0]);
+        next[1].callback();
+      }
+      now = until;
+    },
   };
 }
 
-test('chat stays hidden until the final takeover ends', async () => {
-  const app = await setup({ final: false, reducedMotion: false });
-  assert.equal(app.get('queen-chat').hidden, true);
-  assert.equal(app.sockets.length, 0);
-  await app.puzzle(true);
+for (const difficulty of ['easy', 'medium', 'hard']) {
+  test(`${difficulty}: animated destruction completes before the final investigation`, async () => {
+    const app = await setup();
+    app.puzzle(difficulty, false);
+    assert.equal(app.get('queen-takeover'), null);
+    assert.equal(app.sockets.length, 0);
+    app.puzzle(difficulty);
+    assert.equal(app.get('queen-takeover').dataset.phase, 'arrival');
+    assert.equal(app.get('queen-takeover').open, true);
+    app.advance(1600);
+    assert.equal(app.get('queen-takeover').dataset.phase, 'wrath');
+    app.advance(1800);
+    assert.equal(app.get('queen-takeover').dataset.phase, 'destroyed');
+    assert.equal(app.document.body.classList.contains('queen-destroying'), true);
+    assert.equal(app.sockets.length, 0);
+    app.advance(3600);
+    assert.equal(app.get('queen-takeover').open, false);
+    assert.equal(app.document.body.classList.contains('queen-destroying'), false);
+    assert.equal(app.document.body.classList.contains('queen-system-broken'), true);
+    assert.match(app.get('puzzle-feedback').textContent, /destroyed the final riddle/);
+    assert.equal(app.sockets.length, difficulty === 'hard' ? 1 : 0);
+  });
+}
+
+test('skip cancels the remaining animation and remembers each chamber separately', async () => {
+  const app = await setup();
+  app.puzzle('easy');
+  app.get('skip-takeover').click();
+  assert.equal(app.timers.size, 0);
+  app.puzzle('easy', false);
+  app.puzzle('easy');
+  assert.equal(app.get('queen-takeover').open, false);
+  app.puzzle('medium');
   assert.equal(app.get('queen-takeover').open, true);
-  assert.equal(app.get('queen-chat').hidden, true);
-  await app.get('skip-takeover').emit('click');
-  assert.equal(app.get('queen-chat').hidden, false);
-  assert.equal(app.sockets.length, 1);
+  app.get('queen-takeover').emit('cancel');
   assert.equal(app.get('queen-takeover').open, false);
 });
 
-test('typed messages use the real protocol; replies and user markup render as text', async () => {
-  const app = await setup();
-  const socket = app.sockets[0];
-  assert.equal(socket.url, 'wss://wonderhack.test/ws/queen');
-  assert.equal(app.get('queen-chat-send').disabled, true);
-  await socket.openConnection();
-  assert.equal(app.get('queen-chat-send').disabled, true);
-  await app.draft('  ');
-  await app.submit();
-  assert.equal(socket.sent.length, 1); // Only the initial numeric Queen taunt.
-  await app.draft('<img src=x onerror=alert(1)>');
-  assert.equal(app.get('queen-chat-send').disabled, false);
-  await app.submit();
-  assert.equal(socket.sent[1].event, 'message');
-  assert.equal(socket.sent[1].data, '<img src=x onerror=alert(1)>');
-  assert.equal(app.get('queen-chat-input').value, '');
-  assert.equal(app.get('queen-chat-input').focused, true);
-  assert.equal(app.get('queen-chat-send').disabled, true);
-  assert.equal(app.get('queen-chat-log').textContent, 'You: <img src=x onerror=alert(1)>');
-  await socket.reply({ event: 'message', text: 'Off with their heads!' });
-  assert.match(app.get('queen-chat-log').textContent, /Queen of Hearts: Off with their heads!/);
-  assert.equal(app.get('queen-bubble').querySelector().textContent, 'Off with their heads!');
-  await socket.reply({ event: 'error', text: 'Speak in royal envelopes, Alice!' });
-  assert.match(app.get('queen-chat-log').textContent, /Speak in royal envelopes/);
+test('reduced motion shows a still scene until Continue, and never starts timers', async () => {
+  const app = await setup({ reducedMotion: true });
+  app.puzzle();
+  assert.equal(app.get('queen-takeover').dataset.phase, 'resistance');
+  assert.equal(app.get('skip-takeover').textContent, 'Continue →');
+  assert.equal(app.timers.size, 0);
+  assert.equal(app.sockets.length, 0);
+  app.get('skip-takeover').click();
+  assert.equal(app.sockets.length, 1);
 });
 
-test('reconnecting preserves drafts and expiry disables sending', async () => {
+test('leaving the final trial cancels animation and page restore resumes it', async () => {
   const app = await setup();
-  const socket = app.sockets[0];
-  await socket.openConnection();
-  await app.draft('Hello Queen');
-  await socket.disconnect();
-  assert.equal(app.get('queen-chat-send').disabled, true);
-  assert.match(app.get('queen-chat-status').textContent, /Reconnecting/);
-  const reconnect = [...app.timers.values()].find(timer => timer.delay === 1500);
-  reconnect.callback();
-  await app.submit(); // Even an attempted submission while connecting keeps the draft.
-  assert.equal(app.get('queen-chat-input').value, 'Hello Queen');
-  const replacement = app.sockets[1];
-  await replacement.openConnection();
-  assert.equal(app.get('queen-chat-send').disabled, false);
-  await app.submit();
-  assert.equal(replacement.sent[1].data, 'Hello Queen');
-  await replacement.disconnect(1008);
-  assert.equal(app.get('queen-chat-send').disabled, true);
-  assert.match(app.get('queen-chat-status').textContent, /Sign in again/);
+  app.puzzle('medium');
+  app.puzzle('medium', false);
+  assert.equal(app.get('queen-takeover').open, false);
+  assert.equal(app.timers.size, 0);
+  assert.equal(app.document.body.classList.contains('queen-system-broken'), false);
+  app.puzzle('medium');
+  app.window.emit('pagehide');
+  assert.equal(app.timers.size, 0);
+  app.window.emit('pageshow', { persisted: true });
+  assert.equal(app.get('queen-takeover').open, true);
 });
 
-test('secret-bearing replies are acknowledged without displaying the secret', async () => {
+test('Hard broadcast keeps leaked hashes in the network and reconnects only on the final trial', async () => {
   const app = await setup();
+  app.puzzle();
+  app.get('skip-takeover').click();
   const socket = app.sockets[0];
-  await socket.openConnection();
-  await socket.reply({ event: 'message', leaked: true, text: 'secret-digest', passwordHash: 'secret-digest' });
-  assert.doesNotMatch(app.get('queen-chat-log').textContent, /secret-digest/);
-  assert.match(app.get('queen-chat-log').textContent, /cuts herself short/);
-  assert.doesNotMatch(app.get('queen-bubble').querySelector().textContent, /secret-digest/);
-  await socket.emit('message', { data: '{malformed' });
-  await socket.reply(null);
+  socket.openConnection();
+  assert.equal(socket.sent[0].data, 1);
+  app.get('queen-sprite').click();
+  assert.equal(socket.sent.length, 2);
+  socket.reply({ event: 'message', text: 'secret hash in response', passwordHash: 'private-digest' });
+  assert.match(app.get('queen-bubble').querySelector().textContent, /heard nothing/);
+  assert.doesNotMatch(app.get('queen-bubble').querySelector().textContent, /private-digest|secret hash/);
+  socket.disconnect();
+  app.advance(1500);
+  assert.equal(app.sockets.length, 2);
+  app.puzzle('hard', false);
+  assert.equal(app.sockets[1].readyState, 3);
+  assert.equal(app.timers.size, 0);
+  app.get('queen-sprite').click();
+  assert.equal(app.sockets.length, 2);
 });
 
-test('leaving the final trial closes chat and ignores late events', async () => {
+test('an expired Hard session does not retry the broadcast', async () => {
   const app = await setup();
-  const socket = app.sockets[0];
-  await socket.openConnection();
-  for (let i = 0; i < 55; i++) await socket.reply({ event: 'message', text: `reply ${i}` });
-  assert.equal(app.get('queen-chat-log').childElementCount, 50);
-  const transcript = app.get('queen-chat-log').textContent;
-  await app.puzzle(false);
-  assert.equal(app.get('queen-chat').hidden, true);
-  assert.equal(app.get('queen-chat-send').disabled, true);
-  assert.equal(socket.readyState, 3);
-  await socket.reply({ event: 'message', text: 'stale reply' });
-  await socket.disconnect();
-  assert.equal(app.get('queen-chat-log').textContent, transcript);
-  assert.equal([...app.timers.values()].some(timer => timer.delay === 1500), false);
+  app.puzzle();
+  app.get('skip-takeover').click();
+  app.sockets[0].disconnect(1008);
+  app.advance(2000);
+  assert.equal(app.sockets.length, 1);
 });

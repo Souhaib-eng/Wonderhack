@@ -9,7 +9,7 @@ chamber, but every answer is validated by the backend against
 """
 
 CHAMBER_META = {
-    # ── Easy Chamber (IDs 1–15) ───────────────────────────────────────────────
+    # ── Easy Chamber (9 riddles + sealed trial 15) ───────────────────────────────────────────────
     1: {
         'number': 'I',
         'category': 'Riddle',
@@ -100,58 +100,8 @@ CHAMBER_META = {
         'queenTaunt': '“A silent riddle for a noisy fool!”',
         'queenCorrupted': False,
     },
-    10: {
-        'number': 'X',
-        'category': 'Riddle',
-        'rabbitHints': [
-            'It flows toward the sea.',
-            'Its bed is made of earth, not blankets.',
-        ],
-        'queenTaunt': '“My kingdom has one, and it still moves faster than you!”',
-        'queenCorrupted': False,
-    },
-    11: {
-        'number': 'XI',
-        'category': 'Riddle',
-        'rabbitHints': [
-            'You wear it on your foot.',
-            'It has laces and a sole.',
-        ],
-        'queenTaunt': '“One of these has a tongue, and still says more sense than you!”',
-        'queenCorrupted': False,
-    },
-    12: {
-        'number': 'XII',
-        'category': 'Riddle',
-        'rabbitHints': [
-            'It has black and white keys.',
-            'You press its keys to make music.',
-        ],
-        'queenTaunt': '“My court musicians play one — you merely plonk at it!”',
-        'queenCorrupted': False,
-    },
-    13: {
-        'number': 'XIII',
-        'category': 'Riddle',
-        'rabbitHints': [
-            'You find it inside a mouth.',
-            'It has a crown and a root.',
-        ],
-        'queenTaunt': '“OFF WITH YOUR — oh, you need that one to chew!”',
-        'queenCorrupted': False,
-    },
-    14: {
-        'number': 'XIV',
-        'category': 'Riddle',
-        'rabbitHints': [
-            'It sails on the sea.',
-            'Its deck is a floor, not a pack of cards.',
-        ],
-        'queenTaunt': '“My royal fleet has dozens — and still none can catch you!”',
-        'queenCorrupted': False,
-    },
     15: {
-        'number': 'XV',
+        'number': 'X',
         'category': 'Riddle',
         'rabbitHints': [
             'Oh dear! The Queen has corrupted the final trial of the Easy Chamber!',
@@ -161,7 +111,7 @@ CHAMBER_META = {
         'queenCorrupted': True,
     },
 
-    # ── Medium Chamber (IDs 101–110) ─────────────────────────────────────────
+    # ── Medium Chamber (4 riddles + sealed trial 110) ─────────────────────────────────────────
     101: {
         'number': 'I',
         'category': 'Riddle',
@@ -202,58 +152,8 @@ CHAMBER_META = {
         'queenTaunt': '“ECHO! ECHO! Even my dungeon echoes the right answer!”',
         'queenCorrupted': False,
     },
-    105: {
-        'number': 'V',
-        'category': 'Riddle',
-        'rabbitHints': [
-            'You might use it to tidy your hair.',
-            'Its teeth are close together, but they don’t chew.',
-        ],
-        'queenTaunt': '“My royal hairdresser uses one on me daily!”',
-        'queenCorrupted': False,
-    },
-    106: {
-        'number': 'VI',
-        'category': 'Riddle',
-        'rabbitHints': [
-            'You write with it.',
-            'It sits inside a wooden case, far from the mine now.',
-        ],
-        'queenTaunt': '“My scribes wear theirs down to nothing — as I shall do to you!”',
-        'queenCorrupted': False,
-    },
-    107: {
-        'number': 'VII',
-        'category': 'Riddle',
-        'rabbitHints': [
-            'A whisper can break it.',
-            'It is the absence of sound.',
-        ],
-        'queenTaunt': '“My court is never silent — mostly because you keep talking!”',
-        'queenCorrupted': False,
-    },
-    108: {
-        'number': 'VIII',
-        'category': 'Riddle',
-        'rabbitHints': [
-            'Flip a switch and it fills the room.',
-            'It casts shadows but occupies no space.',
-        ],
-        'queenTaunt': '“Even my darkest dungeon cannot keep this out!”',
-        'queenCorrupted': False,
-    },
-    109: {
-        'number': 'IX',
-        'category': 'Riddle',
-        'rabbitHints': [
-            'It grows when the sun sets.',
-            'It is the absence of light.',
-        ],
-        'queenTaunt': '“The more of it there is, the less I wish to see you!”',
-        'queenCorrupted': False,
-    },
     110: {
-        'number': 'X',
+        'number': 'V',
         'category': 'Riddle',
         'rabbitHints': [
             'The Queen has corrupted the final trial of the Medium Chamber!',

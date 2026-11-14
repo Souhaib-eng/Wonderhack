@@ -29,7 +29,7 @@ const WonderHatterShop = (() => {
         id: 'medium-hint-2',
         number: 2,
         title: 'Cold Soft Quiet Nights',
-        cost: 300,
+        cost: 200,
         text: 'I really like the cold Soft Quiet nights, the moon and its Light really helps me relax!',
       },
       {
@@ -49,8 +49,8 @@ const WonderHatterShop = (() => {
         text: "If I were you, I'd definitely use Burp Suite! What do I know though? I'm just a Mad Hatter!" },
       { id: 'hard-hint-2', number: 2, title: 'A Different Kind of Whisper', cost: 200,
         text: 'Have you ever heard of WebSockets?' },
-      { id: 'hard-hint-3', number: 3, title: 'A Very Small Matter', cost: 0,
-        text: 'Who developed the modern atomic theory?' },
+      { id: 'hard-hint-3', number: 3, title: 'A Royal Confession', cost: 0,
+        text: 'Her secret is a confession: i love alice. Remove the spaces and seal it with an exclamation mark at each end.' },
     ],
   };
 

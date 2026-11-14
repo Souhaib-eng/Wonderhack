@@ -4,6 +4,36 @@
   const selector = '.book-cover-container, .chambers-hero, .chamber-card, .parchment-window, .tea-menu-parchment, .hint-card, .flag-submit-card';
   let observer;
   let mutations;
+  let puzzleAnimations = [];
+
+  document.addEventListener('wonderhack:puzzle-loaded', event => {
+    puzzleAnimations.forEach(animation => animation.cancel());
+    puzzleAnimations = [];
+    if (preference.matches || event.detail.puzzle.queenCorrupted) return;
+    ['.parchment-header', '#puzzle-question-text', '#puzzle-solution-form'].forEach((selector, index) => {
+      const node = document.querySelector(selector);
+      if (!node?.animate) return;
+      puzzleAnimations.push(node.animate([
+        { opacity: 0, transform: 'translateY(16px)' },
+        { opacity: 1, transform: 'translateY(0)' },
+      ], { duration: 450, delay: index * 75, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'backwards' }));
+    });
+  });
+
+  document.addEventListener('wonderhack:puzzle-solved', () => {
+    if (preference.matches) return;
+    const question = document.getElementById('puzzle-question-text');
+    question?.animate?.([
+      { boxShadow: '0 0 0 0 #d6ac5660' },
+      { boxShadow: '0 0 0 16px #d6ac5600', offset: .75 },
+      { boxShadow: '0 0 0 0 #d6ac5600' },
+    ], { duration: 750, easing: 'ease-out' });
+    document.getElementById('next-puzzle-btn')?.animate?.([
+      { transform: 'translateY(5px)', opacity: 0 },
+      { transform: 'translateY(-3px)', opacity: 1 },
+      { transform: 'translateY(0)', opacity: 1 },
+    ], { duration: 500, easing: 'ease-out' });
+  });
 
   function reveal(root) {
     const nodes = [...(root.matches?.(selector) ? [root] : []), ...root.querySelectorAll(selector)];
@@ -39,6 +69,8 @@
   }
 
   function stop() {
+    puzzleAnimations.forEach(animation => animation.cancel());
+    puzzleAnimations = [];
     observer?.disconnect();
     mutations?.disconnect();
     document.querySelectorAll('.wh-reveal, .wh-value-changed').forEach(node => {

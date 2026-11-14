@@ -184,7 +184,7 @@ HINT_CATALOGUE = {
                 'id': 'medium-hint-2',
                 'number': 2,
                 'title': 'Cold Soft Quiet Nights',
-                'cost': 300,
+                'cost': 200,
                 'text': (
                     'I really like the cold Soft Quiet nights, the moon and its '
                     'Light really helps me relax!'
@@ -210,8 +210,8 @@ HINT_CATALOGUE = {
              "What do I know though? I'm just a Mad Hatter!"},
             {'id': 'hard-hint-2', 'number': 2, 'title': 'A Different Kind of Whisper',
              'cost': 200, 'text': 'Have you ever heard of WebSockets?'},
-            {'id': 'hard-hint-3', 'number': 3, 'title': 'A Very Small Matter',
-             'cost': 0, 'text': 'Who developed the modern atomic theory?'},
+            {'id': 'hard-hint-3', 'number': 3, 'title': 'A Royal Confession',
+             'cost': 0, 'text': 'Her secret is a confession: i love alice. Remove the spaces and seal it with an exclamation mark at each end.'},
         ],
     },
 }
@@ -309,6 +309,8 @@ def progress_by_difficulty(conn, user_id, season=None):
         (user_id, season)
     ).fetchall()
     for row in rows:
+        if row['puzzle_id'] not in PUZZLES:
+            continue
         difficulty = difficulty_for(row['puzzle_id'])
         if difficulty in solved:
             solved[difficulty] += 1
@@ -501,7 +503,7 @@ def _solved_ids(conn, user_id, season=None):
         'SELECT puzzle_id FROM solves WHERE user_id = ? AND season = ? ORDER BY puzzle_id',
         (user_id, season)
     ).fetchall()
-    return [row['puzzle_id'] for row in rows]
+    return [row['puzzle_id'] for row in rows if row['puzzle_id'] in PUZZLES]
 
 
 def _json_list(raw, fallback=None):
@@ -522,6 +524,7 @@ def user_to_public(user, conn=None, solved=None):
             public.get('solved_puzzles')
         )
 
+    solved = [pid for pid in solved if pid in PUZZLES]
     public['solved_puzzles'] = solved
     public['solvedPuzzles'] = solved
     public['solvedCount'] = len(solved)
@@ -2674,7 +2677,7 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         except (TypeError, ValueError):
             self._send_json({
                 'success': False,
-                'error': 'Puzzle number must be an integer between 1 and 30.',
+                'error': 'Puzzle number must be an integer between 1 and 20.',
             }, 400)
             return
 
@@ -2682,7 +2685,7 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
         if puzzle_id is None:
             self._send_json({
                 'success': False,
-                'error': 'Puzzle number must be an integer between 1 and 30.',
+                'error': 'Puzzle number must be an integer between 1 and 20.',
             }, 400)
             return
 
@@ -2693,15 +2696,13 @@ class WonderHackHandler(http.server.SimpleHTTPRequestHandler):
 
         puzzle = PUZZLES[puzzle_id]
         prize = points_for(puzzle_id) if solved else 0
-        final_trial = ordinal == 30
+        final_trial = puzzle_id == 15
 
         result = {
             'success': True,
             'puzzle': ordinal,
             'puzzleId': puzzle_id,
-            # Ordinal 30 is the public "final trial" alias. Without this label
-            # the console would print the Hard puzzle 205 title even though the
-            # request came from the Easy chamber and returns the Easy flag.
+            # The tenth Easy trial is the sealed gateway to its flag.
             'title': 'The Final Trial' if final_trial else puzzle['title'],
             'difficulty': 'Easy' if final_trial else puzzle['difficulty'],
             'solved': solved,

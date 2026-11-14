@@ -26,12 +26,12 @@ const WonderCheckIsSolved = (() => {
   }
 
   function _payload(puzzleNumber, solved) {
-    // isSolved() and isSolved(true) both target the final trial (ordinal 30).
+    // isSolved() and isSolved(true) both target the final Easy trial (10).
     if (typeof puzzleNumber === 'boolean' && solved === undefined) {
-      return { puzzle: 30, solved: puzzleNumber };
+      return { puzzle: 10, solved: puzzleNumber };
     }
     if (puzzleNumber === undefined) {
-      return { puzzle: 30, solved: true };
+      return { puzzle: 10, solved: true };
     }
     return {
       puzzle: Number(puzzleNumber),

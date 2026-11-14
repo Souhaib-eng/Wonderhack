@@ -114,7 +114,7 @@ def test_hard_flow(base_url, Client, check):
     check('passwordHash' not in replies[1], 'exactly three characters do not leak the digest')
     check(replies[2]['event'] == replies[3]['event'] == 'error', 'malformed JSON and unknown events do not leak')
     digest = replies[4]['passwordHash']
-    check(digest == hashlib.md5(b'dalton').hexdigest() and replies[4]['algorithm'] == 'MD5', 'four characters expose the crackable challenge digest')
+    check(digest == hashlib.md5(b'!ilovealice!').hexdigest() and replies[4]['algorithm'] == 'MD5', 'four characters expose the crackable challenge digest')
     status, replies, _ = royal_exchange(base_url, player, [
         {'event': 'message', 'data': 'Hi'},
         {'event': 'message', 'data': 'Hello, Your Majesty!'},
@@ -133,7 +133,7 @@ def test_hard_flow(base_url, Client, check):
     status, replies, events = royal_exchange(base_url, player, [{'event': 'message', 'data': 'x' * 5000}])
     check(not replies and any(isinstance(e, CloseConnection) and e.code == 1009 for e in events), 'oversized transport frames close without leaking')
     player.request('POST', '/api/difficulty', {'difficulty': 'hard'})
-    status, _, data = player.request('POST', '/api/check-is-solved', {'puzzle': 30, 'solved': True}, headers=hard_page)
+    status, _, data = player.request('POST', '/api/check-is-solved', {'puzzle': 20, 'solved': True}, headers=hard_page)
     check(status == 403 and 'flag' not in data, 'client progression claims cannot unlock Hard')
     impostor = Client(base_url)
     impostor.request('POST', '/api/login', {'username': 'hearts_queen', 'password': "' OR 1=1;"},
@@ -142,12 +142,12 @@ def test_hard_flow(base_url, Client, check):
         status, _, refusal = impostor.request('GET', path)
         check(status == 403 and 'flag' not in refusal, f'Medium Queen session cannot obtain Hard via {path}')
     gate = {'Referer': base_url + '/login.html?difficulty=hard'}
-    for wrong in ("' OR 1=1;", digest, 'hearts_and_tarts_2026'):
+    for wrong in ("' OR 1=1;", digest, 'hearts_and_tarts_2026', 'dalton'):
         check(Client(base_url).request('POST', '/api/login', {'username': 'hearts_queen', 'password': wrong}, headers=gate)[0] == 401,
               'Hard rejects SQL injection, pass-the-hash and ordinary account credentials')
     # Use one browser cookie jar for player → Queen → player account switching.
     royal = player
-    status, _, data = royal.request('POST', '/api/login', {'username': queen['profile']['username'], 'password': 'dalton'}, headers=gate)
+    status, _, data = royal.request('POST', '/api/login', {'username': queen['profile']['username'], 'password': '!ilovealice!'}, headers=gate)
     check(status == 200 and data['user']['isQueen'], 'cracked credential signs into the Hard Queen gate')
     royal.request('POST', '/api/difficulty', {'difficulty': 'easy'})
     status, _, scroll = royal.request('GET', '/api/queen/answers')

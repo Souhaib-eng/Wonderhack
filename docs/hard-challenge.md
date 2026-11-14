@@ -5,14 +5,13 @@ riddle. The last riddle cannot be solved through `/api/solve`. Alice must
 investigate the court and steal the Queen's Hard-only credential instead.
 The Queen's WebSocket stays disconnected during the four ordinary riddles.
 Opening the final trial triggers the Queen's takeover: she destroys the question,
-then returns to the corrupted parchment and reveals a chat with the Queen.
-Players can type messages, send with Enter or the Send button, and read replies.
-The chat shows connection status and preserves unsent drafts across reconnects.
+then returns to the corrupted parchment. The Queen speaks through her existing
+speech bubble; there is no chat form beneath the question.
 Players investigate actual HTTP and
 WebSocket traffic with tools on their own computer, such as Burp Suite. The Queen's
 ordinary dialogue uses the WebSocket, while leaked secrets are left in the network
 response for the player to discover. Players can skip the
-transition; reduced-motion preferences bypass it automatically. The takeover is
+transition; reduced-motion preferences show a still scene with a Continue button. The takeover is
 remembered per player for the current browser tab so returning from the shop or
 reloading the final trial resumes the investigation immediately.
 
@@ -39,14 +38,13 @@ reloading the final trial resumes the investigation immediately.
    {"event":"message","data":"AAAA"}
    ```
 
-   Alternatively, type a message longer than three characters in the Queen's
-   chat. Both routes send a real WebSocket message. The Queen accidentally
-   rehearses a secret: her server response includes `passwordHash` and
-   `algorithm: "MD5"`. The chat and dialogue bubble show an interrupted reply;
-   the secret stays in the network response for the player to inspect.
-5. Recover the password from the digest. The atomic-theory hint points to John
-   Dalton; the challenge's lowercase password is `dalton`. This is a dedicated
-   fictional credential, independent of the Queen's normal PBKDF2 account hash.
+   The Queen accidentally rehearses a secret: her server response includes
+   `passwordHash` and `algorithm: "MD5"`. The dialogue bubble shows an interrupted
+   reply; the secret stays in the network response for the player to inspect.
+5. Recover the password from the digest. The free confession clue points to
+   `!ilovealice!`: lowercase, no spaces, with an exclamation mark at each end.
+   This is a dedicated fictional MD5 credential, independent of the Queen's
+   normal PBKDF2 account hash.
 6. Use the login page (`/login.html?difficulty=hard`) to sign in
    as `hearts_queen` with that password. The existing login flow opens the royal
    answer scroll. The session now has a server-stored Hard access capability.
@@ -54,7 +52,7 @@ reloading the final trial resumes the investigation immediately.
    to the castle's existing flag submission form to credit Alice's account.
 
 The Mad Hatter offers the supplied Burp Suite clue for 300 coins, the WebSocket
-clue for 200, and the atomic-theory clue for free (no third price was specified).
+clue for 200, and the royal-confession clue for free.
 The shop retains its existing sequential hint progression and deducts only
 Hard coins. Solve the four ordinary Hard riddles to fund the hints.
 

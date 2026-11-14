@@ -13,8 +13,8 @@ const WonderState = (() => {
     points: 0,
     pointsByDifficulty: { easy: 0, medium: 0, hard: 0 },
     progressByDifficulty: {
-      easy: { solved: 0, total: 15 },
-      medium: { solved: 0, total: 10 },
+      easy: { solved: 0, total: 10 },
+      medium: { solved: 0, total: 5 },
       hard: { solved: 0, total: 5 }
     },
     solvedPuzzles: [],

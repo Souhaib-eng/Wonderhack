@@ -16,20 +16,32 @@ from db.chamber_data import CHAMBER_META
 # vulnerable checkIsSolved() helper instead.
 QUEEN_SEALED_PUZZLE_IDS = frozenset({15, 110, 205})
 
-# Ordinal numbers used by the public ``checkIsSolved`` helper.
-# 1–15 are Easy, 16–25 are Medium, 26–30 are Hard. The final ordinal (30)
-# maps to the last Hard puzzle and unlocks the flag.
+# Display order across the 20 retained trials. IDs stay stable for saved progress.
 PUZZLE_ORDINALS = {
-    1: 1, 2: 2, 3: 3, 4: 4, 5: 5,
-    6: 6, 7: 7, 8: 8, 9: 9, 10: 10,
-    11: 11, 12: 12, 13: 13, 14: 14, 15: 15,
-    16: 101, 17: 102, 18: 103, 19: 104, 20: 105,
-    21: 106, 22: 107, 23: 108, 24: 109, 25: 110,
-    26: 201, 27: 202, 28: 203, 29: 204, 30: 205,
+    1: 1,
+    2: 2,
+    3: 3,
+    4: 4,
+    5: 5,
+    6: 6,
+    7: 7,
+    8: 8,
+    9: 9,
+    10: 15,
+    11: 101,
+    12: 102,
+    13: 103,
+    14: 104,
+    15: 110,
+    16: 201,
+    17: 202,
+    18: 203,
+    19: 204,
+    20: 205,
 }
 
 PUZZLES = {
-    # ── Easy Chamber (IDs 1–15) ────────────────────────────────────────────────
+    # ── Easy Chamber (9 riddles + sealed trial 15) ────────────────────────────────────────────────
     1: {
         'title': "The White Rabbit's Clock",
         'question': 'I have hands but cannot clap. I have a face but cannot smile. What am I?',
@@ -93,41 +105,6 @@ PUZZLES = {
         'points': 50,
         'answers': ['book', 'a book'],
     },
-    10: {
-        'title': 'The Sleeping River',
-        'question': 'What has a bed but never sleeps?',
-        'difficulty': 'Easy',
-        'points': 50,
-        'answers': ['river', 'a river'],
-    },
-    11: {
-        'title': 'The Talking Shoe',
-        'question': 'What has a tongue but cannot taste?',
-        'difficulty': 'Easy',
-        'points': 50,
-        'answers': ['shoe', 'a shoe'],
-    },
-    12: {
-        'title': "The Piano's Keys",
-        'question': 'What has many keys but cannot open a single lock?',
-        'difficulty': 'Easy',
-        'points': 50,
-        'answers': ['piano', 'a piano'],
-    },
-    13: {
-        'title': 'The Toothy Crown',
-        'question': 'What has a crown but no king?',
-        'difficulty': 'Easy',
-        'points': 50,
-        'answers': ['tooth', 'a tooth'],
-    },
-    14: {
-        'title': "The Ship's Deck",
-        'question': 'What has a deck but no cards?',
-        'difficulty': 'Easy',
-        'points': 50,
-        'answers': ['ship', 'a ship'],
-    },
     15: {
         'title': "The Kettle's Beak",
         'question': 'What has a beak but no bird?',
@@ -136,7 +113,7 @@ PUZZLES = {
         'answers': ['kettle', 'a kettle'],
     },
 
-    # ── Medium Chamber (IDs 101–110) ─────────────────────────────────────────
+    # ── Medium Chamber (4 riddles + sealed trial 110) ─────────────────────────────────────────
     101: {
         'title': 'Down the Rabbit Hole',
         'question': 'What has a neck but no head?',
@@ -164,41 +141,6 @@ PUZZLES = {
         'difficulty': 'Medium',
         'points': 100,
         'answers': ['echo', 'an echo'],
-    },
-    105: {
-        'title': "The Queen's Feast",
-        'question': 'I have many teeth, but I cannot bite. What am I?',
-        'difficulty': 'Medium',
-        'points': 100,
-        'answers': ['comb', 'a comb'],
-    },
-    106: {
-        'title': "The Miner's Secret",
-        'question': 'I am taken from a mine and shut up in a wooden case, from which I am never released, and yet I am used by almost everyone. What am I?',
-        'difficulty': 'Medium',
-        'points': 100,
-        'answers': ['pencil lead', 'a pencil lead', 'lead', 'graphite'],
-    },
-    107: {
-        'title': 'The Silent Room',
-        'question': 'What is so fragile that saying its name breaks it?',
-        'difficulty': 'Medium',
-        'points': 100,
-        'answers': ['silence'],
-    },
-    108: {
-        'title': 'The Invisible Filler',
-        'question': 'What can fill a room but takes up no space?',
-        'difficulty': 'Medium',
-        'points': 100,
-        'answers': ['light'],
-    },
-    109: {
-        'title': 'The Growing Dark',
-        'question': 'The more of me there is, the less you see. What am I?',
-        'difficulty': 'Medium',
-        'points': 100,
-        'answers': ['darkness', 'dark'],
     },
     110: {
         'title': 'The Right Elbow',
@@ -315,7 +257,7 @@ def is_queen_sealed(puzzle_id: int) -> bool:
 
 
 def puzzle_id_for_ordinal(ordinal: int):
-    """Map the public 1–30 puzzle number to the internal puzzle ID."""
+    """Map the public 1–20 puzzle number to the internal puzzle ID."""
     try:
         return PUZZLE_ORDINALS.get(int(ordinal))
     except (TypeError, ValueError):
